@@ -1,0 +1,128 @@
+# DMC mexx online multiplayer
+
+De lokale versie blijft beschikbaar. De nieuwe online modus werkt als een
+Kahoot-lobby: de beheerder maakt een lobby, deelt een code of uitnodigingslink,
+en deelnemers melden zich met een naam aan op hun eigen apparaat.
+
+## Starten
+
+Benodigd: Node.js 24 of nieuwer. Er zijn geen externe npm-pakketten nodig.
+
+```sh
+npm start
+```
+
+Open op de computer waarop de server draait de website op poort 3000 en kies
+Online multiplayer, of open het pad `/online`. Maak een lobby en deel de code.
+Andere apparaten gebruiken de publiek gehoste HTTPS-website; localhost op een
+telefoon verwijst naar die telefoon en niet naar de spelserver.
+
+```sh
+npm test
+```
+
+De tests controleren spelregels, rechten, realtime updates, dubbele verzoeken,
+het herstellen van sessies en het afronden van een worp na een serverherstart.
+
+## Wie doet wat?
+
+- De beheerder stelt regels, teams en speelvolgorde in en start het spel.
+- De beheerder kan zelf meespelen of alleen meekijken.
+- Alleen de speler aan de beurt kan gooien, stenen vastzetten en doorgeven.
+  Ook een beheerder kan niet voor iemand anders gooien.
+- Iedereen ziet dezelfde stenen, laatste scores, sterren, strafmeldingen en uitslag.
+- Alleen de beheerder start de volgende ronde, sluit een ronde voortijdig af of
+  opent de lobby opnieuw. Terug naar de lobby beëindigt de lopende partij.
+- In de lobby kan het beheer worden overgedragen en kunnen spelers worden
+  verwijderd of tijdelijk op meekijken worden gezet.
+- De lobby verlaten meldt je af. Als de beheerder de lobby verlaat gaat het
+  beheer naar de eerste overgebleven deelnemer.
+
+Namen en teams worden ingesteld vóór het starten van een partij. Sluit de
+beheerder de lobby opnieuw open, dan kunnen de samenstelling en regels worden
+gewijzigd. Late deelnemers komen dus in de lobby voordat een partij start.
+
+Geluiden en zelf ingesproken kreten blijven persoonlijk per browser. Er is geen
+microfoonstream of audiogesprek tussen deelnemers. De bestaande soundboardknop,
+voice recorder en lokale spelmodus blijven beschikbaar. Het gedeelde logo kan
+via Mijn lokale instellingen door de beheerder uit lokale instellingen worden
+overgenomen. Stel het logo eerst in de lokale modus op dezelfde website in en
+sla het daar op; laad die instellingen daarna in de online lobby. Het logo moet kleiner zijn dan ongeveer 250 kB aan beeldgegevens.
+
+## Realtime en opslag
+
+De server bepaalt de willekeurige worpen en verwerkt alle spelacties. Verzoeken
+gebruiken een beveiligde, niet voor JavaScript leesbare sessiecookie; de lobbycode
+is een uitnodiging en geeft geen beheerrechten. De server controleert de rol en
+actieve beurt bij iedere opdracht. Acties sturen alleen de intentie, zoals
+roll, hold of pass; een deelnemer kan geen dobbeluitkomst aan de server opleggen.
+
+Realtime updates lopen via Server-Sent Events met dezelfde spelserver als de
+website. Bij verbindingsverlies worden knoppen geblokkeerd. Na herstel krijgt
+iedereen een volledige actuele stand. Verversen herstelt de eigen deelnemer
+zolang dezelfde browser de sessiecookie nog heeft. Gebruik aparte browsers of
+privévensters als je op één computer verschillende deelnemers wilt testen.
+
+SQLite bewaart de lobby, deelnemers, regels, spelstand, gehashte sessietokens en
+nog af te ronden worpen. De standaardmap is `.dmc-data`; met `DMC_DATA_DIR` kan
+een andere locatie worden gekozen. Die map wordt niet via de website gedeeld.
+Na een procesherstart worden geplande worpen en uitslagen alsnog afgerond.
+Een lobby heeft maximaal 30 deelnemers; er worden maximaal 100 lobby's tegelijk
+bewaard. Lobby's zonder verbindingen verlopen na 24 uur zonder spelactiviteit.
+Per partij worden de laatste 100 rondes bewaard. Er is geen permanente account-
+of wedstrijdhistorie buiten deze lobby's.
+
+## Publiek online zetten
+
+Alleen een HTML-bestand op Netlify Drop is voor deze modus onvoldoende. De
+Node-server moet blijven draaien en toegang hebben tot een permanente schijf.
+
+Een concrete route is een Docker-webservice op bijvoorbeeld Render of Railway:
+
+1. Zet de bestanden uit dit project in de root van je GitHub-repository.
+2. Maak bij de host een webservice die de meegeleverde `Dockerfile` bouwt.
+3. Gebruik één instance. Koppel een permanente schijf op `/app/data`.
+4. Stel zo nodig `DMC_DATA_DIR=/app/data` in. De server gebruikt de door de host
+   aangeleverde `PORT`; zonder die variabele is de poort 3000.
+5. Gebruik `/healthz` als healthcheck en de HTTPS-link van de host als speladres.
+6. Open `/online`, maak een lobby en deel de uitnodigingslink of code.
+
+Kies een hostingplan dat een permanent draaiende webservice en blijvende opslag
+ondersteunt. Dit kan hostingkosten met zich meebrengen. Tijdens dit ontwikkelwerk
+is geen dienst aangemaakt, betaald of gepubliceerd.
+
+De Docker-start voert alleen de voorbereiding van de datamap als root uit en
+schakelt daarna naar gebruiker 1000. Als je een eigen deployment gebruikt, moet
+de servicegebruiker naar de database-map kunnen schrijven. Website en API moeten
+via dezelfde oorsprong worden aangeboden; een eventuele reverse proxy moet SSE
+zonder buffering doorlaten. Voor microfoonopname is HTTPS nodig.
+
+Voor een eigen Docker-host:
+
+```sh
+docker compose up --build -d
+```
+
+De meegeleverde compose-configuratie bewaart de database in een volume. Gebruik
+ook daar HTTPS via je hostingprovider of reverse proxy voordat je de site met
+vrienden deelt. Het Docker-image is gebouwd en gestart. De healthcheck, het draaien als
+gebruiker 1000 en het behoud van lobby, sessie en worp na een containerherstart
+zijn gecontroleerd. Publicatie bij een cloudhost is nog niet uitgevoerd.
+
+De huidige opslag- en realtime-opzet is bedoeld voor één serverinstance. Meerdere
+instanties vereisen gedeelde databaseopslag en een berichtenlaag; dat valt buiten
+deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
+
+## Uitgevoerde controles
+
+- 10 Node-tests voor de spelregels, HTTP-rechten, live updates, meerdere tabbladen,
+  het overdragen van beheer en hervatten na een serverherstart.
+- Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
+  gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel
+  na internetverlies.
+- Lokale spelmodus en bestaande instellingen opnieuw gecontroleerd.
+- Docker-image gebouwd; echte container met permanent volume gestart en opnieuw
+  gestart; database en sessie bleven behouden.
+
+Er staat hiermee nog geen publieke website online. Daarvoor is de hostingstap
+met een eigen hostingaccount en permanente opslag nodig.

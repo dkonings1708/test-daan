@@ -1,0 +1,10 @@
+services:
+  dmc-mexx:
+    build: .
+    ports:
+      - "3000:3000"
+    volumes:
+      - dmc-data:/app/data
+    restart: unless-stopped
+volumes:
+  dmc-data:

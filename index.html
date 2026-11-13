@@ -1,0 +1,811 @@
+<!doctype html>
+<html lang="nl">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="theme-color" content="#00843d"><title>DMC mexx</title>
+<style>
+.score-tools{display:flex;align-items:center;gap:8px}.score-tools select{font-size:11px;padding:5px;border:1px solid #ffffff30;border-radius:6px;background:#111e16;color:white;max-width:110px}
+
+:root{color-scheme:dark;font-family:Arial,Helvetica,sans-serif;color:#fff;background:#101612;--red:#ed0712;--green:#00843d;--muted:#b7cfc0;--line:#ffffff24}*{box-sizing:border-box}[hidden]{display:none!important}body{margin:0;height:100dvh;overflow:hidden;border-top:5px solid var(--red);background:radial-gradient(ellipse at 40% 25%,#004c25,#101612 75%)}button,input,select{font:inherit}button{cursor:pointer;color:white;border:1px solid var(--line);border-radius:10px;padding:11px 15px;background:#ffffff0b;font-weight:700}button:hover{background:#ffffff1c}button:disabled{opacity:.45;cursor:default}button:focus-visible,input:focus-visible{outline:3px solid #fff;outline-offset:3px}.primary{background:var(--red);border-color:var(--red)}.primary:hover{background:#ff2730}.green{background:var(--green);border-color:var(--green)}.green:hover{background:#009c48}input[type=text]{min-width:0;width:100%;border:1px solid #ffffff38;border-radius:8px;padding:10px 12px;background:#081b11;color:#fff}input[type=checkbox],input[type=radio]{accent-color:#00b855;width:19px;height:19px;flex-shrink:0}h1,h2,h3,p{margin:0}.muted{color:var(--muted)}.small{font-size:12px;line-height:1.5}.shell{height:100%;max-width:1250px;margin:auto;padding:16px 24px;display:flex;flex-direction:column;gap:14px}.brand{display:flex;align-items:center;gap:10px;font-size:19px;font-weight:900;white-space:nowrap}.mark{width:36px;height:36px;border:2px solid white;border-radius:50%;display:grid;place-items:center;font-size:10px;background:linear-gradient(var(--red) 50%,var(--green) 50%);box-shadow:0 0 0 2px var(--red)}.brand i{color:#ff3e46}.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-shrink:0}.tag{border:1px solid var(--line);border-radius:30px;padding:7px 12px;font-size:11px;white-space:nowrap}.top-actions{display:flex;align-items:center;gap:8px}.top-actions button{font-size:12px;padding:9px 12px}
+#setup{min-height:0;flex:1;display:flex;flex-direction:column;max-width:760px;width:100%;margin:auto;background:#0c1711dc;border:1px solid var(--line);border-top:4px solid var(--green);border-radius:18px;overflow:hidden}.setup-header{padding:22px 24px 14px;flex-shrink:0}.eyebrow{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:7px}h1{font-size:30px;font-weight:900;letter-spacing:-1px}.setup-body{flex:1;overflow:auto;min-height:0;padding:0 24px 20px;display:flex;flex-direction:column;gap:18px}.mode-options{display:grid;grid-template-columns:1fr 1fr;gap:10px}.choice{display:flex;gap:9px;align-items:center;border:1px solid var(--line);border-radius:12px;padding:13px;background:#ffffff04}.choice:has(input:checked){border-color:#00ae51;background:#00843d24}.choice strong{display:block;font-size:14px}.choice span span{display:block;font-size:11px;color:var(--muted);margin-top:4px}.toggle{display:flex;align-items:center;gap:12px;justify-content:space-between;padding:14px;border-radius:12px;background:#ffffff07;border:1px solid var(--line)}.toggle span{flex:1}.toggle strong{display:block;font-size:14px}.toggle small{display:block;margin-top:4px;color:var(--muted);font-size:11px;line-height:1.5}.list-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:8px}.list-heading h2{font-size:16px}.list-heading button{font-size:12px;padding:8px 11px}.person{display:flex;align-items:center;gap:6px;margin-top:7px}.person .number{color:var(--muted);width:16px;text-align:center;font-size:11px}.person button,.team-controls button{padding:8px;min-width:33px;font-size:13px}.team-box{border:1px solid var(--line);padding:13px;border-radius:12px;margin-top:10px}.team-heading{display:flex;align-items:center;gap:8px;margin-bottom:10px}.team-heading input{font-weight:700}.team-controls{display:flex;gap:4px}.add-member{font-size:12px;padding:8px 11px;margin-top:10px}.setup-footer{border-top:1px solid var(--line);padding:13px 24px;display:flex;align-items:center;justify-content:space-between;gap:16px;background:#0d1e14;flex-shrink:0}#setup-error{color:#ffb4b8;font-size:12px}.setup-footer button{white-space:nowrap}#team-help{margin-bottom:8px}
+#game{min-height:0;flex:1;display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,1fr);gap:18px}.arena{min-height:0;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:16px;border:1px solid var(--line);border-radius:18px;background:#ffffff03;gap:12px;overflow:hidden}.turn-title{font-size:clamp(20px,3vw,34px);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.turn-meta{font-size:12px;color:var(--muted)}.dice-area{display:flex;justify-content:center;gap:32px;padding:18px 12px 10px}.die-wrap{display:flex;flex-direction:column;align-items:center;gap:16px}.die{display:grid;width:106px;height:106px;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:6px;padding:21px;border:0;border-radius:20px;background:white!important;box-shadow:0 7px #c6d0c9,0 16px 25px #0004;transform:rotate(-7deg)}.die:disabled{opacity:1}.die-wrap+.die-wrap .die{transform:rotate(8deg)}.pip{border-radius:50%;background:var(--green);visibility:hidden}.pip.visible{visibility:visible}.die-wrap+.die-wrap .pip{background:var(--red)}.die.held{outline:3px solid #00c65d;outline-offset:5px}.hold-state{font-size:11px;color:var(--muted)}.die.held+.hold-state{color:#71f6ac;font-weight:700}.result{min-height:66px;display:flex;flex-direction:column;align-items:center;gap:4px}.result-label{font-size:10px;letter-spacing:1px;color:var(--muted)}#total{font-size:44px;font-weight:900;line-height:1.1}.actions{display:flex;flex-wrap:wrap;justify-content:center;gap:9px;width:100%}.actions button{font-size:13px}.arena-hint{font-size:11px;color:var(--muted);line-height:1.5}.scoreboard{display:flex;flex-direction:column;min-height:0;border:1px solid var(--line);border-top:4px solid var(--green);border-radius:18px;background:#0c1711dc;overflow:hidden}.score-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:17px 18px;border-bottom:1px solid var(--line)}.score-heading h2{font-size:18px}.score-heading span{font-size:11px;color:var(--muted)}.score-list{overflow:auto;min-height:0;flex:1;padding:4px 16px 12px;overscroll-behavior:contain}.team-title{font-size:12px;color:#8ce8b4;padding:13px 4px 6px;overflow-wrap:anywhere}.score-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;padding:11px 8px;border-bottom:1px solid #ffffff13;border-left:3px solid transparent}.score-row.active{border-left-color:#00c65d;background:#00843d21}.score-name{font-size:13px;font-weight:700;overflow-wrap:anywhere}.score-number{font-size:19px;font-weight:800;grid-row:span 2;align-self:center}.score-detail{font-size:10px;color:var(--muted);line-height:1.4}.stars{color:white;letter-spacing:1px;white-space:nowrap}.out .score-name,.out .score-number{color:#ff7f87}.board-footer{font-size:10px;line-height:1.5;padding:12px 18px;border-top:1px solid var(--line);color:var(--muted);flex-shrink:0}.rip-banner{width:100%;border:1px solid #ff5260;border-radius:12px;padding:12px;background:#360c12;display:flex;gap:12px;justify-content:center;align-items:center}.cross{font-size:52px;line-height:1;color:#fff}.rip-copy{text-align:left}.rip-copy strong{font-size:25px;letter-spacing:4px}.rip-copy p{font-size:11px;color:#ffbdc3;margin-top:4px}.rolling .die:not(.held){animation:tumble .18s infinite alternate}@keyframes tumble{from{transform:translateY(-7px) rotate(-14deg)}to{transform:translateY(2px) rotate(14deg)}}dialog{color:white;background:#111e16;border:1px solid var(--line);border-radius:16px;padding:24px;max-width:min(420px,90vw);line-height:1.6}dialog::backdrop{background:#000b}dialog h2{margin-bottom:8px}dialog p{color:var(--muted);font-size:13px;margin-bottom:18px}.dialog-actions{display:flex;justify-content:flex-end;gap:8px}.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:700px){.shell{padding:10px 12px;gap:9px}.brand{font-size:16px}.mark{width:30px;height:30px}.top-actions{gap:5px}.top-actions button{font-size:10px;padding:8px}.tag{padding:6px 8px;font-size:10px}#game{grid-template-columns:1fr;grid-template-rows:minmax(0,1.65fr) minmax(130px,1fr);gap:9px}.arena{padding:10px;gap:8px}.turn-title{font-size:21px}.turn-meta{font-size:11px}.dice-area{gap:28px;padding:9px 10px 3px}.die{width:84px;height:84px;padding:16px;gap:5px;border-radius:16px}.die-wrap{gap:13px}.result{min-height:49px}#total{font-size:34px}.result-label{font-size:9px}.actions button{font-size:12px;padding:10px 13px}.arena-hint{font-size:10px}.score-heading{padding:9px 12px}.score-heading h2{font-size:15px}.score-list{padding:0 10px 8px}.score-row{padding:8px 6px}.board-footer{padding:6px 12px;font-size:9px}.setup-header{padding:16px 16px 12px}.setup-body{padding:0 16px 16px;gap:13px}.setup-footer{padding:12px 16px}.setup-footer .small{font-size:10px}.choice{padding:10px;gap:6px}.choice strong{font-size:12px}.choice span span{font-size:10px}.rip-banner{padding:7px}.cross{font-size:36px}.rip-copy strong{font-size:21px}.rip-copy p{font-size:10px}}
+@media(max-height:670px) and (max-width:700px){#game{grid-template-rows:minmax(0,2fr) minmax(108px,1fr)}.arena{gap:5px;padding:6px}.die{width:65px;height:65px;padding:12px;gap:4px}.dice-area{padding:6px 8px 0}.die-wrap{gap:10px}.hold-state{font-size:9px}.turn-title{font-size:18px}#total{font-size:27px}.result{min-height:36px}.arena-hint{font-size:9px}.board-footer{display:none}.actions button{padding:8px 10px;font-size:11px}.rip-banner{padding:4px}.cross{font-size:25px}.rip-copy strong{font-size:17px}.rip-copy p{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.rolling .die{animation:none}}
+
+@media(max-height:500px){
+ .shell{padding:7px 12px;gap:7px}.mark{width:28px;height:28px}.brand{font-size:15px}.top-actions button{padding:6px 9px;font-size:10px}.tag{font-size:10px;padding:5px 8px}
+ .arena{padding:8px;gap:5px}.turn-title{font-size:19px}.eyebrow{margin-bottom:3px;font-size:9px}.turn-meta{font-size:10px}.dice-area{padding:4px 8px 0;gap:25px}.die{width:64px;height:64px;padding:12px;gap:4px;border-radius:13px}.die-wrap{gap:11px}.hold-state{font-size:9px}.result{min-height:35px}#total{font-size:27px}.result-label{font-size:9px}.actions button{padding:7px 10px;font-size:11px}.arena-hint{font-size:9px}.score-heading{padding:8px 12px}.board-footer{padding:5px 12px}.score-heading h2{font-size:15px}
+ .arena.eliminated .dice-area,.arena.complete .dice-area{display:none}.rip-banner{padding:5px}.cross{font-size:30px}.rip-copy strong{font-size:20px}.rip-copy p{font-size:10px}
+}
+
+.cross{font-size:0!important;position:relative;display:block;flex-shrink:0;width:28px;height:48px}
+.cross::before,.cross::after{content:'';position:absolute;background:white;border-radius:1px}
+.cross::before{width:7px;height:100%;left:calc(50% - 3.5px);top:0}
+.cross::after{width:100%;height:7px;left:0;top:12px}
+.out .score-number::before{content:'† ';font-family:Georgia,serif}
+@media(max-width:700px){.cross{width:23px;height:36px}.cross::after{top:9px}}
+@media(max-height:500px){.cross{width:20px;height:30px}.cross::after{top:8px}}
+
+#outcome-dialog{width:min(430px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;text-align:center;border-top:4px solid var(--red)}
+#outcome-dialog h2{font-size:25px;line-height:1.25;overflow-wrap:anywhere;margin-bottom:10px}
+#outcome-dialog .outcome-kicker{font-size:10px;letter-spacing:2px;color:var(--muted);margin-bottom:8px}
+#outcome-dialog p{margin-bottom:13px}#outcome-dialog .penalty{padding:18px 12px;background:#00843d22;border:1px solid #00843d88;border-radius:12px;margin:16px 0}
+#penalty-value{display:block;font-size:34px;line-height:1.3;font-weight:900;color:white}#penalty-breakdown{font-size:12px;color:var(--muted)}
+#outcome-rip{display:flex;align-items:center;justify-content:center;gap:16px;padding:10px;margin-bottom:12px;color:#ffb5ba}#outcome-rip strong{font-size:36px;letter-spacing:5px}
+#outcome-next{width:100%}.score-row.lost{border-left-color:#ed0712;background:#ed071215}
+@media(max-height:500px){#outcome-dialog{padding:16px}#outcome-dialog h2{font-size:21px}#outcome-dialog .penalty{padding:8px;margin:8px 0}#penalty-value{font-size:28px}#outcome-dialog p{margin-bottom:8px}}
+
+@media(max-height:500px){
+ #outcome-dialog{padding:12px;line-height:1.25}
+ #outcome-dialog .outcome-kicker{font-size:9px;margin-bottom:4px}
+ #outcome-rip{padding:0;margin-bottom:6px}#outcome-rip strong{font-size:26px}
+ #outcome-dialog h2{font-size:19px;margin-bottom:6px}
+ #outcome-dialog p{font-size:11px;margin-bottom:6px}
+ #outcome-dialog .penalty{padding:6px 8px;margin:8px 0}
+ #penalty-value{font-size:26px;line-height:1.15}#penalty-breakdown{font-size:11px}
+ #outcome-next{padding:9px;font-size:12px}
+}
+
+/* Reserve both button rows so passing replaces rolling at the same position. */
+.arena>div:first-child{width:100%;min-width:0}.turn-meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.4}
+.actions{flex-direction:column;flex-wrap:nowrap;align-items:stretch;justify-content:flex-start;width:min(270px,100%);height:97px;flex-shrink:0}
+.actions button{height:44px;min-height:44px;flex-shrink:0}
+@media(max-height:670px) and (max-width:700px){.actions{height:81px}.actions button{height:36px;min-height:36px}}
+@media(max-height:500px){.actions{height:73px}.actions button{height:32px;min-height:32px}}
+
+#club-logo{width:36px;height:36px;flex-shrink:0;object-fit:contain;background:black;border:2px solid white;border-radius:50%;box-shadow:0 0 0 2px var(--red)}
+.logo-settings{padding:13px;border:1px solid var(--line);border-radius:12px;background:#ffffff04}
+#logo-file{display:block;max-width:100%;font-size:12px;margin:10px 0}
+#logo-file::file-selector-button{border:1px solid #ffffff40;border-radius:7px;color:white;background:#00843d;padding:8px 10px;margin-right:8px;cursor:pointer}
+#save-logo{font-size:12px;padding:9px 12px;margin-top:10px}
+@media(max-width:700px){#club-logo{width:30px;height:30px}}
+@media(max-height:500px){#club-logo{width:28px;height:28px}}
+
+.dashboard-tabs{display:flex;gap:8px;margin-top:16px}.dashboard-tabs button{flex:1;font-size:13px;padding:10px}
+.dashboard-tabs button[aria-selected=true]{border-color:#00c65d;background:#00843d44}
+.dashboard-panel{display:flex;flex-direction:column;gap:18px}
+.settings-card{padding:14px;border:1px solid var(--line);border-radius:12px;background:#ffffff04}.settings-card h2{font-size:16px;margin-bottom:10px}
+.member-add{display:flex;gap:8px;margin-top:12px}.member-add button{font-size:11px;white-space:nowrap;padding:8px}
+.custom-rules label{display:block;font-size:13px;font-weight:700;margin:15px 0 8px}.custom-rules p{margin-top:8px}
+.settings-error{color:#ffb5ba!important}
+.setup-body{position:relative}.sr-only{top:0;left:0}
+@media(max-width:700px){.dashboard-panel{gap:13px}.dashboard-tabs{margin-top:12px}.dashboard-tabs button{font-size:12px;padding:9px}}
+
+#outcome-close{position:absolute;right:8px;top:8px;width:30px;height:30px;padding:0;font-size:23px;line-height:1;background:transparent;border-color:transparent}
+#outcome-dialog .outcome-kicker{padding-inline:22px}
+.outcome-buttons{display:grid;grid-template-columns:1fr 1fr;gap:9px}
+.outcome-buttons #outcome-next,.outcome-buttons #outcome-view{width:100%;padding:10px 8px;font-size:12px}
+
+@media(min-height:501px) and (max-height:670px){
+ #outcome-dialog{padding:16px}
+ #outcome-dialog h2{font-size:22px;margin-bottom:6px}
+ #outcome-dialog p{font-size:12px;margin-bottom:8px}
+ #outcome-dialog .penalty{padding:10px;margin:10px 0}
+ #penalty-value{font-size:28px;line-height:1.2}
+ #outcome-rip{padding:4px;margin-bottom:8px}#outcome-rip strong{font-size:30px}
+}
+
+#table-rules-title~.toggle{margin-top:10px}
+.die.flying{animation:fly-off-table .7s cubic-bezier(.3,.05,.8,.6) forwards!important;pointer-events:none}
+@keyframes fly-off-table{0%{transform:translate(0,0) rotate(0deg);opacity:1}30%{transform:translate(calc(var(--fly-x)*.25),-65px) rotate(210deg);opacity:1}100%{transform:translate(var(--fly-x),120px) rotate(780deg);opacity:0}}
+#incident-dialog{text-align:center;width:min(410px,calc(100vw - 28px));max-height:calc(100dvh - 28px);overflow:auto;border-top:4px solid var(--red)}
+#incident-dialog h2{font-size:26px;margin:10px 0}#incident-dialog .incident-penalty{padding:17px;margin:16px 0;background:#00843d24;border-radius:12px;display:flex;flex-direction:column;gap:5px}
+.incident-penalty strong{font-size:28px}.incident-penalty span{font-size:14px;color:var(--muted)}#incident-continue{width:100%}
+@media(prefers-reduced-motion:reduce){.die.flying{animation:none!important;opacity:0}}
+@media(max-height:500px){#incident-dialog{padding:14px}#incident-dialog h2{font-size:22px;margin:5px 0}#incident-dialog .incident-penalty{padding:8px;margin:8px 0}.incident-penalty strong{font-size:24px}#incident-dialog p{margin-bottom:8px;font-size:12px}}
+
+.topbar{position:relative}.header-tools{display:flex;align-items:center;gap:9px}#soundboard-toggle{font-size:12px;padding:9px 12px;white-space:nowrap;border-color:#00843d;background:#00843d22}#soundboard-toggle[aria-expanded=true]{background:#00843d}
+#soundboard-panel{position:absolute;right:0;top:calc(100% + 9px);width:min(340px,calc(100vw - 24px));max-height:calc(100dvh - 110px);overflow:auto;padding:17px;background:#102219;border:1px solid #ffffff30;border-top:3px solid var(--red);border-radius:14px;box-shadow:0 15px 45px #0009;z-index:40;text-align:left}
+.soundboard-heading{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}.soundboard-heading h2{font-size:18px}#soundboard-close{padding:0;width:28px;height:28px;font-size:23px;background:transparent;border-color:transparent}
+.sound-button{display:flex;flex-direction:column;gap:5px;align-items:center;width:100%;padding:19px 10px;margin:15px 0;background:linear-gradient(135deg,#005d2c,#00843d);border:1px solid #38bd75;border-radius:12px}.sound-button>span:first-child{font-size:25px}.sound-button strong{font-size:17px;letter-spacing:.8px}.sound-button>span:last-child{font-size:11px;color:#d1ebdc}.sound-button.is-playing{border-color:white;box-shadow:0 0 0 2px #ffffff2b}
+.sound-controls{display:flex;align-items:center;gap:9px;font-size:11px}.sound-controls input{width:100%;min-width:0;accent-color:#00bf5a}.sound-controls output{min-width:30px}#sound-stop{padding:7px 10px;font-size:11px}#sound-status{margin-top:12px;font-size:11px}
+@media(max-width:700px){.topbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px}.header-tools{display:contents}.topbar>.brand{grid-row:1;grid-column:1}#soundboard-toggle{grid-row:1;grid-column:2;padding:8px 11px;font-size:11px}#setup-tag{display:none}#game-controls{grid-column:1/-1;grid-row:2;justify-content:flex-end}.sound-button{padding:15px 10px}}
+@media(max-height:670px) and (max-width:700px){.arena-hint{display:none}.arena .eyebrow{margin-bottom:2px}.die{width:56px;height:56px;padding:10px}.result{min-height:31px}}
+
+#voice-recorder{margin-top:15px;border-top:1px solid var(--line);padding-top:12px}#voice-recorder summary{font-size:13px;font-weight:700;cursor:pointer}#voice-recorder p{font-size:11px;line-height:1.5;margin-top:10px}
+.record-buttons{display:flex;flex-wrap:wrap;gap:7px;margin-top:10px}.record-buttons button{font-size:11px;padding:8px 10px}#record-voice{background:#a5121a;border-color:#e32e38}#record-voice.is-recording{background:#ed0712;box-shadow:0 0 0 3px #ed071233}.use-recording{display:flex;align-items:center;gap:8px;font-size:12px;margin-top:10px}
+
+.online-game .topbar>.brand{display:none}.online-game .topbar{display:flex;justify-content:flex-end}.online-game .header-tools{display:flex;gap:5px}.online-game #game-controls{display:flex;gap:5px}.online-game .top-actions button,.online-game #soundboard-toggle{padding:6px 8px;font-size:10px}.online-game .tag{padding:5px 8px;font-size:10px}
+.online-game .arena.complete .dice-area{display:none}
+</style>
+</head>
+<body>
+<div class="shell">
+<header class="topbar"><div class="brand"><span class="mark" id="logo-fallback" aria-hidden="true">DMC</span><img id="club-logo" alt="DMC Swalmen-logo" width="36" height="36" hidden><span>DMC <i>mexx</i></span></div><div class="header-tools"><span class="tag" id="setup-tag">Samen aan tafel</span><div class="top-actions" id="game-controls" hidden><span class="tag" id="round-tag">Ronde 1</span><button id="new-round" type="button">Nieuwe ronde</button><button id="reset" type="button">Reset</button></div><button type="button" id="soundboard-toggle" aria-expanded="false" aria-controls="soundboard-panel"><span aria-hidden="true">♫</span> Soundboard</button></div>
+<section id="soundboard-panel" aria-labelledby="soundboard-title" hidden>
+<div class="soundboard-heading"><h2 id="soundboard-title">Soundboard</h2><button type="button" id="soundboard-close" aria-label="Soundboard sluiten">×</button></div>
+<p id="soundboard-intro" class="small muted">Druk op de knop: eerst SCHEIKUNDEEEE, daarna borrelen!</p>
+<button type="button" id="potion-sound" class="sound-button"><span aria-hidden="true">⚗</span><strong id="potion-label">SCHEIKUNDEEEE</strong><span id="potion-caption">Kreet + borrelende potion</span></button>
+<div class="sound-controls"><label for="sound-volume">Volume</label><input type="range" id="sound-volume" min="0" max="100" value="60" step="1"><output id="sound-volume-value" for="sound-volume">60%</output><button id="sound-stop" type="button" disabled>Stop</button></div>
+<details id="voice-recorder"><summary>Eigen tekst inspreken</summary><p class="small muted">Neem maximaal 8 seconden op. Sluiten of annuleren stopt de microfoon.</p><div class="record-buttons"><button type="button" id="record-voice">● Opnemen</button><button type="button" id="cancel-recording" hidden>Annuleren</button></div><p id="record-status" class="small muted" role="status" aria-live="polite">Je kunt hier je eigen kreet opnemen.</p><label class="use-recording"><input type="checkbox" id="use-recording" disabled> Gebruik mijn opname</label><div class="record-buttons"><button type="button" id="preview-recording" disabled>▶ Terugluisteren</button><button type="button" id="delete-recording" disabled>Verwijderen</button></div><p class="small muted">Je opname wordt lokaal bewaard. Via Instellingen → Download spel met instellingen kun je hem in het spelbestand meenemen.</p></details>
+<p id="sound-status" class="small muted" role="status" aria-live="polite">Klaar om af te spelen.</p>
+</section></header>
+<form id="setup">
+<div class="setup-header"><p class="eyebrow">DMC SWALMEN · KLAAR VOOR DE START?</p><h1 id="dashboard-title">Stel je spel samen.</h1><div class="dashboard-tabs" role="tablist" aria-label="Dashboard"><button id="tab-game" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Spel instellen</button><button id="tab-settings" type="button" role="tab" aria-selected="false" aria-controls="settings-panel" tabindex="-1">Instellingen</button></div></div>
+<div class="setup-body"><div id="dashboard-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-game">
+
+<label class="toggle"><span><strong>DMC-leden inladen</strong><small>Laad de opgeslagen ledenlijst. In teammodus worden de leden over de teams verdeeld.</small></span><input id="load-members" type="checkbox" role="switch" aria-label="DMC-leden inladen"></label>
+<div class="mode-options"><label class="choice"><input type="radio" name="mode" value="single" checked><span><strong>Single player</strong><span>Iedere speler voor zichzelf</span></span></label><label class="choice"><input type="radio" name="mode" value="team"><span><strong>Team mode</strong><span>Speel samen als team</span></span></label></div>
+<button type="button" class="green" id="open-online">Online multiplayer →</button><label class="toggle" id="team-option" hidden><span><strong>Het hele team gooit</strong><small id="team-turn-help">Uit: één teamlid per ronde. Elke ronde is de volgende aan de beurt.</small></span><input id="whole-team" type="checkbox" role="switch" aria-label="Het hele team gooit"></label>
+<div id="single-setup"><div class="list-heading"><h2>Spelers & volgorde</h2></div><p class="small muted">Namen zijn optioneel. Gebruik ↑ ↓ voor de speelvolgorde.</p><div id="players-editor"></div><button type="button" id="add-player" class="add-member">+ Speler toevoegen</button></div>
+<div id="team-setup" hidden><div class="list-heading"><h2>Teams & volgorde</h2><button type="button" id="add-team">+ Team</button></div><p class="small muted" id="team-help">Verplaats teams en teamleden met ↑ ↓. Teams gooien na elkaar; de pijltjes bepalen de volgorde.</p><div id="teams-editor"></div></div>
+<label class="toggle"><span><strong>Nouri mode</strong><small>Gooi je een 3 en een 4? Je verliest direct; de RIP-melding toont 34.</small></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
+<p class="small muted">Maximaal 3 worpen. De eerste beurt bepaalt de limiet voor deze ronde. De laatste worp telt. Mexx (21) is het hoogst. Straf: een half adtje + een half per Mexx in de ronde.</p>
+
+</div><div id="settings-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
+<div class="logo-settings"><div class="list-heading"><h2>Clublogo</h2></div><label class="small muted" for="logo-file">Kies het DMC-logo vanaf je computer.</label><input id="logo-file" type="file" accept="image/png,image/jpeg,image/webp"><p class="small muted" id="logo-status" role="status" aria-live="polite">Kies een logo. Met Download spel met instellingen bewaar je ook het logo in het bestand.</p><button id="save-logo" type="button">Download spel met instellingen</button></div>
+<section class="settings-card" aria-labelledby="members-title"><h2 id="members-title">DMC-leden</h2><p class="small muted">Deze namen worden gebruikt bij DMC-leden inladen.</p><div id="members-editor"></div><div class="member-add"><label class="sr-only" for="new-member-name">Naam nieuw DMC-lid</label><input id="new-member-name" type="text" placeholder="Naam nieuw lid" maxlength="45"><button type="button" id="add-dmc-member">+ Lid toevoegen</button></div><p id="member-message" class="small muted" role="status"></p></section>
+<section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text" aria-describedby="mexx-help"><p class="small muted" id="mexx-help">21 blijft altijd Mexx. Extra Mexx-scores tellen ook als hoogste worp, geven een ster en verhogen de straf.</p><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text" aria-describedby="out-help"><p class="small muted" id="out-help">Bij deze scores eindigt de ronde direct met RIP, ook als Nouri uit staat. Gebruik de getoonde score: bijvoorbeeld 63 of 400. Scheid scores met komma’s of spaties.</p><p class="small muted">Een score kan niet tegelijk extra Mexx en direct af zijn. Bij Nouri mode gaat 43 direct af vóór een eventuele Mexx-regel voor 43.</p></section>
+<section class="settings-card" aria-labelledby="table-rules-title"><h2 id="table-rules-title">Extra tafelregels</h2>
+<label class="toggle"><span><strong>Van tafel gooien</strong><small>5% kans per worp dat de losse stenen van tafel rollen. De werper krijgt een half adtje; de worp telt niet en mag opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
+<label class="toggle"><span><strong>Een vierde worp toestaan</strong><small>Na drie geldige worpen kun je nog één keer gooien. Die vierde worp telt niet en kost een half adtje. Je laatste geldige score blijft staan.</small></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
+<label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong><small>De stenen blijven vast bij doorgeven. Gooien zonder ze eerst los te maken kost een half adtje; daarna worden ze losgemaakt en mag je opnieuw.</small></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
+</section>
+<p id="settings-status" class="small muted" role="status" aria-live="polite">Sla je wijzigingen op voordat je gaat spelen.</p>
+</div>
+</div>
+<div class="setup-footer"><span class="small muted" id="setup-summary">Geen naam ingevuld? Dan gebruiken we Speler 1, Speler 2, enz.</span><span id="setup-error" role="alert"></span><button type="button" class="green" id="save-settings" hidden>Instellingen opslaan</button><button class="primary" id="start-game" type="button">Start het spel →</button></div>
+</form>
+<main id="game" hidden>
+<section class="arena" aria-labelledby="turn-name">
+<div><p class="eyebrow" id="turn-team">AAN DE BEURT</p><h1 class="turn-title" id="turn-name"></h1><p class="turn-meta" id="turn-status" role="status" aria-live="polite"></p></div>
+<div class="dice-area" aria-label="Dobbelstenen"><div class="die-wrap"><button class="die" id="die-one" type="button" aria-pressed="false" aria-describedby="arena-hint"></button><span class="hold-state" id="hold-one">Los</span></div><div class="die-wrap"><button class="die" id="die-two" type="button" aria-pressed="false" aria-describedby="arena-hint"></button><span class="hold-state" id="hold-two">Los</span></div></div>
+<div class="result" role="status" aria-live="polite" aria-atomic="true"><span class="result-label" id="result-label">KLAAR VOOR JE EERSTE WORP?</span><strong id="total">—</strong></div>
+<div class="rip-banner" id="rip" role="alert" hidden><span class="cross" aria-hidden="true">✝︎</span><div class="rip-copy"><strong>RIP</strong><p>43 gegooid. De ronde is direct afgelopen.</p></div></div>
+<div class="actions"><button type="button" class="primary" id="roll">↻ <span id="roll-label">Rol de dobbelstenen</span></button><button type="button" class="green" id="pass">Doorgeven →</button><button type="button" class="green" id="next-round" hidden>Nieuwe ronde →</button></div>
+<p class="arena-hint" id="arena-hint">Tik na je eerste worp op een dobbelsteen om hem vast te zetten.</p>
+</section>
+<section class="scoreboard" aria-labelledby="scores-title"><div class="score-heading"><h2 id="scores-title">Het overzicht</h2><div class="score-tools"><span id="board-mode"></span><label class="sr-only" for="round-view">Bekijk scores van een ronde</label><select id="round-view"><option value="current">Deze ronde</option></select></div></div><div class="score-list" id="score-list" tabindex="0" aria-label="Scores van alle spelers"></div><p class="board-footer">Mexx is het hoogst · Dubbel = honderdtal · Laatste worp telt<br><span id="board-rules"></span></p></section>
+</main>
+</div>
+<dialog id="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-copy"></p><div class="dialog-actions"><button type="button" id="cancel-confirm">Annuleren</button><button type="button" class="primary" id="accept-confirm">Doorgaan</button></div></dialog>
+<dialog id="outcome-dialog" aria-labelledby="outcome-title" aria-describedby="outcome-reason penalty-breakdown">
+<button type="button" id="outcome-close" aria-label="Uitslag sluiten">×</button>
+<p class="outcome-kicker" id="outcome-round"></p><div id="outcome-rip" hidden><span class="cross" aria-hidden="true"></span><strong>RIP</strong></div>
+<h2 id="outcome-title"></h2><p id="outcome-reason"></p>
+<div class="penalty"><span class="small muted" id="penalty-scope">STRAF PER VERLIEZER</span><strong id="penalty-value"></strong><span id="penalty-breakdown"></span></div>
+<p class="small" id="outcome-starter"></p><p id="online-round-help" class="small" hidden>De beheerder start de volgende ronde.</p><div class="outcome-buttons"><button type="button" id="outcome-view">Bekijk scores</button><button type="button" class="green" id="outcome-next">Nieuwe ronde →</button></div>
+</dialog>
+<dialog id="incident-dialog" aria-labelledby="incident-title" aria-describedby="incident-reason">
+<p class="eyebrow">EXTRA STRAF · DE RONDE GAAT VERDER</p><h2 id="incident-title"></h2><p id="incident-reason"></p><div class="incident-penalty"><strong>Een half adtje</strong><span id="incident-player"></span></div><button type="button" class="green" id="incident-continue">Verder spelen →</button>
+</dialog>
+<noscript>Schakel JavaScript in je browser in om DMC mexx te spelen.</noscript>
+<script type="application/octet-stream" id="potion-voice">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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA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AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAef/u/nL+HP7b/b394f07/rf+L/9s/1n/9f6Q/mf+nP4q////EQFZAtkDXAV/BiAHDQddBngF0QTMBKcFOQcJCXcKEgvZCtkJEAhqBRoC5v4X/az9QQA1A2cEpQK//or6M/ct9fnzp/Iv8gf0f/eC+9j+2f41/EX6cfnh+QP9bgDFAu4Gugs9Dx8U+BhjGqUapRnNFH8RbhMRF1kcWCIiI+kgsx+ZHA8W5Q4RBJ/4E/fI/FkDSwmjBwb8AvGu6f3iVd/l3c3actuI4TXnfuvp7a/qxeU25AXkEeWQ6Q7uO/F89X36cv79A+II4QmZCG0FNQHo/5wChAakCqoNqQ7yDlYPng1SCScD7Pxo+fH5HP0cAH0BlwBs/gj85/nG9431qPNu8pjy9/MI9g74qPme+g77GPu4+jr6xfmv+TL6e/s6/cX/MALJAzgEkQNTAhIBVwAaAGUADgH1AcYCUQM1A3UCDAF0/wb+If3n/Dv9/f3V/n3/y/+s//j+1v2W/M377Pt0/QAA3gIkBU8GXAakBV4EtQOlA1EEuwWhB90J9gsPDpcOug2IC5oICQaaBC0EVwSvA6ECZAK+A/MFqwZ7AxD8EvRI7nLse+6Z8QT0G/cY+/T93f8k/jn3xPA37nnvtvZLAiML/RGjF8gYEhm6G8ccxhyvHSAbShfEGWEgaicsMKwz5i3PKFYmSx8qFz8M//iH7jv1gQCyC3ARlgXC8unnUt902MLVBdCVyp3OPddl3WHkzOb/4sbh3+Nt45/jDuV545vjiulK8TX81ApqFOgWKxR3DF4E+wHLAvoDVAbBCIwMPRJ2FqsVCBD0B+8A0f2X/C/7Vfgi9aXzH/W/+Cf8V/3w+7/4zfTz8APulOzA7PjutPIM9yn7Mf6d/yn/1v0Z/P36+vrT+xT9cv4OAMMBGwQZBiYH8AaMBW8DHAEs/8n9Sf3T/UX/9gBUAuQCXAKoAEX+qftj+f73CfiH+R78+P47Ab4ClwMZBC8EpwMkAugAOAAPAbUDEAhADT0SJhYqF6UV/RFSDdoIVwVeA2kE2AenDYUTGxYsE3ILgAJ0+8r4+fbD8t/sQ+iV6HnvZfh1/K/8I/oq9qb0TPLx6eThXeCU5AH0bgtnHJkm4yvbJ3ofUxyPGpYbHyMnJ84lKitPNNo8mEaxSqZCdTiHM6Ar7yDeEoD3leNr6mn9sBCRHu8QivKK4a7X4s2oyD2/kLNPtOG9icY+z+nVLNaI2YLjAei45UriWtli0NjRo9rg6L0BTBfIHxkhQx10FhwUHxS7DTsG7wFvAvAIZhCnEvYPew69D5YSDBIDCo77+uwz5BHjFuc37EzwOfOx9Zj3BvhJ9qny1+4m7DjrjOuk7IjtLfDs87j4Xv6sAxoHwgcjBu0C9P8e/ov95v3c/mcALQKcBMQGMghtCJgHvgUJA/b/3/xR+o/48/df+Mf5+vuY/okAtQEOAq8BlwCL/tf7tPiO9/b4Xv27A3cK0Q/0EoIUfRPAEasPhw0oCxsJRQjcCcANXBLhFbEXvxg8GiEbMhdtDZ79Ou0q5M7lc+6s9wD89/pV+j39P/+U+0Xy1+U83cjdY+Fv4S/i6OU277YF8R9/Lgs1eDPAJecXjxFNDrEVoSZkMNM0kDwVRJhLE1SlU+pG0DkoMnQoOx9RDTjrutoF6bcCfRvqJAYOz+0k3wHWzMyTxGi2lKvhrbe2w72vxcjMSNH03P3spfG+7W3mhdf7y5bML9Q35d7/MhN0Gocdwh2QHlAi6iAHFx8LKQP7AJkDrQV+BFcE1gksE5AaxhkGD9H+kPB+6AnmJObl5k/o3erS7gnzRvby9+H3j/Ye9EHxaO477F7rPeyE7xn1X/xCA9UHOQnQBxcFbwJyANb+2f2c/ZH+rgBpAxkG9we/CCQIEQb1AgL/N/td+Mf2x/Yy+Lr6y/1lABMCdwLOAW4Aiv4A/Az5wfaS9p756f+OB4oOSRNdFUkVsRMAEf4NEQv/CDMIDAm+C+IPVhTBF58ZmxomG0Ia6xQBCSr4ZunD4yDopfGv+fj7U/qm+uT9Y/6D+NPt8OEz3NHeRuGo4ObiHOhJ9WIPYCb+MHo1oi9PH3oUxQ83D/Eb4CsgMko3sj+cRtROWFXLT+JA4jb8LogkPxqaAIPgtt1W894MkSJtH0r/Debd25HRscmov6iwaKv8sR+668BHyWDOj9Rx5Cnxk/AJ7FrhetFjy2XPcNnx70EJwxZWHEQewx0dIKQi9xzJEYgHrwHFAdoETAXFA5YF7wwTFtIa8hU7CDD4ZOxQ51Lm0ubP57Dp5uwv8Rn1nvdJ+Jz32PV78+Xwc+7p7B/tze7T8hD5FQDkBeMIoghiBqwDWgG2/5D+Cv5e/uP/UwL3BOsG3wdgB8MFOAMPACT9vfom+cb4j/lk+8396/9PAa8BTAFPALL+dfzZ+QP4L/gU+zAAMgZhC78OFhDQDxcOMQxGCosINAeBBg0HVgnQDKQQbBP9FNcVTxYmFakPzgTX9zLuV+yh8e34bP2f/R785/yY/87+BPmF8A3o3OS05z3oBedE6cfudfvDD9YenCQTJiwf1RK1C7gJZAyrFyUimSXAKQsxZDf9PuNC2DrRLUQnuCBSGX8Pj/mH5qPqBvxCDlEaABHw+I7qWOPn2/zWNM1rwX7A2cc/ztLUrdpi3WDkwPC89in2kvKw6Nbe5t0i4UXqp/sOC54SexaLFg0V8hYBFz0RcQnTApP/BAHqAmcCNgGMAkcHPQ2kDx8LJQGO9ljvj+yV7GHtce5d8JrzNPfu+Rb7zfrC+ZX4WfdL9iH1g/Te9KD2xfn4/VMCkQUNB4QGmgRaAokAY//u/ib/9/9XAQUDbwQOBcsErwMUAk8AeP6q/D37nvrm+i385v2K/5IA+ACyAMr/H/7f+6/5q/iK+WT8gADMBDIIQQp9CjwKZglRCEUHGgYJBYkEPgVeB28KXw1rD6sQbhGMETkOnAhEADv4X/TP9Sf60P06/ur83vzf/hgASv5l+TDzB/BJ8O/w0e9176fxA/i6A3MP1xSLFkMVNRDaC/gJBwl9DNETfhhXGhMdCCBhJGcqKScVIWIblBfAE+0OXAZ6+p31x/i+AGgIFQpMAhL36O/Y63Po3eR437TaCtuk3qnhpOOa5CXlHOhq7Dfuw+1a7JTn8Oar6E/rAO+B9Ir5dPzE+cD5uflW+5/9p/59/sn9nPxJ/X3+HP85/3f/RgCJAYkBxQGaAa8BMgK4Ao4CpwGsAh8C0wEaAg4DVARvBecFuAUZBWUE3AOZA6ID5wNDBKcE/QRXBaQFuQV+BeUEIgRcA8kCZwJDAmICnwLcAs4CbQKaAYMAZv9U/pD9L/0y/V/9lv21/ZH9MP2R/M77APtm+jH6Tfqf+vf6Ufuw+w78UPxR/A78cvu1+h76/PmI+rT7Av3b/Qv+w/09/aL8/ft7+437jPwq/qv/VAArACIABgGOArQDDASiA4MD1gQjB3cJ4QtqDnwQaxK3E1QTjBJaE0AV/hfiG9Ie6x+VIGggFh8RH3IgtSBFIJEfcR39G9AcvRyPGrkYjhZuE+AQwwyiBZEAsf8SAHAAL/+L+Z7y6e5E7C7pI+dB5THjWOMC5EriV+C130vfvt8O4cjge9923yHgYuGR5FvoB+vM7GLthuxV7L/tsu/i8V30u/YM+Vn7evxI/O/7W/yW/Rj/4P/E/67/awD6AZQDewRyBOcDSQOvAicC6AEzAiEDZQSIBQEG0QU4BYIE8AOqA7cD/QNeBLsEFAVyBb0F1wWPBfUEJARbA8gCagJMAmkCsALfAtACZwKRAXkATv9I/nv9Gf0l/WL9of20/Y79If17/LX76vpb+iP6R/qZ+vX6VPuw+xP8TPxL/P37ZPun+gv6/fmT+sX7Fv3t/RP+tf0v/Zb8+PuG+5v7lvw3/rL/UgArACcAJAGeAroDAgSeA4wD7QRMB5AJ+At5DpAQeBK5E0MTjxJoE0gVFhjvG9Ie5x+UIFsg+h4BH1kgoSA3IIYfYB3iG7sckBx0GqgYexZXE7UQnQycBZQAvP8VAGMAJv90+avyBu9j7EfpOudc5VzjeuMk5GTib+DZ33zf8t894engmN+O3z/giOGj5HPoFuvg7G7tmOxV7L7tt+/U8Vf0tfYN+Uj7bPw3/OH7UfyN/f/+xP+u/5j/WgDsAYMDWQRTBNMDNwOsAiUC1AEUAv0CRgRlBeoFuwUkBXAE5AObA6UD4QM7BJcE+ARZBacFwwWDBeoEHwRhA8UCbwJJAloCnALOAssCZQKkAZoAgP9t/pv9OP0q/WL9n/26/Zv9Sf2t/PD7JPuF+kj6XPqs+gX7Yfu1+xD8VPxp/C38p/v0+kv6GfqA+ov71vzJ/ST+5/1i/cv8Mvyf+4n7SfzU/Wn/RgBHAB0AuAA9ApAD+gPGA5QDXASaBhoJOQuxDSwQBRJdE64TuBK+EsAUWRexGkQe8h9AIH4gmh/AHuof4yBLIJQfJx4iHFIcBB0+GwAZRBdOFFkREA6VB2oBpv/6/10A6/9T+z70xe//7N/pr+fQ5XbjQOMb5MXi0eAA4Dffgd/54Nvgrt+O3+Tf2+Dc43rnQuqV7HDtmOxV7HPtFO9V8d7zEPZu+PX6S/xZ/Ab8J/wy/b/+tv+2/4X/AwBvARwDMgRiBPADTAO6AioCyAHfAZ4C3wMWBcMFxAU+BYwE+wOlA58D1wMvBIkE3wQ7BY8FyAWqBTUFdwS1AwsDkwJfAlwCkwLOAtwClwL1AfkA5v/D/tj9Tv0b/UD9ff2i/Zb9Vv3Q/CT8Vvuj+kP6PPqC+tn6NfuJ++T7OPxi/Ev85/tC+5D6KfpN+ib7avyX/Sr+HP6i/Qv9dPzX+4X78PtJ/fX+HQBjACgAWgCcASoD6gPqA6ED5AOqBUsIhArSDGcPahHyEs4THROIEgIUdBZ8GTodoh8kIHYgCyDWHmIfxCCLIMkfwx6iHPEb+hz4G5MZ3RdLFTASZw/PCdECvf/W/0AAYABN/VT2uvDs7dXqRuiH5iLkHuMf5HTjWuFH4H7fT9+s4DvhFeCa39rfYeDC4m3mgekD7G7t6exH7ALtfu6I8AHzSfWW9yz6/ftX/AX87fuw/Dr+ef+3/4f/xP/qAJkC9ANnBBwEjgP3AmQC6gHaAWcCjAPcBMAF8AWGBdYELQTDA6QDywMfBH0E2gQzBYwFzAXABVoFpATbAx8DmgJcAlQCgQLFAuwCsgIUAioBBgDn/uz9VP0W/S39d/2k/an9Yf3c/Cz8V/uk+jL6J/pe+rX6Eftn+9D7IvxQ/Df8yfsN+1X66/kg+gn7U/x1/QL+8f2D/e/8TPyy+2b77ftQ/QP/IwBRABEAfADLATgD/gPqA4YDDAQLBm0IugpODaAPnRFjE9AT4xLjEmUUtBYsGuAduB9sINAg1x/xHvof8CCdICAgpx5wHFscLx23G40ZtxfDFPQRDA8QCVwC1v/p/0wANQCG/E/1G/Bq7WPqyecZ5tvj9OLt4yLj0+DB30vfM9994BXh1982373fjODp4sDm5ekG7E3t2uwh7P3s0u7Y8FLz0/Ua+Hr6Lfxp/P37GfwO/Y7+wP/r/6n/DgBoASIDWQSkBEkEpwMFA28CCQIfAtYCFARZBRwGHwaRBcEEHgSwA5cDyQMpBI4E9QRJBZIFswWDBf0ELwRZA7MCRgIcAjsCfQK6AtMCgALGAaIAYP9G/oL9Jf09/YD9y/3e/bv9V/2q/NP7Dft9+kj6afq0+hH7dfvc+z38avxU/OX7MPtq+ub57Pm4+vX7L/3U/dD9Yv3b/Dj8kPs1+4370PyG/sL/BgDK/yAAZQHkAroDwANiA8YDmgUDCEkKwQwxDzMR5xKPE9MSkhL0E0IWhxkGHScf6B8vIG0feB4wH1ggICCJHy4eEhyoG2ocThsbGRIXfxTSEQEPhQncAsD/xf9PAEwABv1W9hDxTO6m6xvpW+cs5Sjk6uRx5FTiAOFw4IngseFf4lzhpODq4JrhwONu54DqvewL7rztEe2z7U7vWvG18wX2O/iF+jf8kPxD/EX8Ef2I/rT/+f/N/w8ANgHWAggEWwQDBGkD1AJeAvgB6gF9ApMDwQSJBZYFDAVOBJwDLwMRAz0DkAP6A18EtwTvBPcEtQQvBHUDvQIwAtcBugHlAScCbQKBAiwCbwFjADf/QP6v/X/9qf36/TL+Q/4c/qT9+Pw4/I37JvsT+zX7ffvX+zj8lPzc/O/8sPwt/H37xfp0+tD6w/v4/OT9Jv7p/Xr98vxf/OL7yPt6/O/9Xv8UABIA7/+LAOgBEwN7A0wDJAP+AwYGLQg8CogMlA4qEGIRYhGkEAkRvBIcFVoYLxt0HNsc0BzJG18bhhwoHZMc9RtgGskYJBlaGaIX2hX5E1QR+w69C+oFAwG8//n/TwCE/yT7QfWb8T3vpOy76h7pSucy577neOa25P3jjOMh5FjlNeUU5N/jOeQ15d/nL+uL7VzvCvBn7znvO/C18aXz0PXJ9835yfvZ/Nz8r/z0/On9Mv/u/+P/z/9VAJEB/QLXA+cDdwPwAmcC8AGyAc4BgQKbA5MEDAXsBFQEqQMiA9kC2wIQA14DtwMGBEwEeARyBCkEoQPyAkgC0wGWAY8BxQEGAi8CJAKzAe8A6P/s/jj+1v3R/Q7+Sv5x/mr+G/6Z/ff8TvzO+5f7nPvN+xn8Z/y7/An9Nf0w/ef8W/y++zf7LPu0+638sP1U/mn+If61/S/9qfxI/Hj8XP21/uD/TgArADAA9QAaAucCHwPiAvgCFwT4BcsHpwmfC1cNoA5tDyUPoA4/D94QLxMtFmEYThmWGTQZJxgdGCsZjRkKGVEYzhbVFT8W/RV2FAATNBHhDq0MRAkXBHkAt/8SAFwALP/s+gL2AfPY8J/uBu2n60XqXeqP6k3p8+di5xfnxuer6FjoX+cx55Hnq+gt6yPuL/CW8fPxY/FJ8TTykfNP9Tz3BPnF+mz8Qv00/Qv9Z/1O/mP/6P/L/7f/SgB4AbgCbAN3AxwDngIfAq8BdQGkAVkCTgMlBJQEcgT4A2kD8AK4ArMC3wIkA28DvgMIBD4EQwQFBIsD6QJOAtYBmQGOAbMB9gEkAhwCtgEDAScAPf+A/gL+1v34/Tf+av50/kj+3P1G/an8H/zQ+8D75Psp/HX8yPwU/VD9Yv04/d78XPzf+6H72fuF/Hr9UP64/rL+U/7b/V799/zN/DD9LP5h/0MAfgBVAHAAKAEOAp8CsAKGAsgC+gOXBS4H8AiWCtML8wxlDd4MoQxuDeUOIxGwE2gVCRZNFsMV5hQxFfsV0hWLFeMUeRPyEnET6RJ5ETUQeQ5eDHoKMQe+AjMA7v8oAFIAzf73+u32XPRq8orwVe8J7h3tPO0/7STsGOut6r3qM+vJ617rkepr6tfqAexr7t/wpPKt89jzW/NS8yP0aPXK9mL4+fmC+9/8g/17/XD9zv2N/kf/jf9p/2z/CQAaATAC0ALcAo4CFgKZAScB5wAlAdQBwwKDA9kDvgNiA/oCogJyAmkCgAKwAuoCOgOFA9MD7wPMA2UD1wJFAs4BgwFvAYkBvgHqAfMBsgEzAXkAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAABgAYwDHAPkAXQFkAXsBmgFzAR0Avvz4/ZYH8v8WAr4BRABaAX0BrAHkARkDlgGvAhQCFAOqA1sD8AHq+738BgPvBCQImQU+BIwCiwObA04FYAZ1BCMG7QQLBkcGwweGCU8JYQndCfgKjgytC1cNEw1CDgQOZA6gD+EOihAdD0AR9RHLEekSmBJHEa0QaBG4EWoSLhOfEpISBRINCaEJGglbC3sOVwvDCW8HBgSW/5b6OwKIAbf8jf9I+QL6Vfmi84f0MPWg717qOOvV7VzymfHC8k7yxu7r9HvrPO5W63DoleoG7entEu6n8xTxG/QN9zr0gvJz9EH1qvZH85Lttu6n9+z3rQEV/4/1W/xS9yn3L/rS+Qn5VwC//9f89fuzBIX71fZU+8X73vyv/tP8WP/JALX6OwH7AgX/8wJN+ST4jwAz+bAAyfz5ACn/uv/O/loAgACwAU394PkcBST8LP94Aw8BOPzC/H4G4gDk/UABZP1UAC4AHgLVBusAoQIIArH6VQfs/rr9swUy/WkDogDoAYUEVAEhAiEDyAWE/5kEOAFf/E8KE/6f/r0FAgPfAbAJAgSoBiwH5v8hBFALGwiu//EHFAbPEM4CzwivD6wNrgbsES4L8wsEC58LNBLgEgkOJQq1GU0RXxQ/DioSrBEdFKEN2hG6FcoO4xC6CsgTSBGvEZoP/wYxCS4PaAdgAJAHU/tTA4UCAwGh/j36NP63+vz0nPfT9Jzwre6x7/jvx/A48XjzA+r77fTuxPEy8Dfti+oj6zTvQPE87bjvh+9H7Zz4a/Hh9a/uVPJr8QP8L/SO8fv4v/In/Ar6ovMU/DT9A/aI+/T5i/zq+834fP+J/On8Nf1p/Yj9l/2f/af93P3m/dT9of1e/Sn9FP0l/T38dfyO/Jf8lPyR/Hr8U/zh+t76Wfsp/AD9dP2J/XT9C/29/b/+gv/s/xIAfgBBAb0CkwPUA58DqgNlBLgFBwcMCfQITginB00HLAcgBx0HVwj2CKQJpwmRCFcG1gPqAUwAvP+kAIgB/gBy/ib70fio+Kn5IPp8+O/0HvHU7vLukPBZ8/H1g/ee9z72dfNA8CzuOu9p81v6gQH3Br4J6AhZBfIBGgEoBQcObhfZHDUdOxq6F7EanyEzJzco3SMEHX0anhygH3QhpCBuHv0f7iL8IFIWIgRP8lHuqPjqB/gRPw7O+jroC97N22zfleCf3Y7cD9+n4v/k+uD52JDUVtZ33E/k+uab4xngR+FV6Hvzif0LAQ3/Zvom9sf1/flMAdYK3RLFFooWJhM/DncK/wi6CYUMVBC3E1EV1hNTD44J8gSlA9YEMwZaBfYB4v1b+0j79Pzt/br8fPmw9fny1/Hr8b/yxvMz9bD2b/e29qb0dPJ38YTyJPUt+H36cPtb+//6svrq+rD76vxN/tL/KgF+Ar4DlwTzBLcEHgSsA0ME/QUCCe0Lig0zDVILKQnxB/0HNgm/Cj0MpA2mDocOkwwpCVYFLQOiA7AFvgb6BMwA+PyD+/v8JP/Y/nz6bfPC7CPp6+k67ZvxgPVr97D2mPJn6w7lSOKw5FPt1PgCA90JwApiBU3+jfnR+1MHahbhIIojAR8VGkcdYihZMjo1ky97JCUegiEPJw4rWStoKGArSDJjL/cfTAMt5vzg7/NeDnYgyBgZ+ujdSM9azfnTh9ZW0y7Uc9hC3gzhktnCzWHItctA1yjjZeU53/za5N6M67j8MAioCC0C2Pl49NL26P/iDOEZ7yFtIi8dRxTDC6wHuQc5C6IQuhWeGJYXgRH7B43+Tvqv+8T/7QGQ/w76c/VZ9Pn2x/mm+Qj2KfEa7gTuRPCJ82T2tvhk+hv7WfoT+Lb1qfQ19hX6qf4cAh8D3wGm/9b99Pwh/b39qf6p/6UAgwF1Ag4D8wK2AXz/9fy4+3X8nAAPBmUKtQv5CeYGoQTvAywFTAcSCr8N+hECFd0UKBGcC1cIegmMDRYQwA1EB7UB3QBvBf0KiAt1BPL31uuh5HTjmuew7pH1A/o5+Sfxo+SX2IHRotPw3nbv3QAEDNcK8gF79fzsfvLtBRkcxSkZKsEgXBykJ0M6zkaJR4I6tCkbJmgtIDbvO5U5GDlDQw1JUj7UHYPoj8pO2BMCiCqWNXET5d1ev/61FbwPxvHE3sJYyUnSRtkC1LbBVbUrt4PEu9g85PHeRNVo1vTldP5/E4IXUwyJ/S30tPVZBEsYkilpNBI08igqGWkKywLIBKkLCxQOG10dMBniDaT9Ou9V6FvsSfUW+9340fCt6aTot+zf8WXy0u1J6GHm8+ng8DD4LP1KABwClwIlAR/+fft3/DkBjAgRD8sRFhBhC0QGAwPOAeEBJQKwAWUAA/80/tb9H/60/VP79/a28S/uge4T8nb5IAD6Aq8Bi/4s/Or7uvwR/8UC9wgFEa4XeBnMFYcQZA4qEnAY9hojFusMwgbPCZ0TtRw3HbwSDgHx763lGOOT54jwcvpnATX/8PFQ37DNpMRgyDLWDOvHANAKBwbX9v/keN/K7jMLcyOEK/QiXxeyHf818Us+VMxMoTefKUAtpDiaQl1E3EE9S6dWTFOeOHP5N8KjwEDtaykHRcQtcuk/ub+pXa2nukq+g7tGwdLMptaX05++d63/rES8LNZy6IvkTteH1S3m7wLXGkMgVROvAev2YPiRCFQf/DEQPMU5AytnFlcEafx7AIIKcRQTG3sbZRS2BbzyTOMu3lXkKfDe9+T1iew65P/igOjj7izwFew+5yPn6ezW9b/9mQLtBIQGFwf7BYAD1gGRA2EJ0xBhFjkXnBPIDb4IFQZoBXsF2QQfA5UAk/1m+0r6LvoQ+lT43fPD7ZLoZ+eZ6z/zuvo7/o795/ol+T/5pPqc/GcAPweREGYY8hpIF8ERiBC4FbIcfh7wFz4NRweYC18XySBcIDoUIQFE74bkBuKI5rjvLftaAt/+XPAn2w7JncImyNDXMO8CA2gKjAQ987ji8uE39L4RgihILGggRxeUIiE8dlBSVdRIojLkKGUvXTuXQwVCDEJyTm1WSU5rKg3l4LyHyV7/wjWTQ2ocOdeSsvSpm7Envoy++bwuxfPQeNdUzju4dKsOsOXDS92r6OffTNS11+ftvQrMHPsbpAvf+nv1+vxYEEcngzawO3c1syMMD0kBRf6cBTcRKRoqHkcbPhAq/xHtzuHL4T7rfvZQ+jL0e+kG45fkHuv278/unOk/5pboGfDJ+OH+zgEeAzAEFwTCAtwAwwCIBGULMRJoFYUTYQ7pCJYFAAWIBfgF+gSLAlL/U/yn+lb6DftT+6j5q/VB8H3s4Oyb8XL4tP2A/2P+yfxM/OL80f1k/zoDFwoPEg8XkBb/EYcOVxBSFu0avBjtD74GwwQRDOkWjBz+F2YKyPkS7O/k1uRX6g70VP6qAb36M+st2OzL8MqW0zflJvpEB0oJtv/k7jjlWuxUAnEbWSinI4MX7BboKCZAPE30SZM3qSa2JTgukjgNPBE5xD8vTHBMmjm3B6TPkcR55boaXjs5MHj4vsbjszS0msCYx5PE8Mc70rTaltmvyHy2qrPZwPLXgelz6EPc5tfj5LD9IROjGQQQuf+G9uP4ZQaxGgYrvzLkMMUk5BKhBAr/AASNDvUXcRyzGisSRQQZ9f3qt+ms8Fv6Dv8U+4Dxk+mr6ODsdPHi8X/uPutG7HrxL/jO+338yPuv+2H8A/06/bX99QDRBQMKCwtLCJQD//+G/l0B3gT3BpQGKgSuAND8D/ko+Bn6w/1PAaoC2QCF/Fr5mfdg+aT9OwJyBRsHAggJCfcIzQeBBigH3Ar+D0sTRxLhDqsMbA7DErMUaBBrBn38wfhN/VgGeQ1qDWcFA/jK6rHgzt3t4rLup/oKAJD8SfK45MrbK9nm3ijuXQG7EHsWYw3D/Z32BwCpFTIo8CqsHwkWVh1eMhhFZEl8PEYodh5QIeopGy+iLC4wBD4DRfw59BS33vHHrdzYDKsypzI+BzPVF790vjnLUtV1097TOdwg4hDf4s7CvPK46sVu2/npOuYD2SbUmt819EMCHAHA8lDnOOlK968JiRhUHiYb5hFGCMcAaABKB4ESGh0ZIfQbkxFwBcL86vrh/1EIlw4JDg4GLfuP83Dyffaq+gP7pvdB85bxrvKd9OT0cfO98QfxwPG08n7zX/Td9XH3Efio9nP1WfVF94X6OP0x/kP9t/tf+838f/8wAgUENwQ7AxYCFwIMBC4H1AnAChQKEwmACTEK8gpVC9ELzwwVDm0OlQ21C24K3gr4C3ELMAiLA9oAxgKHB6AKTAg5AIb2bfCC8JT1ovyWAUYBE/uU8eLoGeaN6fHxevtTAgkDyv49+Fnyoe8b9awB3RAXGjUXyQxBBm4KyRiZJScmMxtoEUIVpiSuNIg4hS12HusW5hb2Gv8ajRjVH44t2TFFJb4Cgt0l2Gzx9RWkKQccMvUf14nOJNZQ49nnlOVQ54vq6OhG3wDRWMli0PPgLO7s7eDibdqM3gHsqfez+KTwF+iY6E3z1wDFCgMOTAr4A7T+FPym/n4FGw7KFDMWgRGKCS0Chf51/yoEHwqxDVAM9QXD/Rn4L/eZ+oL+Wf90/GX44/Xb9cb2B/cH9qv0EvRw9Cz1sfU99tr2m/f395P31PbU9kT4vfrb/Mn9bf2l/HD8V/0m/zsByQJlAwkDXAKRAv4DSQbxB1wIywc0B3IHbwh9CRQKOQqqCiILAQsaChAJ+wj7CbgKfAk2BkgDFwMdBo0JlAkWBAb8/PUs9U35Fv/TAjcC/vxl9MDsWOnG67/yhvrP/wAARvvu9F/vz+ys8JH6vAY0EBoRRQlEAZ8A1gnqFzAfZRqWERQPgxg9KKwxAy4AIZQVpRMxGMMcARwaG4sisSuEKngZRPh63l/h3PttGc0jdxBl7qTYFdQ72w7kv+QG48DmVewF7aTkFNfXz33VHOTM7+jxMOuY5EHnS/MC/9QCv/4A9vPxdfbv/9kK2hKnFCoSEQyXBB8AzADABbwMFhK1EuIP5AmeAo785vme+3UAXASWBfIBmfuR9nP1n/cQ+k76dviE9mf2O/hk+lD7xvo1+sf5DfqT+g771vtR/U3/SwGXAVQAVv4C/UP97/4fAaQCqQJqAXz/5P1N/Rb+9P+hATUCRgFk/9n90P1I/0kBugJGA3UDyAMiBAAEXAMRAxsEgwatCAUJbgeqBcAF6gcGCksJLwUdAMD9wv97BC8ICwhkA9/8DfeO873ydvR8+JD94f9q/sb4IvHS6xbrC+9E927/egQ+BTkB9/oW+Nf7RQfdEHMQLQppCj0VaCFjI/4X/A+HELgV+BipF2IaPSHUHYwM1/G+5tb1og5gGWAJpPBy4nvhKOdz6PXnkuue7yrwSutY5iLn2+rH7ZLuJPCr9jL7LfvY+Z/63P7nAwMGMgZnBf0EXwQDAxwFegpfD+AR4AxxBzoEVAL2AIkAOgO1CCAJbgdXA/L9Ofko92j4l/vZ/WH9evo696D1FvZd9833M/dy9rb2F/ik+V76LPoC+rj6kfyR/sX/+v///yoBxgNfBtkHygdEB7wHogn2C0kNzwyZC1ULhgzODQ0NhQkhBaoCIQRwCPMLlQuMBtz+4feX8+LyG/UB+Q39Uv+n/Tv4jvBn6WTmuegD7+T3+f9vA8UBp/uO9BTzqfkJBT8PRxKsDRUJIAwPF+8inCfPIekWgBCiEssYpB2jHU8cBiHoJ6AmgRib/cflUuTq9zMRaR5yE2T3UOBO1+DZE+El4wvhEeMs6Yvui+0C5I7Zztcv4D/ttvUT9SjvMe0s9EMAxQo8DjcJOAGh/Bf9NQP/DBsW7xq3Gs0UJQzLBNoATwEoBawJHw03DsYLdgXs/G71FvJ19Hn5Df14/FH45fMN8hHze/QV9Onx+O9X8F/zffes+lz7Q/qo+Nb3aPg6+vr8JwARA4MF3QYNBxcGlgS3A1EERQcxCwwOag53DDMKoQm4CgYMIguAB20DJwLtBMUJzwwzC/oE2/xU9hXzZPNW9jj6Vv4+AN79mPdL7y/oDOY36bvwRfrIAfUDqACg+VvzafOR+6AHcBC0EYsM1wgKDgManyRxJw4g6BS5EBQUzRlSHqEdOx2MI9sogCQmE932AuN85/H9zhUPHqcN1fA13YLWqtqd4Uji/OCP5JLquO7B6+ng99f52ODig+9o9tjz6e3p7RP2gQINDKMN4QdMAAL8bf1vBGIOGBeoG1YaVxPhCXACbP8rAbMFdArGDWoONAsvBEj7J/QW8k712/oc/qX88vf0807zWvUN9wj2xfK676PvnvIP9+L6FP2f/aX8cvqN98T15fZ9+zgClQhgC4gKXgdfBLoCuwJwBN4HpQzJELsSKxFcDVsKaAraDIYOzQzQBxADlgIrB2ANIxCiDGIEGfpU8ufu3e8p9PT5Wf9lAVT97PO+6Evg1t6g5O7uN/oLA9YEyv/U9njvs/Bn/HcLChaOFksPCQsrExQjyC+WMo4oYxq+FSQaYyGaJqoleCYWL+k0Gy5eFtXwWdly4bL/YB4+JxMQNOrx0c/KedDr2JPZkNjJ3Uflv+n55JHW28uyziPcj+yf9O3vRugD6YT0GgXbEHwR/gg9/4D6Jf1VBxQUSh5DI8cgWBdrC/IBIv7dADMHpA3xERcSEA2sA0H4a/D67qDzGPo4/Q77ovVg8Tvx6PPu9ev0W/Eo7qLtRvD281b35/kJ/JD9tf1h+4D3S/TB9Nj5hAGxB1cKKAmwBa8CqgF1AiQEGQZ5CH8LQg6jD2cOUgvJCN0IPgtMDWcMHgiGA14CKwYaDG8P5gw2BR77DPNt747wLPUc+1cA4gGR/av00OlN4bPfp+RF7j36egOABQEBS/fQ7vTvFPsiCswVrhY/D+8KzBEEIbMuOTLaKAcbeRVUGbcgLCZTJWElny1XNDUvrhm/9GPahd8t/JEbiCedE9Xt59NpywjQ/9iM2sXYD93E5NbpWOYh2XvNjc5z26DrUPRB8W3pxejj8wMEEBBKEkwKvP96+jL8agWcEh0dBSIUIA0XUAtIAl/+OQCtBXwLqQ+lENAMSQRm+RvxN+/N8736g/5s/IT2gvEi8V/0iPeh9+T0EPKK8ZHzQ/Yn+DP5WPoX/K399f14/Hf6Ofns+XX8IAA6BP8GaAcZBuIDfQLhArgEoAbQB8wIzQryDXYQOxApDdcJpAkcDTMRZxEYDMwEdQEeBU4NgxONEroJCP1j8u7sJu1z8Zz3Qv7kAdv+IvWL55nbHtdF26nm2vWhAuUGCwLJ9t7rj+oP98sK/BkjHQ0V9Q1AFRooBTmhPvM0XCNmG/sf/ihzMNIvvC7RNzFASjt1Ijr0btH/1eL44CCVMRMbGOthyhi/ecPPztzQ/M0P01rcPeON4GTQs8HtwZTPeuO98OPtluMu4gDuDwLHEsIWGw6LAan56vpMBf8UziI1KvworR6bD2ID8v0PAPYGEA4OE2QUDxDgBbT4ye176qnvz/h//mz8vvQa7iDtRPG29Rv2mPKH7kDu3fGn9rb5Wfrn+dn5I/ou+rb5Dvrf++b+OAFWAdb/b/79/lYB9QNdBWoFDgUZBTsF8ASUBHYFqAjzDKkP7w5oC48Iggm/DRcRhA80Ca8CZAHrBlMPvROWEIQGlPqY8V7tOu7y8rb5QQDDAnv9xvHM44zZH9hg3yHsrfrQBDgGEf9x883qau3W/AIQhxs2Gz0Shw6AGgUuOzvcOzIuKh5BG2IiVCuRMGQuBjDVOrU/pDTlExHlfs+D4GUIRSo6LY0JPNywxC7AHsmH0bnPu89H1yzgreRz24/JLsGUx6jYgOsR8fPoE+LA5kr3OwthFpcTEAgy/UX55P54DIcb7ibKKvMk1xeKCZD/iP1yAgEKrRBNFPESzwvQ//vyJOu963Xz4vuO/vH5OvJ87aXud/OL9k71ZfHG7gHwZ/Qe+er7XvzW+y/7UPoC+Tj4Xvln/bICtQWTBAoA1vp9+eH8iQKKB0EJZQilBk8FagTCAxwE/wZWDLAR0BN1Ef0M+AqqDeYSLhUuEaUIPgK0A6sMsRa3GcMSNwTW9GnqK+ev6qTyV/ykA8ICFvhB563W+M0N0Gjb/ezC/k8IJwYc+trqkuNW7ZMEMxu5JNMeZRObFUEqH0C2SlBFSTEhImQkfy4yOSY8DjkjQKVLe0qONb0C7s07xuzoWh2WO5YtkvUlxsCzqLTQwEHGAMNOx2jSNtxv3PrKxrdotMfA49dE6xXrvt5X2j3mrP6rFU0dLRThA0f4kPcUA3YWMijLMqYzFSkpF9wF1/tF/LMEIw9qF2sa2hVnCWX4renr4+joEvTh/PX8PfW37KrpBe0c8trz6/Bp7CPrnO6+9Bz6w/wJ/Tf8xfqG+Aj2N/UZ+Kb++wWqCWAHCQCd+Ur3YfrRALsGdAkJCdgGsAQzA2cCjAKiBDQJmA5IEvgRaA5JCwEMHhCLExQSQQvtA1QCtQjYEg8ZLxbIChT7LO7Z5+Xote8z+eEBrATU/VbvWd6q0XHP/9aD5QD4IwbUCEAB2vEf5bLn8fkRErciuCIYF5YRKB4cNSJGe0ggOpImxiARKAkz3znvN4M5k0XXS5BBFR6T4/XEq9QcBNgw4DnxEz/aUrv6szu8Gse/xvHFI84a2fneLdbRwX61iLrazYnkI+4B5g3bT94c8jALdxtuGi0LC/wK9jv7BAzcH5EtNDMiLuseJg18/2/6Zv9CCewSORm3GAgQ3wAT8KTloOVg7hj5v/3A+Yjx2+uD7ADxKfTe8qLuzeti7dnyJfl6/ST/AP/F/V77/ffu9PT0ufnGAXIJWwyaCBcAJ/ai8d30cP3oBq4M9gybCXoFYQLJAJcAgQJrB8AOWRXDF9AU7g/qDSURUhaAF8wReAj7Al0HcROFHvIfIBUMAl7vdOMr4WrnXPJ9/hQGngLK9BjgYcwzw3LGodM96h8BawtACED4beMY3MXplQbYIiIuKSWCF8YaQTK0S1FXWVGnPCYrQSyJN31DoUaXQ+dLpVgZWNVCbgaTxGm5GeAPIVRHMTsa+DG8hKdEp9iz1btsuN27P8hW077TosGurHmni7OXzc3kPucx2fPQcd09+yQYuCRBHKgG9va69OIARhn4MHo9JD/cMxwe/wh6/HT7vQT+EAgbDSCKHLQOmfl85e3bgOBG7mP6KfyZ83jpzeXi6TLwkfEI7fnmo+Xg6oPzLPsj/4YAwQDE/0P8nPba8enxtPiMAzANHRFiDecDy/nn8pjxmvau/1kIogw/C38G5wF//w7/mf8tAToFMQyIE0EXMRXJD1gMoA55FHQXIxP5CRsDlgUwEUAdWyAXF6oEJvI25jPj7Oda8QL8SAS3A+X3mOSn0DDFMsfV04/oev/lCuEHCPrH5vvd6umRBFofUCt9JDAXsBiXLq1HPVT3T1g8VynKKH4zPT/lQzZBLEcKVM5VJ0RaELjNp7oP2TkWBkG4PWUF7cYkrQuqM7XSvp68Wb4YyefUhNioyaOzHKs9tKDLwuPi6UXeu9QE3RH2AxI/IPwa1AjY+cX1kf6sEzMq0zdAO8kx1x2FCbL8S/vvA/MODRicHAAaqQ5C/GbpBt9R4SXtevkZ/Yv2oeyN50XqmfC+8/HwdevR6ArsbfPU+i7/HAETAoECJwE9/U74yPVE+OP+kQafCxQMswgqA9n8o/a38rry5PdKADIIaAv7CJ4D/f4R/Xf9nP6aABoFqAwoFQUaQxhLEgMOKRAaF8YbwBhsDvgEQwW4EAYfRSWIHvYL1vWz5SPfo+Hn6k33PgKBBYD7/eZS0CLBFb9SyRTd/PViCHcLxP/76xXd5uBf+tQa+i3GLYYfTBmZLLRIOlmCWt1JEDLtLMc2tUOES9tIz0ocWBJdolBjIwzWCrVWy/MK90ByR7oT2clHqfaiGqx3t7W1qrUuwPvM4tPsx2evHqQ3qiW/HNvu5mzb08+h1YXuXg+xIlwflwwv+mPzePyyErsqNTsDQXI6CShFEb//f/plASwO/Bm6IDIfzROE/6zqFd503i7p/fXT+g71POpz5Kzmnu1Z8nfwwere5uXo1O/U96L98wDqAtYD1AJL/yT7Gvk3+9wA9AY0ClsJHwXMATUA8f8O/6f8Kfkg98X3ofvqAJEEvgTzAY3+rfy0/Pr9CQCqA44JYhD5FMMUuRBFDJ8MLhILGEYYeBFJCKUETQrVFRYedBztD6n9m+0W5T3kOOo+9BP/FAQn/ubulttTy2vGQsww2zbxmwPzCekD1vJy4tjh7vNuEJomRyplHj0Vsx/KOKNNb1OaR9ExkCc4Le048kHrQN0/jUu6VKVO3y937mHAzMYN96QuEEOOJOngOLdoq76w772QwIu9DMTtzwfYy9IfviCuK6+ewJjaL+rt5ILXYdbp6NwFXRsjH9YQEf549eH5jQpuIVQyoznsNbsmRBKtAoX8hwDOCgkVShtgGzETVwOf8Cfj4OBy6dL1O/wq+PHtMeZI5onst/JF8+nu3urd67Lx/vg9/rYA4QEFA1YDyQHp/mn9tP/OBb0Lpg2WCmEEeP7D+6z85P+4A94EFgKI+yz0RPA68ln4gv/hAoYBIf4f/I783/3O/vYAGgYlDrQVTxgNFdcP1w4lFMYbSh7AF+ULZARkCEUVlyGUI08Y/QMM8HTj+d865Mrt9PlFA/IB6PNJ3k/JMb9DwgnQFud6/zwL7QcL+NXjAdxS6swI5CXbMLgnkRmeHY02qE+MWnFU8D7eLcwvpjq2RV5I2EUFTy5bcVnMQUwC4sCmuN7i2CWOSZY5ifJ9uFClNqZIsyu67bY7u0/H99EA0T69QKngpXSz3M0r5AbkQdVIz1HeJP1FGaAjmBhZA/z1xfVpBMsdrDOBPxdAxDL0Gw8HAPwA/mQJtRUrHmUgqxkmChv12+KC2zXhxu7V+eP5GPBb5d/hiuac7WXwfuzQ553nbu2W9jf+8gHnAhAD+wLsAaT/+v3A/9wFyA1dE5wSHgwvA8b71fhs+s7+ZAMABi8FYgCa+J7xqu5B8Xf3CP5hAfkA5P5n/ST9Rf1t/f/+7APCCwcTyBUrE+EOJQ6VEngYlBlOE6cJkAQ3CbwUTB6THqMT5AEU8bfmTuTx6O7xy/zeA/0A5fMW4CLOD8fxyj7YkO0XAakJVwaF937mpuE2740JJSI5Kgwh3hU1G6kxSEi4UcdJ2zTqJjgpjzMsPsI/2z2hR2JSFU+GNrr7bMZ0w83rRyTqQG0ur+/7vkSuzq98vGDCw7/AxFfQ4NhE1tPDnbF/ryq+0NYA6dbm89lj1hjmmQHnFzIe6RIrAEb21/j5Brgc8y6fN6g2RyqHFl0F5/y8/qMIqRMIG1McTBVRBgT0i+US4RHnS/Iv+uj4pvDI6NjmzOrT7+Dwtu1x6g3rsPB4+NH+IgJJA4wDPgO9AYL/ZP6LAFEGXA0xEgwS5QyMBdP+MPvx+j79vQCwBFIGVgSb/mL2uO7S6ofsB/MF+5wA9gH2/1H93vvT+4D8gP47A/oKURN+GOwXGhRoEaMTghm0HOAYQw8SB8oHqhHkHdsiyhsdCkz1lOXL3o7hTevc91cCtwI39j3iC84NwvrCB8764Xj6fAnkCUP9ueh83fDnugM/IUQv5CgaG6Yb5jHJS4NYzlTkQAotdywhN/hCqUffRPhKslfTWB1GNw+Kyuu48tm6GSJEOz5dAQHCTqnzpl6yK7vmuFW7PMal0STUnMMFrgunx7DByGnhFeZN2bLQIdtY960U2iFSGYME2PVq9XoDnBuwMBk8XT0FM5cftwvV/s39dAelFG8ecSFsGyAMP/cg5YvdXeL47hL5Ovld8GHms+JX5lfsm+526xznwOYS7IP0+/trALcCCASGBE4DeQBL/rH/mQX5DQ0UNBViEdwKiQQnAB/+EP7m/iUALwG2ASsB6f6Q+tv0hO8o7WXvhPVw/LUA9QCf/nT8zvty/KL9z/9WBG4LSxI5FkIVNBH2DpgRDxe1GdoVwwyLBccGMhDVGjseghaMBr/02+c/41rmje5p+ZMB5QCr9iLlD9OXycvKPdWw6Bv9xwitCEv8nep54wPuZwbeHrcohiGuFo8ayC89RihQXEkXNTYmBihNMtQ87j51PORE6k+6TeQ2wP87yrXEPeoSIb0+ry5Q80DCprCrsbG9wMOqwGTErc9I2bXYn8d2tEmwmLz00zHnSei+3FHXYeNG/U0UVhxDE20BbfYi+HUFOBtxLSc2RDUgKpQXDAfC/nMAwwlxFEobFhxlFU0H2vU155HiAei88jX62/g48K7nZeX66fPvgPG77f3olugR7jT3CP7RAUgDJwR7BE4DzgCA/5EBngcED8kTyBN4D88JaAWZA3QDdAOfAjYBXP96/RD81/vI+8b6Ifcb8TPr7Ojy61zzQPug/3//E/1q+z37EPwl/c3/wQUvD88XJxsRGHkSQxDNFPEbsB72GPkNKwaJCFQTNB5fIBEXUwW48oPlm+Az4x7rpfZ4AIYAEfU74UvNC8MVxWDRQech/v0JrgjZ+qbnfOAt7RgJQCR0LhYmahlHHbA0kkwJV4JQaTtrK3gtAjiUQntEskEGS8xW3VQiPbr/MMRcvt/nNSXlRMAyUO+/ujypGaspuEm+Prunv+vK4tOb0Um+H6wiqou4X9LE5VnjmNWa0UDhlf6NF1IftxNOACn1xfdIB/ge3DKCPCQ7OC5mGVIHuP6oAdoMjxgGIMgfKhc0BxD0IOUp4A/mHPKW+XL3tu0Y5FHhm+XT6+ftnupy5h7miesV9Hr7ev8MAQwCBgM3A0UC5QFcBFoKUxLYFi0WEhG3CqoGOAYkCAAKngruCLgEY//N+sX33/ak93z5i/p9+c31z/AJ7brsMvAs9rL7d/54/qT9eP1N/nH/3AC3AzMJGxBOFWEWiBPPEGUR6RXuGcMYVhFoCMgEjglUE7oaihnODlH+te6/5NjiJuhF8i/9+AFc/HHu4txhz4nL9dDL3jHzfQTDCtAE5/Tb5sTnkPmlEzwmdSelG00UxR94N+BJtk2wQCEsNSTJKf0zlTtVOm471Uf9TsBFQyNt5mfDb9BZABYwnTwcGTrcQLoesVG4ucS5xaPET8xv1rbbTtPTvluyobZiyefgs+vF437Y0tpt7rEITBldGL4IY/ld9Yn9lw+eI4EwmzRhL+gfAQ7LAZb+ggQBDw0Y1hxoGiEQ1v8I7+/kJeXK7RP4Qvvd9YzsfObW5ljrpe6V7drpDej46rPxuPg4/Qj/5P+4AGoBMAGrAN8BRgYLDYwTvhViEy8OPQm0BvkGxAjeCn0LeQrbB+0DJP8A+vL1mvPh8tTzA/YM+PP3c/RZ7kTpq+Zw6bPw7fg9/mf/Zv4c/gj/bgBdARcDvAfXD/wXHBwwGiYVzBJcFpMcxR7tGNoNSAXKBmIRjRxwH5EW4gSy8g7leN/f4TTqJ/YlAFkAfvVz4vjO/8T0xqrSouc6/pwKSQr9/A/qS+KI7rQJxCNaLSEl3hiLHRQ15EtTVelNqDjpKGMrKzYUQQVDBEAUSYxUPlJ9Olv+8MT0vybp1ySLQ14xtO/wvK+rjq2kuhXA2ryQwTnNxdbr1FnBbK7xq+W5pdK+5TrkIdeb0+Di/f7iFpUc8w/y/FXzg/dTCNcffjKMOjU4ZyrpFVMFf/4WAz0PiRqlIIkfUBYdBn3zv+X34TLp2fSU+x34qe1J5Azit+b465jscugf5KPkoOpQ82z6xv3c/lD/z/+p/yf/z/8DBGgLbhNPGBMYlxPqDRUKpwllC10NNA5uDaELBwm5BewBS/4k+1X4H/aA9LPzI/Rt9Tf3cffg9Afwg+ty6hfuovSy+97/3wCMAG4A5QBMARECnwSCCUAQWxaYGGIWWxLeEMkTWxhaGfMTrAo1BKgFfg0MFgsYsBBGAony3uYA4j/kUuxK96H/AP+x9FTkp9R+zdzP0do/7ZIARAvwCT39le1j6Bn1ng3EInsoLx9FFdAbqTGGRUhMeUITLugimSbcL+g37ze/N+9CIUy7Reon/+7kxoXNkvm9Ks87wB6o47G+LLSauivHHslWx+PN29eS3QrW1cFwtKi3Vcky4P3qNuPH13jZ2+vJBJoUAxMIBIz14vIk/JQOuyF1LZownyrGGw0MBQLkAOYIaxTkHIMfWRouDrf+PfEE68Htc/YK/rz+bPfP7VLoKelW7cvvEu7X6YHoY+sQ8VP2dPmv+oX77fse/KL7rPs4/sIDkApvDxgQhw3TCWkHNwe1CIUKsAutC1MK3gfsBFoCyQAJACb/ZP2Y+kr3efS38pLy3fMY9jv4pvhJ9h/y0O5L70b0lvvOAQwFuQXDBXkGOQd5B9EHJgqYDzMWBhrYGIgUzhHgExwYUxpcFSIKlf8i/WkEjQ9MFdIR9QTP89rkb9z726biRe4u+pv+0fgO6rnYNs5tzenVPehO/rcNcBETB3n1D+0P938PQiejL88mMxqpHQkzA0m1UlpLyzYlKKQoGzEBOkA6JjmVRMxPFUwuMSr1OcVHx8byHCnQP2gmXufKvASw4bW1w13HmcR/ytnUwtmt0cW8PK74sC3D29p75nre4tHK0mvlEP+8DoAM+Pwt73vu1PpFD7YjZS+PMJ8oyxgHCcUBBQVIEP4cgiS8JJYdzg8b/xXyze1m843+yQZGBa/6DO4655Lohe0g8LXtZuny54brk/Ha9Xb2wvTN87f0jvbO92P5lPzzAbUHDgtNCokGcwKyAToETwinC7gMigvxCKEF1ALRALb/q/8fAFkA3f9y/mf87Pls95j1e/VZ99v6P/5Q/2H90vl691X4Sfw5AfUECgdrCPAJHQv2CmcJWgj7CXUO/RIKFCsRcw3zDI4QHBTQEocKOv8F+HH5tgFjCgUN9wdi/LnuquOV3hngOuiR85z8jf7v917qGN6F2DXabuUG+AEJARNlEewDEfgb+XYHuBzXKZMmdBsEGJUknjlNR8lF0TW8JOsfGyWgLaIwEC7INIJBsEO4MyMJF9eFyl3mIhUdNIAsIv3Tz1i9y704ylnSe9Ci0qzaDOAL3OLL9bpfuKfF/NoL6Ffk+NhW1dPhgPfPBb0Fa/kh7AnrbfZqCCwaSiR6JKod0hHWBdoAuwT1DqEaoiEjIeEZ3w1XAdj4pPcq/XAFbgoOCBv/7PRh7zLwG/Qh9jX0E/Cb7QjvB/NQ9vb2g/XH8znz8fMs9RL3+vnc/W8BCAMJAmv/dP3Y/XwAxQMrBtsG5wUQBEMCLQEfAY4BnwHiAKn/ev4k/lH+wv54/iL9Fvs6+Z34FvpO/Q4BewNOA+sAXv7T/SgAXARqCD4L/ww3DpEOow3LC3QKigsED7MSLBO4DxQLfwkRDGwQ1RASCpn+wfQ38p/3DACoBj4G9f038KbidNoo2lHioO8F+6T/Uft47zDjqttH283ky/eCDHgacRqtDPL9yfx0DIYjJzHpLS0gYBrMJ5g9fky8S/06UiiUIsImzS4sMbAu4jZ0RRhIHTcNCArSAMba5MAYgznfL2r708p6uFm6tsjW0cfPA9J62Tndd9cUxbO07LPVwurY1uW039jRus6T3fPznQFf/r/vDuQz5oH19Qk1GwYjqCC1F3cLlAFSADIIGhUXIVkmKyMoGa0Ljf9k+kL9GQYbD+IRqQty/yn0PvA38x34m/lU9pbxku+H8YT0efWa8+Dwwu/P8MLyWfSN9WH3PPrQ/Eb9VPvf+DL48fqQ/28DnAQiA6IA1f6h/lL/jgDzAeQCzALDAf//lv60/Zv9UP5S/4wASQEIAQMAE/6t/DT99P/CA50G9AZ7BaEDUQPTBPcGmQiRCc4KiwwlDvUNnAsQCZoIpwroDIsMzAiGBMMDXQflCxIMPgWF+k/x5O7S8yT8bQL4Agb9NvNp6C/hJeCU5rvxCPyBAcD/LPeZ7fDmLeah7nT+Cg/GGUMZFQ6JA2EE8hFGI6QrBiblGUQXKCQ1NxJDiD/wLoIgXhzeHwAmQybJJJIuNjueOxwp3/3X1EDRevBcG/QxUCKw8x3PEcP/x+bVKNyQ2QLcpOHa4pPbNssxviHAcc+j4R3pleFO1uLVK+O/9FT9kvWZ6KniHOq9+qQLjRZPGPgRXgltAbX9bQEBCzsWax5MH+wYjw5lBKz+i/++BZUNHBK1D1MHdf1d92D3UfuA/vf9xPmp9YD0G/YD+PP35vVL8zfy1PJO9MX1+/ZD+GX5hPnK+ML3ivfM+EX7wv1F/zf/df6c/UP9rP3T/lUAfgH+ACgAHv+b/ir/WQBWAVQBeAA0/7L+Bf8MAEkBgAJbA5EDvgKIAQ4BbAKXBeYIigr+CV8IaAfnB3EJ1wqhC3EMeQ2MDhgOwgslCV0IAArMC84KIwa9APj+VwLIB7AJagT1+V7vgeor7fr09/yLAKf9cvVs6mvhhd7W4+7uA/tlAw4EE/3P86Pr9+jS8MEAERMdIDMgghRFCf8I4Ba1Kc4x/irYHc0ZvSYcOxZHUEOhMkMjax6ZIakmziX7JMswrD4FP/4pq/mVz3/OLfLGIGQ2YCLQ7pjJIb/JxofWo9yw2Y3bMeAp4JrWO8WpuVG9jc6C4ZTmitzH0LXQDd/o8Hf34OxQ4BfdfejR++UL7hN/ErsJQwG7+4L77AIAD2gawCBBHvkUhQkvAZn/7wTQDTQVfhZgEMYFRvyd+Fn7hwBIAyUB4fuR9172nPeK+Hn3/PTh8m3yWPOE9Fn11vVL9oT26PX59Fz0O/V890D6E/xX/Df7S/o6+hH7kfwk/lP/0/9Q/5v+N/6T/nL/XQB2AP3/h/+h/1UAKgGBATUBvgB+AMsAgQF9AqIDtwQ6BecE/gOGAywENQaiCCMK7QnUCPQHCAicCAUJSgmkCWAK0QoJCuYHsAUaBUAGUgfkBbYBKf11+/39cgKIBEMBZfkb8aDs2u2M85v6Df9F/ij4ae9A6DPmpurP8xT+MAUEBssBBvtc9PDxHPj4BLMU/R66HLIS3go0DGAZySekKiIilBfMFjwkVzUvPPk02yXCGqsYNRxdHrgbSR5bKyg1fjC/FszrYdMy30YD/SRFK5INdOOfzc/Lcdec42nkBuKb5DjnsOOT11XJjcTKzTzfaOoW5x/cM9TD2+/rX/WN8YfnDuAo48Px+ACnCSALzwWR/jf6W/my/ccGnhApF+QXJhI3CQACDgAtBKELTRJoFJYQgQh5AJv8ff47A6UG3QWIAcX8N/pn+n37gvsH+jD4Ovc693n3evcp9+b25vbi9o72MfZo9p73EPkH+gP6WvnB+On45/mI+778of3k/X/9zvxl/OH8Gf5g/xQA8f+y/6n/DwBaAG0A/P8UAPgAbwKwAwgEnAMnA+wCSAMlBG0F5gYvCLsIbwh2B+4GpAdeCfYKmwsUC1sKBgoGCusJXgnYCMoI8Ah5CLgGpQSwA3AEUwUJBHL/xPmO9kH4ov0oApwBBvuQ8V3qYegP7bT1t/2OAJ78FfTY60bn0enX8YP8AwYiCg0JcwTn+232vPnJBTAXGCTGI6UZxQ9jEN4dFC2DML0m0hlzGGEmZjhDQIQ4aihRHaUaph0mHxcbZR7QLRY4YDIrFb7mAdA04GsIIioZLM0HPdw2yb7KUtl95eHj5OCM43/k7d6lzxPC5sFl0JTi1+iU34/SSs8G2jrqG/Gk6kLfCNqY4WryHwFyBzgFgv3R9pv0K/fq/swJARM5F7cUhgy1AzX/ZQHtCHARdBZXFXgOgAUu/9v+YQOHCC0K+QZSAfT8u/sA/QL+If3Z+rb40Pfi9yT45/dQ9+72qvYk9mT1+vSA9f/2Ufi2+B/4P/fr9oX39/iC+qL78PuI++f6xvqJ+xD9df4W/+H+Vv4i/nf+GP+v/y4AuABDAYkBagH4ALkAJwFWAqcDdQRsBN4DagOOA1MEpAX0BrEHkgfjBkQGYgZKB4kIPQkaCXsI8QerB30HIwe0BpEGnwY5Bt4EAAPaATcCLwMyA5wA5PvA9yn3u/qN/+gBA//s93Twm+wu7iP0A/vs/9v/4vpn84jt7+zV8d359wK/CMUJzQZVAGr6evqPAbcOWhvSHnkY0A9/DeYVxSJ7KFsi1xZ7EpEbryvFNQoylCQWGRcV3RYcGZkWChc1InMtdyx7GPjyUNkf4DT/1R4dJ9kOVuma1MrSDN0H6Azp9+bf6SnswOeq2/DNQ8q+1Arl4+096dXdBdjT3X7qaPK873Hn9OGj5fPxhv4sBdoECP/B+Bj2pvfO/fsG+Q6pEuoQsgq7A9v/zAAfBjINaBK+EsgN6AWC/xH+uwENB7cJsge9AlH+u/xq/VH+3/0Q/O36wPrZ+lP6LvlM+EP4oPij+Pj3Tfdg92T4pPkC+l75fPg9+P/4W/qW+zf8UfwT/NT70fsv/O/88v3W/kP/Gf+y/o7+r/4s/6P/8v85AK4ARAGUAY8BKgHPAPYAywHqAvUDmgTJBJkEMwQFBFwEcgUdB4MI3wgZCBIHxga0B+gIuAl/CbUIWQinCOUISQjKBqIFgAXcBXYFyAPoAZcBuwJqAwQBW/vW9ZH01fhr/7cCmP9L98DupOqG7LHyxfl3/if/X/tz9N7tmOso7xz4lALOCYUL5gcqAEP68vrMAjsQiRwNHy0ZoRENEDoZ4iWPKUoi/RaZE6Qe4C/POKgzESaoGQMVNReoGZQXwxkbJjwwlC36FgXvg9YQ4IgB3yGxKNENf+ax0WTQgttH55zoiObp6JjqZOXT2J7LKshs0mHjm+z15yLdG9e32wvoAvB27ULmcOH55Jjx5P6LBS8FZP5o9onzuPZN/4UKlRItFL8PYghkAq4ATgPHCPUOXBOCFPsODAbv/tD9pAIaCdkLAQkOA0v+C/1O/jX/QP4L/HL6UPrs+un6/fmq+M73g/ds9zb3EPdW9zn4G/lh+fb4Jfi/9zP4b/np+gb8U/zs+1D7LPvp+y/9WP7O/oP+Dv4C/or+Ov+h/7r/tP/K/wQAMQAzACcAYADtAIgBvQFoAfgA+AC7AeIC0AMRBLIDQwMvA6cDngS+BagGBwezBv4FlgXJBZ8GfQfLB5MHNgcKB+MGMgYhBVQEWwTRBKoESQNZAZIAgQGvApQBV/0i+ML1MPjF/egB3QDN+nLz4+4S79TyH/i7/P3+Ef60+XLzHO9h7wX1kP78BkIKXQhtAhf88vqH/5QIIxO5GM4WPRHWDRoRQRotIVcfmRYbEJQTJiB3LKguNSU3GWcSlhFwFHEUPxK2GFckoSj7HlYDl+QI3hLyIBCfIscZBfqo313XodyA6DHu6usH7I7uPe0A5gbaftHO1Lfhw+1I8CzpxeC13w7nle8B8jfuROm/6LrvavpfAoIETgHm+lT2lvb6+y0FsQ3BEJIOQgnnAygBoQG6BNwJ0A5yEZgPRAmnAYL9Tf86BSUKUgrlBWsAd/29/TT/f/8Z/nf8+vtt/Jz8sPsk+g35/viB+dP5fPkT+T/5/PmW+nr65vlj+a75yPoL/N78+vyb/Ej8Yvzs/LX9gv4Q/0X/G////vX+GP88/3X/1f8oAGoAXAAdALT/gv+g/+T/TgCiAOQAGQEvASUB6wDBAO0AlAGwArUDRQQbBIkDHgNZA14E1wX2Bl4H6wZRBiIGdQb0BhoH9Ab7BnQHFgjqB5EGogR7A6wDTAQFBFQCrQDDAHMCRQOEAHj60vTs87v47P4eA6UAxPiQ8LLsN+4G89T32fsZ/s79Dvq+823uz+1e8x7+sQd5CzQJYgIc/Jf7VwBpCZ8TPBg5FisSLRBzFE0dJCIyHmMVJhDGFf8joy+ULw0lExmyEnsSFxX/E/4SqBuJJwIq/hw+/YTfhN4P9+EV8yTtFfvyCNuo1Vjdyun67PLqjuza7rnrseHQ1A3P0dUi5NfuLO7U5UDfHuDb5wXvLe9h62zo7ukB8kP85AKOBIsADfll9AD22P0FCT0RaBKnDekGNQJoAZEDQQfnC3QQcxLgD8EIvQAI/fn/0gb5C0oLzAXV/yr99P2F/3f/vf0U/Nz7l/zk/OH7JvrE+J341/jY+Lb4/vjK+aT6r/rj+eP4jvhb+c36Lfzn/PL8n/xn/G383PyZ/W3+Mf+C/2T/Dv/k/iP/r/8tAFIAMADu/9b/2//3//n/+v8KACMAFwD3/7z/sf/0/2MAzADoALAAcABtAMAAXQERAqoCBgMIA8wCgAKOAj4DdwSnBR8GnQXiBHAEmQQsBa0FzgW5BdkFKAYgBj4FyQOhAnsCCAMfAyQCvQBqAIYBgAL7AGf8U/dl9Yn4i/6MAiQBBfs+9OjwZfGJ9E74qfsk/t7+cPxP99XxG/Bq9Ib97gV8CZ4HAQL7/Iz8PgA8B9cOShJEEcUOsQ1KEfkX7xpNFxUQWAwJEYAcnCZSJ38e8BMMDtcNehA6EL8PvBYIINUhrRav/CXl/uSd+bASTR7dEKL0wuED3pXkIO7J8EHv+fDR8s7vPueB3P7XJt466rzyDfJt607mzeZ77JjxzvGd7zHuve8O9p79VwJtAwAA5PmB9qD47/9KCSAPnQ7XCYMEkQHJAdwDgQYqCvANlQ/MDBcGTv8l/dkAGgfACjkJHwRm/6/9eP6E/z//E/5e/aL9E/6L/Qn8dfq/+Qf6k/rZ+sj6wvoJ+0v7OvvZ+m/6dfoI+wD8AP2X/Z/9S/3q/OX8b/1e/kr/wv+n/03/Fv83/5P/8f8gADYATgBdAEoACgDC/6H/vP8RAGMAXAARAL3/iP+W/73/y//x/y4AlwDzAPYAogBKAFQABgEeAiUDkwNtA/gCogK3AmUDfQSiBU8GVwbfBWcFLAVPBXgFgwWvBSgG1AboBucFJAStAkMClwJyAlYBIACBAF8CaQP1APT67vSA89f3//4IA7YArPnO8tTv6PDV82n3gPoy/b/+C/1P9/zwze5K84v9EAdQCp4HegGw/ID9LAKOCBgP7BEZEQEQYBAdFLQZBxspFkMPVQ26FEMhcCkHJyQcPBLuDY8O4xD4Dz8R9RpCI/wg8Q9j8pbghOn9AmIazx1FBxjrnt3/3bfnFvDz757vDfLS8WrsseHq10TYH+Ly7Snzsu/x6FPlwecj7fHvGPA87w/vp/IJ+dX+2QJnAt78R/fa9cb6JAVDDs8Q6QwzBpMBKgFiAzwGQQmrDJMPfw/UCjcDjf3T/Z8DKApNDNQIvQJG/kX9fP53/zT/af4h/m/+Uf4k/UD7qfkr+aD5bPoO+1f7evtO+9v6Lvqm+br5Y/qG+578Tv1y/R/9nvxf/Kf8gv2c/n3/0v+Y/yH/4/4R/5j/GABlAFwAPAAnACoAJwAVAPL/6P/3/wQAEQD0/+D/3f/j/9n/wP+N/5j/8v+BAPIAAwGlADEAAwByAF0BZwIZAzoD3wJZAggCQQIDAyQEHwWZBXAF5AReBPQDzgMABFsE4QR6BcYFXwURBHcCWQEkAV8BSwG7AG4AGgEBAkkBxv24+In16/Yy/EkBBQKh/Tr3/PKb8tX0jff1+XL8yP4e/5D7t/WN8dTyQ/pXA0gIsQcDAzT+k/1wANwE+QkODW0NaA2dDZsPjhNgFYoSJA0aCgkO0hePID8hlxmCEGYL0woeDTgNtgymEu0aXBz7EvT8q+gu6Sn7URDzGZ4NgPVO5oDjhOnJ8ajzcfJT9If1jPIG67HhXt5C5GDuRvUK9TDw4+t769fu2vGv8gTzPPPN9DH53P1SAYMCPP/u+XX3L/r4AdcKog4DDDMGZwF2AKICUQWmB/kJcQwyDVgKcAQI/+r9yQF2B3cKwQgDBLb/+/18/m//nv9I/wj/G//1/hT+l/w4+5b6vfpN++L7Sfx+/Gf8+vtT+8X6pPoi+wD8A/3A/QL+w/1G/eX88vyN/XL+Tf/E/8L/bv8k/xn/WP+8/xoATgBPADUAFwAEAAcABwAKAAkAAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA==</script>
+<script type="application/json" id="saved-settings">{}</script>
+<script>
+const sourceDocument='<!doctype html>'+document.documentElement.outerHTML;
+const $=s=>document.querySelector(s);
+const ONLINE_MODE=new URLSearchParams(location.search).get('online')==='1'&&window.parent!==window;
+let onlineSnapshot=null,onlineConnected=false,onlinePending=false,onlineClockOffset=0,onlineAnimation=null,onlineOutcomeId=null,onlineIncidentId=null;
+
+
+let potionContext=null,potionMaster=null,potionRun=null,potionRequest=0,potionVoiceBuffer=null;
+let recordedVoiceData=null,recordedVoiceBuffer=null,useRecordedVoice=false;
+let recordingMode='idle',recordingSession=0,voiceRecorder=null,voiceStream=null,recordingTimer=null,recordingTicker=null;
+function setSoundboardOpen(open,returnFocus=false){
+ if(!open&&recordingMode!=='idle')cancelOwnRecording();
+ $('#soundboard-panel').hidden=!open;$('#soundboard-toggle').setAttribute('aria-expanded',String(open));
+ if(returnFocus)$('#soundboard-toggle').focus({preventScroll:true});
+}
+function cancelPotionSpeech(){try{window.speechSynthesis?.cancel()}catch{}}
+function stopPotion(showStatus=true){
+ potionRequest++;const run=potionRun;potionRun=null;
+ if(run){
+  clearTimeout(run.timer);clearTimeout(run.voiceTimer);
+  if(run.utterance){run.utterance.onend=null;run.utterance.onerror=null;cancelPotionSpeech()}
+  for(const source of run.sources){try{source.stop()}catch{}}
+  for(const node of run.nodes){try{node.disconnect()}catch{}}
+ }
+ $('#potion-sound').classList.remove('is-playing');$('#sound-stop').disabled=true;
+ if(showStatus)$('#sound-status').textContent='Geluid gestopt.';
+}
+function createPotionSound(context,destination,when){
+ const duration=3.1,sampleRate=context.sampleRate;
+ const buffer=context.createBuffer(1,Math.ceil(sampleRate*duration),sampleRate),data=buffer.getChannelData(0);
+ let seed=80473;const random=()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296};
+ let lowNoise=0;
+ for(let i=0;i<data.length;i++){
+  lowNoise+=.08*((random()*2-1)-lowNoise);
+  const t=i/sampleRate;
+  data[i]=lowNoise*.12*(.65+.2*Math.sin(t*32)+.15*Math.sin(t*57));
+ }
+ for(let start=.025;start<duration-.25;start+=.045+random()*.11){
+  const frequency=140+random()*330,seconds=.08+random()*.14,level=.15+random()*.17;
+  const offset=Math.floor(start*sampleRate),count=Math.floor(seconds*sampleRate);let wetNoise=0;
+  for(let j=0;j<count&&offset+j<data.length;j++){
+   const t=j/sampleRate,progress=t/seconds;
+   const envelope=(1-Math.exp(-t*180))*Math.exp(-progress*5);
+   const phase=2*Math.PI*frequency*(t-.24*t*t/seconds);
+   wetNoise+=.22*((random()*2-1)-wetNoise);
+   data[offset+j]+=level*envelope*(Math.sin(phase)+.2*Math.sin(phase*.53)+.28*wetNoise);
+  }
+ }
+ for(let i=0;i<data.length;i++){
+  const t=i/sampleRate;data[i]*=Math.min(1,t/.025,(duration-t)/.22);
+ }
+ const source=context.createBufferSource(),filter=context.createBiquadFilter(),gain=context.createGain();
+ source.buffer=buffer;filter.type='lowpass';filter.frequency.value=1000;filter.Q.value=.5;gain.gain.value=.9;
+ source.connect(filter);filter.connect(gain);gain.connect(destination);source.start(when);source.stop(when+duration);
+ return {sources:[source],nodes:[source,filter,gain],duration};
+}
+function startPotionBubbles(run){
+ if(potionRun!==run||run.phase==='bubbles')return;
+ clearTimeout(run.voiceTimer);run.utterance=null;run.phase='bubbles';
+ const part=createPotionSound(potionContext,potionMaster,potionContext.currentTime+.045);
+ run.sources.push(...part.sources);run.nodes.push(...part.nodes);
+ $('#sound-status').textContent='Blub blub…';
+ run.timer=setTimeout(()=>{if(potionRun!==run)return;stopPotion(false);$('#sound-status').textContent='Klaar! Nog een keer?'},(part.duration+.1)*1000);
+}
+async function playEmbeddedShout(run,custom=false){
+ if(potionRun!==run||run.fallbackStarted||run.phase==='bubbles')return;
+ run.fallbackStarted=true;clearTimeout(run.voiceTimer);
+ if(run.utterance){run.utterance.onend=null;run.utterance.onerror=null;run.utterance=null;cancelPotionSpeech()}
+ try{
+  const selectedRecording=custom?recordedVoiceData:null;
+  let buffer=custom?recordedVoiceBuffer:potionVoiceBuffer;
+  if(!buffer){
+   const encoded=custom?recordedVoiceData.split(',')[1]:$('#potion-voice').textContent.trim();
+   const binary=atob(encoded),bytes=new Uint8Array(binary.length);
+   for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i);
+   buffer=await potionContext.decodeAudioData(bytes.buffer);
+   if(potionRun!==run||(custom&&selectedRecording!==recordedVoiceData))return;
+   if(custom)recordedVoiceBuffer=buffer;else potionVoiceBuffer=buffer;
+  }
+  if(potionRun!==run)return;
+  const voice=potionContext.createBufferSource();voice.buffer=buffer;voice.connect(potionMaster);
+  voice.onended=()=>startPotionBubbles(run);run.sources.push(voice);run.nodes.push(voice);voice.start(potionContext.currentTime+.02);
+ }catch(error){if(potionRun===run){stopPotion(false);$('#sound-status').textContent='De stem kon niet worden afgespeeld. Probeer het nogmaals.'}}
+}
+async function playPotion(){
+ if(recordingMode!=='idle')return;
+ stopPotion(false);const request=potionRequest;
+ try{
+  const Audio=contextAudioConstructor();if(!Audio)throw new Error('unsupported');
+  if(!potionContext||potionContext.state==='closed'){potionContext=new Audio();potionVoiceBuffer=null;potionMaster=potionContext.createGain();potionMaster.connect(potionContext.destination)}
+  await potionContext.resume();if(request!==potionRequest)return;
+  const volume=Number($('#sound-volume').value)/100;potionMaster.gain.setValueAtTime(volume,potionContext.currentTime);
+  const run={sources:[],nodes:[],phase:'voice',utterance:null,fallbackStarted:false};potionRun=run;
+  $('#potion-sound').classList.add('is-playing');$('#sound-stop').disabled=false;$('#sound-status').textContent=recordedVoiceData&&useRecordedVoice?'Je opname speelt…':'SCHEIKUNDEEEE!';
+  if(recordedVoiceData&&useRecordedVoice){await playEmbeddedShout(run,true);return}
+  let synthesis=null,voices=[];
+  try{synthesis=window.speechSynthesis;voices=synthesis?synthesis.getVoices().filter(voice=>/^nl(?:-|_)/i.test(voice.lang)):[]}catch{}
+  const voice=voices.find(voice=>/google/i.test(voice.name))||voices[0];
+  if(voice&&window.SpeechSynthesisUtterance){
+   try{
+   const utterance=new SpeechSynthesisUtterance('SCHEIKUNDEEEE!');utterance.lang='nl-NL';utterance.voice=voice;utterance.rate=.9;utterance.pitch=1.2;utterance.volume=volume;run.utterance=utterance;
+   utterance.onend=()=>startPotionBubbles(run);utterance.onerror=()=>playEmbeddedShout(run);
+   run.voiceTimer=setTimeout(()=>playEmbeddedShout(run),4000);synthesis.speak(utterance);
+   }catch(error){await playEmbeddedShout(run)}
+  }else await playEmbeddedShout(run);
+ }catch(error){if(request!==potionRequest)return;stopPotion(false);$('#sound-status').textContent=error.message==='unsupported'?'Deze browser ondersteunt dit geluid niet.':'Het geluid kon niet starten. Probeer de knop opnieuw.'}
+}
+function contextAudioConstructor(){return window.AudioContext||window.webkitAudioContext}
+$('#soundboard-toggle').addEventListener('click',()=>setSoundboardOpen($('#soundboard-panel').hidden));
+$('#soundboard-close').addEventListener('click',()=>setSoundboardOpen(false,true));
+$('#potion-sound').addEventListener('click',playPotion);
+$('#sound-stop').addEventListener('click',()=>stopPotion());
+$('#sound-volume').addEventListener('input',()=>{
+ const value=Number($('#sound-volume').value);$('#sound-volume-value').textContent=value+'%';
+ if(potionContext&&potionMaster)potionMaster.gain.setTargetAtTime(value/100,potionContext.currentTime,.015);
+ if(potionRun?.utterance)potionRun.utterance.volume=value/100;
+});
+document.addEventListener('click',event=>{if(!$('#soundboard-panel').hidden&&!event.target.closest('#soundboard-panel,#soundboard-toggle'))setSoundboardOpen(false)});
+document.addEventListener('keydown',event=>{if(event.key==='Escape'&&!$('#soundboard-panel').hidden&&!document.querySelector('dialog[open]')){event.preventDefault();setSoundboardOpen(false,true)}});
+window.addEventListener('pagehide',()=>{stopPotion(false);cancelOwnRecording(false)});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&recordingMode!=='idle')cancelOwnRecording()});
+try{window.speechSynthesis?.getVoices()}catch{}
+
+
+function refreshRecordingUI(){
+ const busy=recordingMode!=='idle',hasVoice=!!recordedVoiceData;
+ $('#record-voice').disabled=recordingMode==='requesting'||recordingMode==='processing';
+ $('#record-voice').textContent=recordingMode==='recording'?'■ Stop opname':recordingMode==='requesting'?'Microfoon openen…':recordingMode==='processing'?'Opname verwerken…':'● Opnemen';
+ $('#record-voice').classList.toggle('is-recording',recordingMode==='recording');
+ $('#cancel-recording').hidden=!busy;$('#potion-sound').disabled=busy;
+ $('#use-recording').disabled=!hasVoice||busy;$('#use-recording').checked=hasVoice&&useRecordedVoice;
+ $('#preview-recording').disabled=!hasVoice||busy;$('#delete-recording').disabled=!hasVoice||busy;
+ $('#soundboard-intro').textContent=hasVoice&&useRecordedVoice?'Je eigen stem, gevolgd door borrelend geluid.':'Druk op de knop: eerst SCHEIKUNDEEEE, daarna borrelen!';
+ $('#potion-label').textContent=hasVoice&&useRecordedVoice?'EIGEN OPNAME':'SCHEIKUNDEEEE';
+ $('#potion-caption').textContent=hasVoice&&useRecordedVoice?'Jouw stem + borrelen':'Kreet + borrelende potion';
+}
+function clearRecordingTimers(){clearTimeout(recordingTimer);clearInterval(recordingTicker)}
+function stopMicrophone(stream){if(stream)stream.getTracks().forEach(track=>track.stop())}
+function cancelOwnRecording(report=true){
+ if(recordingMode==='idle')return;
+ recordingSession++;clearRecordingTimers();const recorder=voiceRecorder,stream=voiceStream;voiceRecorder=null;voiceStream=null;recordingMode='idle';
+ if(recorder&&recorder.state!=='inactive'){try{recorder.stop()}catch{}}
+ stopMicrophone(stream);refreshRecordingUI();
+ if(report)$('#record-status').textContent='Opname geannuleerd. De microfoon is uit.';
+}
+function persistOwnRecording(){
+ settings.recording=recordedVoiceData;settings.useRecording=useRecordedVoice;settingsDraft.recording=recordedVoiceData;settingsDraft.useRecording=useRecordedVoice;
+ try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings));return true}catch{return false}
+}
+async function wavFromRecording(blob){
+ const Audio=contextAudioConstructor();if(!Audio)throw new Error('Deze browser kan de opname niet verwerken.');
+ if(!potionContext||potionContext.state==='closed'){potionContext=new Audio();potionMaster=potionContext.createGain();potionMaster.connect(potionContext.destination)}
+ const decoded=await potionContext.decodeAudioData(await blob.arrayBuffer());
+ if(decoded.duration<.1)throw new Error('De opname was te kort. Spreek iets in en probeer opnieuw.');
+ const sampleRate=22050,count=Math.ceil(Math.min(decoded.duration,8)*sampleRate);
+ const Offline=window.OfflineAudioContext||window.webkitOfflineAudioContext;if(!Offline)throw new Error('Deze browser kan de opname niet opslaan. Probeer Chrome.');
+ const offline=new Offline(1,count,sampleRate),source=offline.createBufferSource();source.buffer=decoded;source.connect(offline.destination);source.start();const rendered=await offline.startRendering();const samples=rendered.getChannelData(0);
+ let first=-1,last=-1,peak=0;for(let i=0;i<samples.length;i++){const magnitude=Math.abs(samples[i]);peak=Math.max(peak,magnitude);if(magnitude>.008){if(first<0)first=i;last=i}}
+ if(first<0)throw new Error('Ik hoor geen duidelijke opname. Controleer je microfoon en probeer opnieuw.');
+ first=Math.max(0,first-Math.floor(sampleRate*.08));last=Math.min(samples.length,last+Math.ceil(sampleRate*.15)+1);
+ const frames=last-first,bytes=new ArrayBuffer(44+frames*2),view=new DataView(bytes);const write=(offset,text)=>{for(let i=0;i<text.length;i++)view.setUint8(offset+i,text.charCodeAt(i))};
+ write(0,'RIFF');view.setUint32(4,36+frames*2,true);write(8,'WAVE');write(12,'fmt ');view.setUint32(16,16,true);view.setUint16(20,1,true);view.setUint16(22,1,true);view.setUint32(24,sampleRate,true);view.setUint32(28,sampleRate*2,true);view.setUint16(32,2,true);view.setUint16(34,16,true);write(36,'data');view.setUint32(40,frames*2,true);
+ const gain=Math.min(3,.85/peak);for(let i=0;i<frames;i++)view.setInt16(44+i*2,Math.round(Math.max(-1,Math.min(1,samples[first+i]*gain))*32767),true);
+ const raw=new Uint8Array(bytes);let binary='';for(let i=0;i<raw.length;i+=8192)binary+=String.fromCharCode(...raw.subarray(i,i+8192));
+ return 'data:audio/wav;base64,'+btoa(binary);
+}
+function microphoneBlockReason(){
+ const previewMessage='Dit voorbeeldvenster blokkeert de microfoon. Download het spel en open het HTML-bestand rechtstreeks in Chrome, of gebruik de HTTPS-link van je website.';
+ try{const policy=document.permissionsPolicy||document.featurePolicy;if(policy&&typeof policy.allowsFeature==='function'&&!policy.allowsFeature('microphone'))return previewMessage}catch{}
+ if(!window.isSecureContext)return 'De microfoon werkt alleen op een veilige pagina. Open het spel rechtstreeks in Chrome of via de HTTPS-link van je website.';
+ if(window.top!==window&&location.origin==='null')return previewMessage;
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder)return 'Deze browser ondersteunt hier geen microfoonopname. Open het spel rechtstreeks in een recente versie van Chrome.';
+ return '';
+}
+async function startOwnRecording(){
+ if(recordingMode==='recording'){stopOwnRecording();return}if(recordingMode!=='idle')return;
+ const blocked=microphoneBlockReason();if(blocked){$('#record-status').textContent=blocked;return}
+ stopPotion(false);const session=++recordingSession;recordingMode='requesting';refreshRecordingUI();$('#record-status').textContent='Geef je browser toestemming voor de microfoon.';
+ let stream=null;
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:true,noiseSuppression:true,autoGainControl:true},video:false});
+  if(session!==recordingSession){stopMicrophone(stream);return}
+  voiceStream=stream;
+  const mime=['audio/webm;codecs=opus','audio/mp4','audio/webm','audio/ogg;codecs=opus'].find(type=>typeof MediaRecorder.isTypeSupported==='function'&&MediaRecorder.isTypeSupported(type));
+  const recorder=new MediaRecorder(stream,mime?{mimeType:mime}:undefined),chunks=[];voiceRecorder=recorder;
+  recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data)};
+  recorder.onerror=()=>{if(session!==recordingSession)return;cancelOwnRecording(false);$('#record-status').textContent='Opnemen is mislukt. Controleer je microfoon en probeer opnieuw.'};
+  recorder.onstop=async()=>{
+   stopMicrophone(stream);if(session!==recordingSession)return;
+   clearRecordingTimers();voiceRecorder=null;voiceStream=null;recordingMode='processing';refreshRecordingUI();$('#record-status').textContent='Je opname wordt verwerkt…';
+   try{
+    const data=await wavFromRecording(new Blob(chunks,{type:recorder.mimeType}));if(session!==recordingSession)return;
+    recordedVoiceData=data;recordedVoiceBuffer=null;useRecordedVoice=true;const persisted=persistOwnRecording();
+    $('#record-status').textContent=persisted?'Opname opgeslagen. Je kunt hem terugluisteren of via de soundboardknop afspelen.':'Opname klaar voor deze sessie. Download het spel met instellingen om hem te bewaren.';
+   }catch(error){if(session===recordingSession)$('#record-status').textContent=error.message||'De opname kon niet worden verwerkt.'}
+   finally{if(session===recordingSession){recordingMode='idle';refreshRecordingUI()}}
+  };
+  recorder.start();recordingMode='recording';refreshRecordingUI();$('#record-status').textContent='Opname loopt… spreek nu je tekst in. (0/8 sec)';
+  const started=performance.now();recordingTicker=setInterval(()=>{if(session===recordingSession&&recordingMode==='recording')$('#record-status').textContent=`Opname loopt… ${Math.min(8,Math.floor((performance.now()-started)/1000))}/8 sec`},1000);
+  recordingTimer=setTimeout(stopOwnRecording,8000);
+ }catch(error){
+  stopMicrophone(stream);if(session!==recordingSession)return;voiceStream=null;voiceRecorder=null;recordingMode='idle';refreshRecordingUI();
+  $('#record-status').textContent=error.name==='SecurityError'?'Deze bestandsweergave blokkeert de microfoon. Open het HTML-bestand rechtstreeks in Chrome of via de HTTPS-link van je website.':error.name==='NotAllowedError'?'Microfoontoegang geweigerd. Sta de microfoon toe in Chrome en probeer opnieuw.':error.name==='NotFoundError'?'Er is geen microfoon gevonden. Sluit een microfoon aan en probeer opnieuw.':'De microfoon kon niet worden geopend. Controleer je browserinstellingen.';
+ }
+}
+function stopOwnRecording(){
+ if(recordingMode!=='recording'||!voiceRecorder)return;
+ clearRecordingTimers();const recorder=voiceRecorder;recordingMode='processing';refreshRecordingUI();
+ try{recorder.stop()}catch{cancelOwnRecording(false);$('#record-status').textContent='De opname kon niet worden gestopt. Probeer opnieuw.'}
+ stopMicrophone(voiceStream);
+}
+async function previewOwnRecording(){
+ if(!recordedVoiceData||recordingMode!=='idle')return;stopPotion(false);const request=potionRequest;
+ try{
+  const Audio=contextAudioConstructor();if(!Audio)throw new Error('unsupported');
+  if(!potionContext||potionContext.state==='closed'){potionContext=new Audio();potionMaster=potionContext.createGain();potionMaster.connect(potionContext.destination)}
+  await potionContext.resume();if(request!==potionRequest)return;
+  if(!recordedVoiceBuffer){const selected=recordedVoiceData,raw=atob(selected.split(',')[1]),bytes=Uint8Array.from(raw,char=>char.charCodeAt(0));const buffer=await potionContext.decodeAudioData(bytes.buffer);if(request!==potionRequest||selected!==recordedVoiceData)return;recordedVoiceBuffer=buffer}
+  if(request!==potionRequest)return;
+  potionMaster.gain.setValueAtTime(Number($('#sound-volume').value)/100,potionContext.currentTime);
+  const source=potionContext.createBufferSource();source.buffer=recordedVoiceBuffer;source.connect(potionMaster);
+  const run={sources:[source],nodes:[source],phase:'preview',utterance:null};potionRun=run;
+  source.onended=()=>{if(potionRun!==run)return;stopPotion(false);$('#sound-status').textContent='Je opname is afgelopen.'};
+  $('#sound-stop').disabled=false;$('#sound-status').textContent='Je opname speelt…';source.start();
+ }catch{if(request===potionRequest){stopPotion(false);$('#sound-status').textContent='Je opname kon niet worden afgespeeld.'}}
+}
+$('#record-voice').addEventListener('click',startOwnRecording);
+$('#cancel-recording').addEventListener('click',()=>cancelOwnRecording());
+$('#preview-recording').addEventListener('click',previewOwnRecording);
+$('#use-recording').addEventListener('change',()=>{stopPotion(false);useRecordedVoice=$('#use-recording').checked;persistOwnRecording();refreshRecordingUI()});
+$('#delete-recording').addEventListener('click',()=>{stopPotion(false);recordedVoiceData=null;recordedVoiceBuffer=null;useRecordedVoice=false;persistOwnRecording();refreshRecordingUI();$('#record-status').textContent='Opname verwijderd. De standaardkreet is weer actief.'});
+
+let logoSelection=0;
+$('#logo-file').addEventListener('change',async()=>{
+ const selection=++logoSelection;const file=$('#logo-file').files[0];if(!file)return;
+ if(!['image/png','image/jpeg','image/webp'].includes(file.type)){$('#logo-status').textContent='Kies een PNG-, JPG- of WebP-afbeelding.';return}
+ try{
+  const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
+  await new Promise((resolve,reject)=>{const image=new Image();image.onload=resolve;image.onerror=reject;image.src=data});
+  if(selection!==logoSelection)return;
+  $('#club-logo').src=data;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true;
+  $('#logo-status').textContent='Logo toegevoegd. Download het spel met instellingen om het te bewaren.';
+ }catch(error){if(selection===logoSelection)$('#logo-status').textContent='Deze afbeelding kon niet worden geopend. Kies een PNG- of JPG-bestand.'}
+});
+$('#save-logo').addEventListener('click',downloadConfiguredGame);
+if($('#club-logo').getAttribute('src')?.startsWith('data:image/'))$('#logo-status').textContent='Het DMC-logo is opgenomen in dit spelbestand.';
+let nextId=1;
+const makePerson=(name='')=>({id:nextId++,name});
+let draftPlayers=[makePerson(),makePerson()];
+let draftTeams=[{id:nextId++,name:'Team 1',members:[makePerson(),makePerson()]},{id:nextId++,name:'Team 2',members:[makePerson(),makePerson()]}];
+let config=null,state=null,animation,finishRoll,outcomeTimer,incidentTimer,confirmAction;
+const faces={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const dice=[$('#die-one'),$('#die-two')];
+
+const DEFAULT_MEMBERS=['Q','Jordan','Lon','Siem','Sef','Robin','Dennis','Ties','Gijs','Kay','Sem'];
+const SETTINGS_KEY='dmc-mexx-settings-v1';
+const VALID_SCORES=new Set([21,31,32,41,42,43,51,52,53,54,61,62,63,64,65,100,200,300,400,500,600]);
+function cleanSettings(value){
+ if(!value||!Array.isArray(value.members)||!value.members.length||value.members.some(n=>typeof n!=='string'||!n.trim()))return null;
+ const mexx=Array.isArray(value.extraMexx)?value.extraMexx:[],out=Array.isArray(value.extraOut)?value.extraOut:[];
+ if([...mexx,...out].some(n=>!VALID_SCORES.has(n))||out.includes(21)||out.some(n=>mexx.includes(n)))return null;
+ return {recording:typeof value.recording==='string'&&/^data:audio\/wav;base64,/.test(value.recording)?value.recording:null,useRecording:value.useRecording!==false,offTable:!!value.offTable,fourthRoll:!!value.fourthRoll,heldTrap:!!value.heldTrap,members:[...new Set(value.members.map(n=>n.trim().slice(0,45)))],extraMexx:[...new Set(mexx)].filter(n=>n!==21),extraOut:[...new Set(out)],logo:typeof value.logo==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(value.logo)?value.logo:null};
+}
+let embeddedSettings=null,storedSettings=null;
+try{embeddedSettings=cleanSettings(JSON.parse($('#saved-settings').textContent))}catch{}
+try{storedSettings=cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY)))}catch{}
+let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTable:false,fourthRoll:false,heldTrap:false};
+let settingsDraft=structuredClone(settings),memberBackup=null;
+function renderMembers(){
+ $('#members-editor').replaceChildren();settingsDraft.members.forEach((name,index)=>{
+  const row=document.createElement('div');row.className='person';
+  row.append(nameInput(name,`DMC-lid ${index+1}`,value=>settingsDraft.members[index]=value),control('×',`DMC-lid ${index+1} verwijderen`,()=>{settingsDraft.members.splice(index,1);renderMembers()},settingsDraft.members.length<=1));
+  $('#members-editor').append(row);
+ });
+}
+function addMember(){
+ const name=$('#new-member-name').value.trim();if(!name){$('#member-message').textContent='Vul eerst een naam in.';$('#new-member-name').focus();return}
+ if(settingsDraft.members.some(n=>n.trim().toLocaleLowerCase()===name.toLocaleLowerCase())){$('#member-message').textContent='Dit lid staat al in de lijst.';return}
+ settingsDraft.members.push(name);$('#new-member-name').value='';$('#member-message').textContent=`${name} toegevoegd. Sla de instellingen op om de ledenlijst te bewaren.`;renderMembers();$('#new-member-name').focus();
+}
+function parseScores(text){
+ if(!text.trim())return [];
+ const tokens=text.trim().split(/[,;\s]+/).filter(Boolean);const result=[];
+ for(const token of tokens){if(!/^\d+$/.test(token)||!VALID_SCORES.has(Number(token)))throw new Error(`“${token}” is geen mogelijke score. Gebruik bijvoorbeeld 31, 65 of 400.`);result.push(Number(token))}
+ return [...new Set(result)];
+}
+function saveSettings(){
+ try{
+  const members=settingsDraft.members.map(n=>n.trim());
+  if(!members.length||members.some(n=>!n))throw new Error('Geef ieder DMC-lid een naam of verwijder de lege regel.');
+  if(new Set(members.map(n=>n.toLocaleLowerCase())).size!==members.length)throw new Error('Er staan dubbele namen in de ledenlijst.');
+  const extraMexx=parseScores($('#extra-mexx').value).filter(n=>n!==21),extraOut=parseScores($('#extra-out').value);
+  if(extraOut.includes(21))throw new Error('21 blijft altijd Mexx en kan niet als direct-af-score worden ingesteld.');
+  if(extraOut.some(n=>extraMexx.includes(n)))throw new Error('Een score kan niet tegelijk extra Mexx en direct af zijn.');
+  const membersChanged=JSON.stringify(members)!==JSON.stringify(settings.members);
+  settings={recording:recordedVoiceData,useRecording:useRecordedVoice,members,extraMexx,extraOut,offTable:$('#rule-off-table').checked,fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,logo:$('#club-logo').getAttribute('src')||null};settingsDraft=structuredClone(settings);
+  let persisted=true;try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}catch{persisted=false}
+  $('#extra-mexx').value=extraMexx.join(', ');$('#extra-out').value=extraOut.join(', ');
+  $('#settings-status').textContent=persisted?'Instellingen opgeslagen op dit apparaat.':'Instellingen actief voor deze sessie. Download het spel met instellingen om ze te bewaren.';
+  $('#settings-status').classList.remove('settings-error');
+  if($('#load-members').checked&&membersChanged)applyMemberRoster();return true;
+ }catch(error){$('#settings-status').textContent=error.message;$('#settings-status').classList.add('settings-error');return false}
+}
+function applyMemberRoster(){
+ draftPlayers=settings.members.map(name=>makePerson(name));
+ draftTeams=draftTeams.map(t=>({...t,members:[]}));
+ settings.members.forEach((name,i)=>draftTeams[i%draftTeams.length].members.push(makePerson(name)));
+ draftTeams.forEach(t=>{if(!t.members.length)t.members.push(makePerson())});renderEditors();
+}
+function toggleMemberRoster(){
+ if($('#load-members').checked){memberBackup=structuredClone({players:draftPlayers,teams:draftTeams});applyMemberRoster()}
+ else if(memberBackup){draftPlayers=memberBackup.players;draftTeams=memberBackup.teams;memberBackup=null;renderEditors()}
+}
+function selectDashboardTab(tab){
+ const showSettings=tab==='settings';$('#dashboard-panel').hidden=showSettings;$('#settings-panel').hidden=!showSettings;
+ $('#start-game').hidden=showSettings;$('#save-settings').hidden=!showSettings;$('#setup-summary').hidden=showSettings;$('#setup-error').hidden=showSettings;
+ $('#dashboard-title').textContent=showSettings?'Instellingen':'Stel je spel samen.';
+ for(const [id,active]of[['#tab-game',!showSettings],['#tab-settings',showSettings]]){$(id).setAttribute('aria-selected',String(active));$(id).tabIndex=active?0:-1}
+ $('.setup-body').scrollTop=0;
+}
+function downloadConfiguredGame(){
+ if(!saveSettings())return;
+ const copy=new DOMParser().parseFromString(sourceDocument,'text/html');
+ const logo=$('#club-logo').getAttribute('src');
+ if(logo?.startsWith('data:image/')){copy.querySelector('#club-logo').setAttribute('src',logo);copy.querySelector('#club-logo').hidden=false;copy.querySelector('#logo-fallback').hidden=true}
+ copy.querySelector('#saved-settings').textContent=JSON.stringify(settings).replace(/</g,'\\u003c');
+ const blob=new Blob(['<!doctype html>'+copy.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='DMC-mexx-met-instellingen.html';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+function isOutScore(score){return config.extraOut.includes(score)||(config.nouri&&score===43)}
+function isMexx(score){return config.mexxScores.includes(score)&&!isOutScore(score)}
+
+function textNode(tag,text,cls){const n=document.createElement(tag);n.textContent=text;if(cls)n.className=cls;return n}
+function control(text,label,action,disabled=false){const b=textNode('button',text);b.type='button';b.setAttribute('aria-label',label);b.disabled=disabled;b.addEventListener('click',action);return b}
+function move(list,index,step){[list[index],list[index+step]]=[list[index+step],list[index]];renderEditors()}
+function nameInput(value,label,onInput){const input=document.createElement('input');input.type='text';input.value=value;input.placeholder=label;input.maxLength=45;input.setAttribute('aria-label',label);input.addEventListener('input',()=>onInput(input.value));return input}
+function personRow(person,list,index,label){
+ const row=document.createElement('div');row.className='person';row.dataset.person=person.id;
+ row.append(textNode('span',String(index+1),'number'),nameInput(person.name,label,v=>person.name=v),control('↑',`${label} omhoog`,()=>move(list,index,-1),index===0),control('↓',`${label} omlaag`,()=>move(list,index,1),index===list.length-1),control('×',`${label} verwijderen`,()=>{list.splice(index,1);renderEditors()},list.length<=1));return row;
+}
+function renderEditors(){
+ $('#players-editor').replaceChildren(...draftPlayers.map((p,i)=>personRow(p,draftPlayers,i,`Speler ${i+1}`)));
+ $('#teams-editor').replaceChildren();
+ draftTeams.forEach((team,index)=>{
+  const box=document.createElement('div');box.className='team-box';box.dataset.team=team.id;
+  const heading=document.createElement('div');heading.className='team-heading';heading.append(nameInput(team.name,`Teamnaam ${index+1}`,v=>team.name=v));
+  const controls=document.createElement('div');controls.className='team-controls';controls.append(control('↑','Team omhoog',()=>move(draftTeams,index,-1),index===0),control('↓','Team omlaag',()=>move(draftTeams,index,1),index===draftTeams.length-1),control('×','Team verwijderen',()=>{draftTeams.splice(index,1);renderEditors()},draftTeams.length<=1));heading.append(controls);box.append(heading);
+  team.members.forEach((p,i)=>box.append(personRow(p,team.members,i,`Teamlid ${i+1}`)));
+  const add=control('+ Teamlid','Teamlid toevoegen',()=>{team.members.push(makePerson());renderEditors()});add.className='add-member';box.append(add);$('#teams-editor').append(box);
+ });
+}
+function updateSetupMode(){const teams=$('input[name=mode]:checked').value==='team';$('#single-setup').hidden=teams;$('#team-setup').hidden=!teams;$('#team-option').hidden=!teams;$('#setup-error').textContent=''}
+function startGame(event){
+ event.preventDefault();const mode=$('input[name=mode]:checked').value;const people=mode==='single'?draftPlayers:draftTeams.flatMap(t=>t.members);
+ $('#setup-error').textContent='';
+ config={offTable:settings.offTable,fourthRoll:settings.fourthRoll,heldTrap:settings.heldTrap,mexxScores:[21,...settings.extraMexx],extraOut:[...settings.extraOut],mode,wholeTeam:$('#whole-team').checked,nouri:$('#nouri').checked,players:people.map((p,i)=>({id:p.id,name:p.name.trim()||`Speler ${i+1}`})),teams:mode==='team'?draftTeams.map((t,i)=>({id:t.id,name:t.name.trim()||`Team ${i+1}`,members:t.members.map(p=>p.id)})):[]};
+ state={round:0,history:[],outcome:null,stars:new Map(config.players.map(p=>[p.id,0]))};$('#setup').hidden=true;$('#setup-tag').hidden=true;$('#game').hidden=false;$('#game-controls').hidden=false;beginRound();
+}
+function scheduleForRound(round=state.round){
+ if(config.mode==='single')return config.players.map(p=>p.id);
+ if(!config.wholeTeam)return config.teams.map(t=>t.members[(round-1)%t.members.length]);
+ return config.teams.flatMap(t=>t.members);
+}
+function rotateTo(ids,starter){const index=ids.indexOf(starter);return index<0?ids:[...ids.slice(index),...ids.slice(0,index)]}
+function orderWithStarter(ids,starter){
+ if(!starter)return ids;
+ if(config.mode==='single')return rotateTo(ids,starter);
+ const losingTeam=teamFor(starter);
+ const teams=rotateTo(config.teams.map(t=>t.id),losingTeam.id).map(id=>config.teams.find(t=>t.id===id));
+ if(!config.wholeTeam)return teams.map(t=>ids[config.teams.findIndex(original=>original.id===t.id)]);
+ return teams.flatMap(t=>t.id===losingTeam.id?rotateTo(t.members,starter):t.members);
+}
+function cancelTimers(){clearInterval(animation);clearTimeout(finishRoll);clearTimeout(outcomeTimer);clearTimeout(incidentTimer);$('.dice-area').classList.remove('rolling');dice.forEach(die=>die.classList.remove('flying'))}
+function beginRound(){
+ if(ONLINE_MODE){sendOnlineAction('newRound');return}
+ cancelTimers();$('#outcome-dialog').close();$('#incident-dialog').close();
+ const starter=state.outcome?.starter;
+ if(state.round)state.history.push({round:state.round,records:new Map(state.records),out:new Set(state.out),schedule:[...state.schedule],stars:new Map(state.stars),incidents:[...state.incidents],outcome:state.outcome});
+ state.stars=new Map(config.players.map(p=>[p.id,0]));
+ state.round++;state.schedule=orderWithStarter(scheduleForRound(),starter);state.outcome=null;state.outcomePending=false;state.index=0;state.limit=3;state.records=new Map();state.incidents=[];state.incidentOpen=false;state.out=new Set();state.complete=false;
+ $('#round-view').replaceChildren(new Option('Deze ronde','current'),...state.history.map(r=>new Option('Ronde '+r.round,String(r.round))));
+ startTurn(true);
+}
+function startTurn(newRound=false){
+ const firstThrow=!state.values;
+ state.turn=[];state.values=state.values||[1,1];
+ state.held=config.heldTrap&&!newRound?state.held||[false,false]:[false,false];
+ state.inheritedHeld=state.held.map(held=>!!held);state.fourthUsed=false;state.rolling=false;state.incidentOpen=false;
+ dice.forEach((die,i)=>showFace(die,state.values[i],i));$('#total').textContent='—';
+ $('#result-label').textContent=firstThrow?'KLAAR VOOR JE EERSTE WORP?':'STENEN VAN DE VORIGE BEURT';renderGame();
+}
+function turnLimit(){return state.index===0?3:state.limit}
+function fourthAvailable(){return config.fourthRoll&&turnLimit()===3&&state.turn.length===3&&!state.fourthUsed}
+function inheritedTrap(){return config.heldTrap&&state.inheritedHeld.some((held,i)=>held&&state.held[i])}
+function canRollNow(){return !!state&&!state.complete&&!state.rolling&&!state.incidentOpen&&!state.out.has(currentId())&&(state.turn.length<turnLimit()||fourthAvailable())&&(!state.held.every(Boolean)||inheritedTrap())}
+function rollsOffTable(){return config.offTable&&Math.random()<0.05}
+function currentId(){return state.schedule[state.index]}
+function currentPlayer(){return config.players.find(p=>p.id===currentId())}
+function teamFor(id){return config.teams.find(t=>t.members.includes(id))}
+function scoreFor(a,b){return a===b?a*100:10*Math.max(a,b)+Math.min(a,b)}
+function randomFace(){return Math.floor(Math.random()*6)+1}
+function showFace(die,value,index){die.replaceChildren(...Array.from({length:9},(_,i)=>{const pip=textNode('span','','pip'+(faces[value].includes(i)?' visible':''));pip.setAttribute('aria-hidden','true');return pip}));die.setAttribute('aria-label',`Dobbelsteen ${index+1}: ${value}`)}
+function renderGame(){
+ $('.arena').classList.toggle('complete',state.complete&&!state.outcomePending);
+ const player=currentPlayer(),out=state.out.has(currentId()),max=turnLimit(),canRoll=canRollNow();
+ $('#round-tag').textContent=`Ronde ${state.round}`;$('#turn-name').textContent=state.complete&&!state.outcomePending?'Ronde afgelopen':player.name;$('#turn-name').title=player.name;$('#turn-team').textContent=state.complete?(state.outcome?.instant?'DIRECT AF · RIP':'RONDE AFGESLOTEN'):config.mode==='team'?teamFor(player.id).name:'AAN DE BEURT';
+ $('#turn-status').textContent=state.outcomePending?`${state.turn.at(-1).score} gegooid · De ronde is voorbij.`:state.complete?'Begin een nieuwe ronde om verder te spelen.':`${state.turn.length} van ${max} worpen${out?' · Uitgeschakeld':state.turn.length>=max?' · Geef door':''}${config.nouri?' · Nouri aan':''}`;
+ $('#roll').disabled=!canRoll;$('#roll').hidden=state.complete||out||(state.turn.length>=max&&!fourthAvailable())||(state.held.every(Boolean)&&!inheritedTrap());$('#pass').hidden=state.complete;$('#pass').disabled=state.rolling||state.incidentOpen||!state.turn.length;$('#next-round').hidden=!state.complete||state.outcomePending;
+ $('#new-round').disabled=!!state.outcomePending||state.rolling||state.incidentOpen;$('#reset').disabled=!!state.outcomePending||state.rolling||state.incidentOpen;
+ $('#roll-label').textContent=state.rolling?'Even rollen…':out?'Uitgeschakeld':fourthAvailable()?'Nog een keer rollen':state.turn.length>=max?'Alle worpen gebruikt':state.held.every(Boolean)&&!inheritedTrap()?'Maak een steen los':state.held.some(Boolean)&&!inheritedTrap()?'Rol de losse steen':state.turn.length?'Nog een keer rollen':'Rol de dobbelstenen';
+ $('.rip-copy p').textContent=`${state.outcome?.nouri?34:state.outcome?.eliminationScore||state.turn.at(-1)?.score||''} gegooid. De ronde is direct afgelopen.`;
+ $('#rip').hidden=!out||state.outcomePending;$('.arena').classList.toggle('eliminated',out&&!state.outcomePending);
+ $('#pass').textContent=state.index===state.schedule.length-1?'Ronde afsluiten →':'Doorgeven →';
+ $('#arena-hint').textContent=state.outcomePending?'De uitslag verschijnt zo…':state.complete?'De Mexx-sterren worden bij de volgende ronde gereset.':out?'Deze speler kan pas in een nieuwe ronde weer gooien.':'Tik na je eerste worp op een dobbelsteen om hem vast te zetten.';
+ dice.forEach((die,i)=>{die.disabled=state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'Vastgezet':'Los'});
+ $('#board-mode').textContent=config.mode==='single'?'Individueel':config.wholeTeam?'Hele team':'1 per team';$('#board-rules').textContent=`${config.nouri?'Nouri aan: 43 stopt de ronde · ':''}Rondelimiet: ${state.index===0&&!state.complete?'wordt bepaald':state.limit+' worpen'}`;
+ renderScores();
+}
+function renderScores(){
+ const list=$('#score-list');const scrollTop=list.scrollTop;list.replaceChildren();
+ const selected=$('#round-view').value;const past=selected==='current'?null:state.history.find(r=>r.round===Number(selected));const view=past||state;
+ const groups=config.mode==='single'?[{name:null,members:config.players.map(p=>p.id)}]:config.teams;
+ for(const group of groups){
+  if(group.name)list.append(textNode('h3',group.name,'team-title'));
+  for(const id of group.members){
+   const person=config.players.find(p=>p.id===id),record=view.records.get(id),active=!past&&!state.complete&&id===currentId(),out=view.out.has(id);const row=document.createElement('div');row.className='score-row'+(active?' active':'')+(out?' out':'')+(view.outcome?.loserIds.includes(id)?' lost':'');row.dataset.player=id;
+   const name=textNode('div',person.name,'score-name');const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
+   const last=record?.at(-1);const score=textNode('span',out?'RIP':last?String(last.score):'—','score-number');
+   let detail=record?record.map(w=>w.score).join(' → ')+(active?' · aan de beurt':' · laatste worp telt'):active?'Aan de beurt':view.schedule.includes(id)?past?'Niet gegooid':'Wacht op de beurt':past?'Deze ronde niet aan de beurt':'Volgende ronde aan de beurt';
+   const extraPenalties=(view.incidents||[]).filter(incident=>incident.player===id).length;
+   if(extraPenalties)detail+=` · ${String(extraPenalties/2).replace('.',',')} adtje extra`;
+   if(out)detail+=' · RIP, ronde afgelopen';else if(view.outcome?.loserIds.includes(id))detail+=' · verloren';row.append(name,score,textNode('p',detail,'score-detail'));list.append(row);
+  }
+ }
+ list.scrollTop=scrollTop;
+}
+function showIncident(kind){
+ const details={offTable:['Van tafel!','Je gooide de losse stenen van tafel. Deze worp telt niet; je mag opnieuw gooien.'],fourth:['Te vaak gegooid!','Dit was je vierde worp. Die telt niet: je derde, geldige score blijft staan. Geef de beurt nu door.'],held:['Vergeten los te maken!','Je drukte op gooien met een vastgezette steen van de vorige speler. De stenen zijn nu los; je mag opnieuw gooien.']};
+ state.rolling=false;state.incidentOpen=true;
+ state.incidents.push({player:currentId(),kind,amount:0.5});
+ $('#incident-title').textContent=details[kind][0];$('#incident-reason').textContent=details[kind][1];$('#incident-player').textContent=currentPlayer().name;
+ renderGame();$('#incident-dialog').showModal();
+}
+function closeIncident(){
+ if(ONLINE_MODE){if(onlineSnapshot?.viewer.id===currentId())sendOnlineAction('ack');else $('#incident-dialog').close();return}
+ $('#incident-dialog').close();if(!state)return;state.incidentOpen=false;renderGame();
+ const target=canRollNow()?$('#roll'):$('#pass');target.focus({preventScroll:true});
+}
+function roll(){
+ if(ONLINE_MODE){sendOnlineAction('roll');return}
+ if(!state||$('#game').hidden||!canRollNow())return;
+ if(inheritedTrap()){
+  state.held=[false,false];state.inheritedHeld=[false,false];showIncident('held');return;
+ }
+ const fourth=fourthAvailable();if(fourth)state.fourthUsed=true;
+ const offTable=!fourth&&rollsOffTable();
+ state.rolling=true;renderGame();$('.dice-area').classList.add('rolling');
+ animation=setInterval(()=>dice.forEach((die,i)=>{if(!state.held[i])showFace(die,randomFace(),i)}),90);
+ finishRoll=setTimeout(()=>{
+  clearInterval(animation);$('.dice-area').classList.remove('rolling');
+  if(offTable){
+   dice.forEach((die,i)=>{if(!state.held[i]){die.style.setProperty('--fly-x',i?'120vw':'-120vw');die.classList.add('flying')}});
+   incidentTimer=setTimeout(()=>{dice.forEach((die,i)=>{die.classList.remove('flying');showFace(die,state.values[i],i)});showIncident('offTable')},700);return;
+  }
+  const values=state.values.map((v,i)=>state.held[i]?v:randomFace());state.values=values;state.inheritedHeld=[false,false];dice.forEach((die,i)=>showFace(die,values[i],i));
+  if(fourth){$('#result-label').textContent='LAATSTE GELDIGE SCORE';showIncident('fourth');return}
+  const score=scoreFor(...values);state.turn.push({values:[...values],score});state.records.set(currentId(),[...state.turn]);
+  if(isMexx(score))state.stars.set(currentId(),state.stars.get(currentId())+1);
+  if(isOutScore(score))state.out.add(currentId());
+  state.rolling=false;$('#total').textContent=score;$('#result-label').textContent=`${values[0]} EN ${values[1]} · LAATSTE WORP`;
+  if(isOutScore(score)){finishRound(currentId(),config.nouri&&score===43?'nouri':'extra');return}
+  if(state.index===state.schedule.length-1&&state.turn.length>=turnLimit()&&!fourthAvailable()){finishRound();return}
+  renderGame();
+ },650);
+}
+function passDice(){
+ if(ONLINE_MODE){sendOnlineAction('pass');return}
+ if(!state||state.rolling||state.incidentOpen||state.complete||!state.turn.length)return;
+ if(state.index===0)state.limit=state.turn.length;
+ if(state.index+1>=state.schedule.length){finishRound()}else{state.index++;startTurn()}
+}
+function rankScore(score){return isMexx(score)?1000:score}
+function finishRound(instantLoser=null,instantReason=null){
+ if(state.complete)return;
+ cancelTimers();state.rolling=false;
+ if(state.index===0)state.limit=state.turn.length;
+ const played=state.schedule.filter(id=>state.records.has(id));
+ if(!played.length)return;
+ const minimum=Math.min(...played.map(id=>rankScore(state.records.get(id).at(-1).score)));
+ const loserIds=instantLoser!==null?[instantLoser]:played.filter(id=>rankScore(state.records.get(id).at(-1).score)===minimum);
+ const mexxes=[...state.records.values()].flat().filter(w=>isMexx(w.score)).length;
+ state.outcome={loserIds,starter:loserIds[0],mexxes,halfUnits:1+mexxes,instant:instantLoser!==null,nouri:instantReason==='nouri',eliminationScore:instantLoser!==null?state.records.get(instantLoser).at(-1).score:null};state.complete=true;
+ state.outcomePending=instantLoser!==null;
+ renderGame();
+ if(state.outcomePending){
+  const outcome=state.outcome;
+  outcomeTimer=setTimeout(()=>{
+   if(!state||state.outcome!==outcome)return;
+   state.outcomePending=false;renderGame();showOutcome();
+  },800);
+ }else showOutcome();
+}
+function showOutcome(){
+ const outcome=state.outcome;const names=outcome.loserIds.map(id=>config.players.find(p=>p.id===id).name);
+ const joinNames=items=>items.length===1?items[0]:items.slice(0,-1).join(', ')+' en '+items.at(-1);
+ const losingTeams=config.mode==='team'?[...new Set(outcome.loserIds.map(id=>teamFor(id).id))].map(id=>config.teams.find(t=>t.id===id).name):[];
+ const labels=config.mode==='team'?losingTeams:names;
+ $('#outcome-round').textContent=`RONDE ${state.round} · UITSLAG`;
+ $('#outcome-title').textContent=joinNames(labels)+(labels.length===1?' heeft verloren':' hebben verloren');
+ $('#outcome-rip').hidden=!outcome.instant;
+ const score=state.records.get(outcome.starter).at(-1).score;
+ $('#outcome-reason').textContent=outcome.instant?`${joinNames(names)} gooide ${outcome.nouri?34:outcome.eliminationScore}${outcome.nouri?' in Nouri mode':' (direct-af-score)'}. De ronde is direct afgelopen.`:`${joinNames(names)} ${names.length===1?'had':'hadden'} de laagste eindscore: ${score}.${names.length>1?' Gelijke laagste scores tellen als verlies.':''}`;
+ $('#penalty-scope').textContent=config.mode==='team'?'STRAF PER VERLIEZEND TEAM':'STRAF PER VERLIEZER';
+ const amount=outcome.halfUnits/2;
+ $('#penalty-value').textContent=amount===0.5?'Een half adtje':`${String(amount).replace('.',',')} ${amount===1?'adtje':'adtjes'}`;
+ $('#penalty-breakdown').textContent=`½ basis + ${outcome.mexxes} × ½ voor ${outcome.mexxes===1?'één Mexx':outcome.mexxes+' Mexx-worpen'} in deze ronde`;
+ const nextStarter=orderWithStarter(scheduleForRound(state.round+1),outcome.starter)[0];
+ const nextName=config.players.find(p=>p.id===nextStarter).name;
+ $('#outcome-starter').textContent=config.mode==='team'?`${teamFor(nextStarter).name} begint de volgende ronde. ${nextName} is aan de beurt.`:`${nextName} begint de volgende ronde.${names.length>1?' Bij gelijkspel begint de eerste in de speelvolgorde.':''}`;
+ $('#outcome-dialog').showModal();
+}
+function confirm(title,copy,action){confirmAction=action;$('#confirm-title').textContent=title;$('#confirm-copy').textContent=copy;$('#confirm-dialog').showModal()}
+function requestNewRound(){if(ONLINE_MODE){if(state?.complete)sendOnlineAction('newRound');else if(window.confirm('Ronde nu afsluiten?'))sendOnlineAction('endRound');return}if(state.complete)beginRound();else if(state.records.size)confirm('Ronde nu afsluiten?','De gespeelde eindworpen bepalen de verliezer. Je krijgt eerst de uitslag en de straf te zien.',()=>finishRound());else confirm('Nieuwe ronde beginnen?','Er is nog niet gegooid; er wordt geen straf toegekend.',beginRound)}
+$('#start-game').addEventListener('click',startGame);
+$('#setup').addEventListener('submit',event=>{if($('#settings-panel').hidden)startGame(event);else{event.preventDefault();saveSettings()}});
+$('#setup').addEventListener('keydown',event=>{
+ if(event.key==='Enter'&&event.target.matches('#dashboard-panel input[type=text]'))startGame(event);
+});
+document.querySelectorAll('input[name=mode]').forEach(n=>n.addEventListener('change',updateSetupMode));
+$('#whole-team').addEventListener('change',()=>$('#team-turn-help').textContent=$('#whole-team').checked?'Aan: eerst gooit het ene team helemaal, daarna het volgende team.':'Uit: één teamlid per ronde. Elke ronde is de volgende aan de beurt.');
+$('#add-player').addEventListener('click',()=>{draftPlayers.push(makePerson());renderEditors();$('#players-editor .person:last-child input').focus()});$('#add-team').addEventListener('click',()=>{draftTeams.push({id:nextId++,name:`Team ${draftTeams.length+1}`,members:[makePerson()]});renderEditors();$('#teams-editor .team-box:last-child input').focus()});
+$('#round-view').addEventListener('change',renderScores);
+$('#outcome-next').addEventListener('click',beginRound);
+$('#incident-continue').addEventListener('click',closeIncident);
+$('#incident-dialog').addEventListener('cancel',event=>{event.preventDefault();closeIncident()});
+function closeOutcome(){
+ $('#outcome-dialog').close();$('#round-view').value='current';renderScores();$('#score-list').focus({preventScroll:true});
+}
+$('#outcome-view').addEventListener('click',closeOutcome);
+$('#outcome-close').addEventListener('click',closeOutcome);
+$('#outcome-dialog').addEventListener('cancel',event=>{event.preventDefault();closeOutcome()});
+$('#outcome-dialog').addEventListener('click',event=>{
+ if(event.target!==$('#outcome-dialog'))return;
+ const box=$('#outcome-dialog').getBoundingClientRect();
+ if(event.clientX<box.left||event.clientX>box.right||event.clientY<box.top||event.clientY>box.bottom)closeOutcome();
+});
+$('#roll').addEventListener('click',roll);$('#pass').addEventListener('click',passDice);$('#new-round').addEventListener('click',requestNewRound);$('#next-round').addEventListener('click',beginRound);
+$('#reset').addEventListener('click',()=>{if(ONLINE_MODE){if(window.confirm('Terug naar de lobby? De lopende partij wordt beëindigd.'))sendOnlineAction('lobby');return}confirm('Spel resetten?','Alle scores en sterren worden gewist. Je gaat terug naar het startdashboard; de ingevulde namen blijven staan.',()=>{cancelTimers();state=null;$('#game').hidden=true;$('#game-controls').hidden=true;$('#setup').hidden=false;$('#setup-tag').hidden=false;$('#setup').scrollTop=0;$('.setup-body').scrollTop=0;$('input[name=mode]:checked').focus({preventScroll:true})})});
+$('#cancel-confirm').addEventListener('click',()=>$('#confirm-dialog').close());$('#accept-confirm').addEventListener('click',()=>{const action=confirmAction;$('#confirm-dialog').close();action()});
+ dice.forEach((die,i)=>die.addEventListener('click',()=>{if(die.disabled)return;if(ONLINE_MODE){sendOnlineAction('hold',{index:i});return}state.held[i]=!state.held[i];if(!state.held[i])state.inheritedHeld[i]=false;renderGame()}));
+$('.arena').addEventListener('click',event=>{if(!event.target.closest('button,.die-wrap'))roll()});
+document.addEventListener('keydown',event=>{if(event.code==='Space'&&!$('#game').hidden&&!$('#confirm-dialog').open&&!$('#outcome-dialog').open&&!$('#incident-dialog').open&&!event.target.closest('button,input,select,textarea,#score-list,#soundboard-panel')){event.preventDefault();if(!event.repeat)roll()}});
+$('#tab-game').addEventListener('click',()=>selectDashboardTab('game'));
+$('#tab-settings').addEventListener('click',()=>selectDashboardTab('settings'));
+$('.dashboard-tabs').addEventListener('keydown',event=>{if(['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const settings=event.key==='End'||event.key!=='Home'&&$('#tab-settings').getAttribute('aria-selected')!=='true';selectDashboardTab(settings?'settings':'game');$(settings?'#tab-settings':'#tab-game').focus()}});
+$('#load-members').addEventListener('change',toggleMemberRoster);
+$('#add-dmc-member').addEventListener('click',addMember);
+$('#save-settings').addEventListener('click',saveSettings);
+$('#settings-panel').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.matches('input[type=text]')){event.preventDefault();if(event.target.id==='new-member-name')addMember();else saveSettings()}});
+$('#extra-mexx').value=settings.extraMexx.join(', ');$('#extra-out').value=settings.extraOut.join(', ');
+$('#rule-off-table').checked=!!settings.offTable;$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
+if(settings.logo){$('#club-logo').src=settings.logo;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true}
+recordedVoiceData=settings.recording||null;useRecordedVoice=!!recordedVoiceData&&settings.useRecording!==false;
+refreshRecordingUI();if(recordedVoiceData)$('#record-status').textContent='Je opgeslagen opname is beschikbaar.';
+renderMembers();renderEditors();updateSetupMode();
+
+function sendOnlineAction(action,extra={}){
+ if(!ONLINE_MODE||!onlineSnapshot||!onlineConnected||onlinePending)return;
+ const adminActions=['newRound','endRound','lobby'];
+ if(adminActions.includes(action)){if(!onlineSnapshot.viewer.isAdmin)return}
+ else if(!state||onlineSnapshot.viewer.id!==currentId())return;
+ window.parent.postMessage({type:'dmc-online-action',action,extra},location.origin);
+}
+function hydrateOnlineState(value){
+ const copy=structuredClone(value);copy.records=new Map(Object.entries(copy.records));copy.stars=new Map(Object.entries(copy.stars));copy.out=new Set(copy.out);
+ copy.history=copy.history.map(round=>({...round,records:new Map(Object.entries(round.records)),stars:new Map(Object.entries(round.stars)),out:new Set(round.out)}));return copy;
+}
+function applyOnlineControls(){
+ const admin=onlineSnapshot.viewer.isAdmin,active=onlineSnapshot.viewer.id===currentId(),ready=active&&onlineConnected&&!onlinePending;
+ if(!ready){$('#roll').disabled=true;$('#pass').disabled=true;dice.forEach(die=>die.disabled=true)}
+ $('#new-round').hidden=!admin;$('#reset').hidden=!admin;
+ if(!admin){$('#next-round').hidden=true;$('#outcome-next').hidden=true}else{$('#outcome-next').hidden=false}
+ $('#online-round-help').hidden=admin;
+ if(!onlineConnected||onlinePending){$('#new-round').disabled=true;$('#reset').disabled=true;$('#next-round').disabled=true;$('#outcome-next').disabled=true}else{$('#next-round').disabled=false;$('#outcome-next').disabled=false}
+ $('#incident-continue').textContent=active?'Verder spelen →':'Bekijk scores';$('#incident-continue').disabled=active&&(!onlineConnected||onlinePending);
+ if(!active&&!state.complete)$('#arena-hint').textContent='Je kijkt live mee. '+currentPlayer().name+' is aan de beurt.';
+}
+function updateOnlineAnimation(){
+ clearInterval(onlineAnimation);onlineAnimation=null;$('.dice-area').classList.remove('rolling');dice.forEach(die=>die.classList.remove('flying'));
+ dice.forEach((die,i)=>showFace(die,state.values[i],i));
+ if(!onlineConnected)return;
+ if(state.animation?.kind==='roll'){
+  $('.dice-area').classList.add('rolling');const draw=()=>{
+   const frame=Math.max(0,Math.floor((Date.now()+onlineClockOffset-state.animation.started)/90));
+   dice.forEach((die,i)=>{if(!state.held[i]){let seed=(state.animation.seed^Math.imul(frame+1,1103515245)^Math.imul(i+1,2654435761))>>>0;seed^=seed>>>16;showFace(die,(seed>>>0)%6+1,i)}});
+  };draw();onlineAnimation=setInterval(draw,60);
+ }else if(state.animation?.kind==='fly')dice.forEach((die,i)=>{if(!state.held[i]){die.style.setProperty('--fly-x',i?'120vw':'-120vw');die.classList.add('flying')}});
+}
+function receiveOnlineSnapshot(snapshot,connected,pending){
+ if(!ONLINE_MODE)return;onlineSnapshot=snapshot;onlineConnected=connected;onlinePending=pending;onlineClockOffset=snapshot.now-Date.now();
+ $('#setup').hidden=true;$('#setup-tag').hidden=true;document.body.classList.add('online-game');
+ if(snapshot.phase!=='playing'){
+  clearInterval(onlineAnimation);cancelTimers();stopPotion(false);cancelOwnRecording(false);setSoundboardOpen(false);
+  for(const dialog of document.querySelectorAll('dialog[open]'))dialog.close();onlineOutcomeId=null;onlineIncidentId=null;return;
+ }
+ config=snapshot.config;state=hydrateOnlineState(snapshot.state);$('#game').hidden=false;$('#game-controls').hidden=false;
+ if(config.logo){$('#club-logo').src=config.logo;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true}
+ const viewedRound=$('#round-view').value;
+ $('#round-view').replaceChildren(new Option('Deze ronde','current'),...state.history.map(r=>new Option('Ronde '+r.round,String(r.round))));
+ if(Array.from($('#round-view').options).some(option=>option.value===viewedRound))$('#round-view').value=viewedRound;
+ const last=state.turn.at(-1);$('#total').textContent=last?last.score:'—';$('#result-label').textContent=state.rolling?'DOBBELSTENEN ROLLEN…':state.lastDisplay==='valid'?'LAATSTE GELDIGE SCORE':last?`${last.values[0]} EN ${last.values[1]} · LAATSTE WORP`:'STENEN VAN DE VORIGE BEURT';
+ renderGame();updateOnlineAnimation();applyOnlineControls();
+ if(state.complete&&!state.outcomePending&&state.outcome?.id!==onlineOutcomeId){onlineOutcomeId=state.outcome.id;showOutcome();applyOnlineControls()}
+ if(!state.complete&&$('#outcome-dialog').open)$('#outcome-dialog').close();
+ if(state.activeIncident&&state.activeIncident.id!==onlineIncidentId){
+  onlineIncidentId=state.activeIncident.id;
+  const detail={held:['Vergeten los te maken!','Er is gegooid met een vastgezette steen van de vorige speler.'],fourth:['Te vaak gegooid!','De vierde worp telt niet. De laatste geldige score blijft staan.'],offTable:['Van tafel!','De losse stenen zijn van tafel gegooid. De speler mag opnieuw gooien.']}[state.activeIncident.kind];
+  $('#incident-title').textContent=detail[0];$('#incident-reason').textContent=detail[1];$('#incident-player').textContent=currentPlayer().name;$('#incident-dialog').showModal();applyOnlineControls();
+ }
+ if(!state.activeIncident&&$('#incident-dialog').open)$('#incident-dialog').close();
+}
+window.addEventListener('message',event=>{
+ if(!ONLINE_MODE||event.origin!==location.origin||event.source!==window.parent)return;
+ if(event.data?.type==='dmc-online-ping')window.parent.postMessage({type:'dmc-online-ready'},location.origin);
+ if(event.data?.type==='dmc-online-state')receiveOnlineSnapshot(event.data.snapshot,event.data.connected,event.data.pending);
+});
+$('#open-online').addEventListener('click',async()=>{
+ if(location.protocol!=='http:'&&location.protocol!=='https:'){$('#setup-error').textContent='Online spelen werkt via de multiplayer-website. Dit gedownloade bestand speelt lokaal.';return}
+ const button=$('#open-online');button.disabled=true;
+ try{const response=await fetch('/healthz');const health=await response.json();if(!response.ok||health.ok!==true)throw new Error();location.assign('/online')}
+ catch{$('#setup-error').textContent='De multiplayer-server is op deze website nog niet geactiveerd. De lokale spelmodus blijft beschikbaar.';button.disabled=false}
+});
+if(ONLINE_MODE){$('#setup').hidden=true;$('#setup-tag').hidden=true;window.parent.postMessage({type:'dmc-online-ready'},location.origin)}
+
+</script>
+</body>
+</html>
