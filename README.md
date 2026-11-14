@@ -71,7 +71,7 @@ naar een andere browser of computer meenemen, zonder externe bestanden.
 Drie nieuwe schakelaars in Instellingen staan standaard uit en worden met de
 andere instellingen opgeslagen en geëxporteerd:
 
-- Van tafel gooien: elke normale worp heeft 5% kans. Alleen de losse stenen
+- Van tafel gooien: elke beurt heeft 2% kans bij de eerste normale worp. Alleen de losse stenen
   vliegen met een animatie uit het speelveld. De worp verandert geen score,
   sterren of worplimiet; de werper krijgt een half adtje en mag opnieuw gooien.
 - Een vierde worp toestaan: bij een limiet van drie blijft na de derde geldige
@@ -129,8 +129,13 @@ straf. Bekijk scores, het kruisje, Escape of klikken buiten de pop-up sluiten
 alleen de uitslag; scores, sterren, straf en ronde blijven behouden. Nieuwe ronde
 start pas na een expliciete klik op die knop. Dit geldt ook bij RIP. De laatste speler sluit via Ronde afsluiten af, of de ronde eindigt direct
 als diens laatste toegestane worp is gebruikt. De laagste eindscore verliest;
-bij gelijkspel verliezen alle laagst geëindigde spelers. De eerste van hen in
-de speelvolgorde begint de nieuwe ronde. Bij Nouri-43 is de werper altijd de
+bij een gedeelde laagste score gaan alleen die spelers kavelen. Ieder krijgt
+één worp met twee losse stenen; de beurt gaat daarna automatisch door. De laagste
+kavelscore verliest. Zijn er opnieuw meerdere laagste scores, dan kavelen alleen
+die spelers verder. Mexx (ook extra Mexx) blijft het hoogst en telt mee voor de
+straf; Nouri en extra direct-af-scores beëindigen ook tijdens kavelen de ronde.
+Vastzetten en een vierde worp zijn bij kavelen niet mogelijk. De uiteindelijke
+verliezer begint de volgende ronde. Bij Nouri-43 is de werper altijd de
 verliezer, ook als anderen nog niet hebben gegooid. In teammodus toont de
 uitslag de verliezende teamnaam; de tekst eronder noemt de speler met de laagste
 score of de Nouri-43. Bij meerdere verliezers binnen één team wordt die teamnaam
@@ -140,7 +145,15 @@ De straf per verliezer (of verliezend team) is een half adtje als basis, plus
 een half adtje voor
 elke Mexx (21) in deze ronde. Alle worpen tellen daarvoor mee, inclusief eerdere
 worpen van een beurt. Nul Mexx is een half adtje; één is 1 adtje; twee is 1,5 adtjes.
-De teller begint elke ronde op nul en gebruikt geen sterren uit eerdere rondes.
+De Mexx-teller voor deze straf begint elke ronde op nul en gebruikt geen sterren
+uit eerdere rondes. Alle kavelworpen tellen binnen dezelfde ronde mee.
+
+Achter iedere naam staat daarnaast het totaal aan opgelegde adtjes, inclusief
+halve adtjes en extra straffen. Een rondeverlies telt alleen bij de speler met
+de verliezende worp, ook in teammodus. Online blijft deze adt-teller binnen de
+lobby behouden bij nieuwe rondes, terugkeer naar de lobby, een nieuw spel,
+verversen en een serverherstart. In de lokale modus geldt het totaal voor het
+huidige spel; een reset of nieuw spel begint weer op nul.
 
 Nieuwe ronde begint bij de verliezer of het verliezende team; daarna volgt
 de ingestelde volgorde in een cirkel. Bij één teamlid per ronde schuift elk team

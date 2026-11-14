@@ -137,7 +137,7 @@
 <section class="settings-card" aria-labelledby="members-title"><h2 id="members-title">DMC-leden</h2><p class="small muted">Deze namen worden gebruikt bij DMC-leden inladen.</p><div id="members-editor"></div><div class="member-add"><label class="sr-only" for="new-member-name">Naam nieuw DMC-lid</label><input id="new-member-name" type="text" placeholder="Naam nieuw lid" maxlength="45"><button type="button" id="add-dmc-member">+ Lid toevoegen</button></div><p id="member-message" class="small muted" role="status"></p></section>
 <section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text" aria-describedby="mexx-help"><p class="small muted" id="mexx-help">21 blijft altijd Mexx. Extra Mexx-scores tellen ook als hoogste worp, geven een ster en verhogen de straf.</p><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text" aria-describedby="out-help"><p class="small muted" id="out-help">Bij deze scores eindigt de ronde direct met RIP, ook als Nouri uit staat. Gebruik de getoonde score: bijvoorbeeld 63 of 400. Scheid scores met komma’s of spaties.</p><p class="small muted">Een score kan niet tegelijk extra Mexx en direct af zijn. Bij Nouri mode gaat 43 direct af vóór een eventuele Mexx-regel voor 43.</p></section>
 <section class="settings-card" aria-labelledby="table-rules-title"><h2 id="table-rules-title">Extra tafelregels</h2>
-<label class="toggle"><span><strong>Van tafel gooien</strong><small>5% kans per worp dat de losse stenen van tafel rollen. De werper krijgt een half adtje; de worp telt niet en mag opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
+<label class="toggle"><span><strong>Van tafel gooien</strong><small>2% kans per beurt dat de losse stenen van tafel rollen. De werper krijgt een half adtje; de worp telt niet en mag opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
 <label class="toggle"><span><strong>Een vierde worp toestaan</strong><small>Na drie geldige worpen kun je nog één keer gooien. Die vierde worp telt niet en kost een half adtje. Je laatste geldige score blijft staan.</small></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
 <label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong><small>De stenen blijven vast bij doorgeven. Gooien zonder ze eerst los te maken kost een half adtje; daarna worden ze losgemaakt en mag je opnieuw.</small></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
 </section>
@@ -528,7 +528,7 @@ function startGame(event){
  event.preventDefault();const mode=$('input[name=mode]:checked').value;const people=mode==='single'?draftPlayers:draftTeams.flatMap(t=>t.members);
  $('#setup-error').textContent='';
  config={offTable:settings.offTable,fourthRoll:settings.fourthRoll,heldTrap:settings.heldTrap,mexxScores:[21,...settings.extraMexx],extraOut:[...settings.extraOut],mode,wholeTeam:$('#whole-team').checked,nouri:$('#nouri').checked,players:people.map((p,i)=>({id:p.id,name:p.name.trim()||`Speler ${i+1}`})),teams:mode==='team'?draftTeams.map((t,i)=>({id:t.id,name:t.name.trim()||`Team ${i+1}`,members:t.members.map(p=>p.id)})):[]};
- state={round:0,history:[],outcome:null,stars:new Map(config.players.map(p=>[p.id,0]))};$('#setup').hidden=true;$('#setup-tag').hidden=true;$('#game').hidden=false;$('#game-controls').hidden=false;beginRound();
+ state={round:0,history:[],outcome:null,adtHalfUnits:{},stars:new Map(config.players.map(p=>[p.id,0]))};$('#setup').hidden=true;$('#setup-tag').hidden=true;$('#game').hidden=false;$('#game-controls').hidden=false;beginRound();
 }
 function scheduleForRound(round=state.round){
  if(config.mode==='single')return config.players.map(p=>p.id);
@@ -549,9 +549,9 @@ function beginRound(){
  if(ONLINE_MODE){sendOnlineAction('newRound');return}
  cancelTimers();$('#outcome-dialog').close();$('#incident-dialog').close();
  const starter=state.outcome?.starter;
- if(state.round)state.history.push({round:state.round,records:new Map(state.records),out:new Set(state.out),schedule:[...state.schedule],stars:new Map(state.stars),incidents:[...state.incidents],outcome:state.outcome});
+ if(state.round)state.history.push({round:state.round,records:new Map(state.records),out:new Set(state.out),schedule:[...(state.roundSchedule||state.schedule)],stars:new Map(state.stars),incidents:[...state.incidents],outcome:state.outcome});
  state.stars=new Map(config.players.map(p=>[p.id,0]));
- state.round++;state.schedule=orderWithStarter(scheduleForRound(),starter);state.outcome=null;state.outcomePending=false;state.index=0;state.limit=3;state.records=new Map();state.incidents=[];state.incidentOpen=false;state.out=new Set();state.complete=false;
+ state.round++;state.schedule=orderWithStarter(scheduleForRound(),starter);state.roundSchedule=[...state.schedule];state.tieBreak=null;state.outcome=null;state.outcomePending=false;state.index=0;state.limit=3;state.records=new Map();state.incidents=[];state.incidentOpen=false;state.out=new Set();state.complete=false;
  $('#round-view').replaceChildren(new Option('Deze ronde','current'),...state.history.map(r=>new Option('Ronde '+r.round,String(r.round))));
  startTurn(true);
 }
@@ -559,15 +559,15 @@ function startTurn(newRound=false){
  const firstThrow=!state.values;
  state.turn=[];state.values=state.values||[1,1];
  state.held=config.heldTrap&&!newRound?state.held||[false,false]:[false,false];
- state.inheritedHeld=state.held.map(held=>!!held);state.fourthUsed=false;state.rolling=false;state.incidentOpen=false;
+ state.offTableChecked=false;state.inheritedHeld=state.held.map(held=>!!held);state.fourthUsed=false;state.rolling=false;state.incidentOpen=false;
  dice.forEach((die,i)=>showFace(die,state.values[i],i));$('#total').textContent='—';
  $('#result-label').textContent=firstThrow?'KLAAR VOOR JE EERSTE WORP?':'STENEN VAN DE VORIGE BEURT';renderGame();
 }
-function turnLimit(){return state.index===0?3:state.limit}
-function fourthAvailable(){return config.fourthRoll&&turnLimit()===3&&state.turn.length===3&&!state.fourthUsed}
+function turnLimit(){return state.tieBreak?1:state.index===0?3:state.limit}
+function fourthAvailable(){return !state.tieBreak&&config.fourthRoll&&turnLimit()===3&&state.turn.length===3&&!state.fourthUsed}
 function inheritedTrap(){return config.heldTrap&&state.inheritedHeld.some((held,i)=>held&&state.held[i])}
 function canRollNow(){return !!state&&!state.complete&&!state.rolling&&!state.incidentOpen&&!state.out.has(currentId())&&(state.turn.length<turnLimit()||fourthAvailable())&&(!state.held.every(Boolean)||inheritedTrap())}
-function rollsOffTable(){return config.offTable&&Math.random()<0.05}
+function rollsOffTable(){if(state.offTableChecked)return false;state.offTableChecked=true;return config.offTable&&Math.random()<0.02}
 function currentId(){return state.schedule[state.index]}
 function currentPlayer(){return config.players.find(p=>p.id===currentId())}
 function teamFor(id){return config.teams.find(t=>t.members.includes(id))}
@@ -577,17 +577,17 @@ function showFace(die,value,index){die.replaceChildren(...Array.from({length:9},
 function renderGame(){
  $('.arena').classList.toggle('complete',state.complete&&!state.outcomePending);
  const player=currentPlayer(),out=state.out.has(currentId()),max=turnLimit(),canRoll=canRollNow();
- $('#round-tag').textContent=`Ronde ${state.round}`;$('#turn-name').textContent=state.complete&&!state.outcomePending?'Ronde afgelopen':player.name;$('#turn-name').title=player.name;$('#turn-team').textContent=state.complete?(state.outcome?.instant?'DIRECT AF · RIP':'RONDE AFGESLOTEN'):config.mode==='team'?teamFor(player.id).name:'AAN DE BEURT';
+ $('#round-tag').textContent=`Ronde ${state.round}`;$('#turn-name').textContent=state.complete&&!state.outcomePending?'Ronde afgelopen':player.name;$('#turn-name').title=player.name;$('#turn-team').textContent=state.complete?(state.outcome?.instant?'DIRECT AF · RIP':'RONDE AFGESLOTEN'):state.tieBreak?'KAVELEN · '+state.tieBreak.round:config.mode==='team'?teamFor(player.id).name:'AAN DE BEURT';
  $('#turn-status').textContent=state.outcomePending?`${state.turn.at(-1).score} gegooid · De ronde is voorbij.`:state.complete?'Begin een nieuwe ronde om verder te spelen.':`${state.turn.length} van ${max} worpen${out?' · Uitgeschakeld':state.turn.length>=max?' · Geef door':''}${config.nouri?' · Nouri aan':''}`;
- $('#roll').disabled=!canRoll;$('#roll').hidden=state.complete||out||(state.turn.length>=max&&!fourthAvailable())||(state.held.every(Boolean)&&!inheritedTrap());$('#pass').hidden=state.complete;$('#pass').disabled=state.rolling||state.incidentOpen||!state.turn.length;$('#next-round').hidden=!state.complete||state.outcomePending;
- $('#new-round').disabled=!!state.outcomePending||state.rolling||state.incidentOpen;$('#reset').disabled=!!state.outcomePending||state.rolling||state.incidentOpen;
+ $('#roll').disabled=!canRoll;$('#roll').hidden=state.complete||out||(state.turn.length>=max&&!fourthAvailable())||(state.held.every(Boolean)&&!inheritedTrap());$('#pass').hidden=state.complete||!!state.tieBreak;$('#pass').disabled=state.rolling||state.incidentOpen||!state.turn.length;$('#next-round').hidden=!state.complete||state.outcomePending;
+ $('#new-round').disabled=!!state.outcomePending||state.rolling||state.incidentOpen||!!state.tieBreak&&!state.complete;$('#reset').disabled=!!state.outcomePending||state.rolling||state.incidentOpen;
  $('#roll-label').textContent=state.rolling?'Even rollen…':out?'Uitgeschakeld':fourthAvailable()?'Nog een keer rollen':state.turn.length>=max?'Alle worpen gebruikt':state.held.every(Boolean)&&!inheritedTrap()?'Maak een steen los':state.held.some(Boolean)&&!inheritedTrap()?'Rol de losse steen':state.turn.length?'Nog een keer rollen':'Rol de dobbelstenen';
  $('.rip-copy p').textContent=`${state.outcome?.nouri?34:state.outcome?.eliminationScore||state.turn.at(-1)?.score||''} gegooid. De ronde is direct afgelopen.`;
  $('#rip').hidden=!out||state.outcomePending;$('.arena').classList.toggle('eliminated',out&&!state.outcomePending);
  $('#pass').textContent=state.index===state.schedule.length-1?'Ronde afsluiten →':'Doorgeven →';
- $('#arena-hint').textContent=state.outcomePending?'De uitslag verschijnt zo…':state.complete?'De Mexx-sterren worden bij de volgende ronde gereset.':out?'Deze speler kan pas in een nieuwe ronde weer gooien.':'Tik na je eerste worp op een dobbelsteen om hem vast te zetten.';
- dice.forEach((die,i)=>{die.disabled=state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'Vastgezet':'Los'});
- $('#board-mode').textContent=config.mode==='single'?'Individueel':config.wholeTeam?'Hele team':'1 per team';$('#board-rules').textContent=`${config.nouri?'Nouri aan: 43 stopt de ronde · ':''}Rondelimiet: ${state.index===0&&!state.complete?'wordt bepaald':state.limit+' worpen'}`;
+ $('#arena-hint').textContent=state.outcomePending?'De uitslag verschijnt zo…':state.complete?'De Mexx-sterren worden bij de volgende ronde gereset.':out?'Deze speler kan pas in een nieuwe ronde weer gooien.':state.tieBreak?'Kavelen: één worp met twee losse stenen. De laagste score verliest.':'Tik na je eerste worp op een dobbelsteen om hem vast te zetten.';
+ dice.forEach((die,i)=>{die.disabled=!!state.tieBreak||state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'Vastgezet':'Los'});
+ $('#board-mode').textContent=config.mode==='single'?'Individueel':config.wholeTeam?'Hele team':'1 per team';$('#board-rules').textContent=`${config.nouri?'Nouri aan: 43 stopt de ronde · ':''}Rondelimiet: ${state.tieBreak?'1 worp per kavelaar':state.index===0&&!state.complete?'wordt bepaald':state.limit+' worpen'}`;
  renderScores();
 }
 function renderScores(){
@@ -598,9 +598,10 @@ function renderScores(){
   if(group.name)list.append(textNode('h3',group.name,'team-title'));
   for(const id of group.members){
    const person=config.players.find(p=>p.id===id),record=view.records.get(id),active=!past&&!state.complete&&id===currentId(),out=view.out.has(id);const row=document.createElement('div');row.className='score-row'+(active?' active':'')+(out?' out':'')+(view.outcome?.loserIds.includes(id)?' lost':'');row.dataset.player=id;
-   const name=textNode('div',person.name,'score-name');const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
+   const total=ONLINE_MODE?(onlineSnapshot.members.find(m=>m.id===id)?.adtHalfUnits||0):(state.adtHalfUnits?.[id]||0);
+   const name=textNode('div',person.name+' · '+(total/2).toLocaleString('nl-NL')+' adt','score-name');const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
    const last=record?.at(-1);const score=textNode('span',out?'RIP':last?String(last.score):'—','score-number');
-   let detail=record?record.map(w=>w.score).join(' → ')+(active?' · aan de beurt':' · laatste worp telt'):active?'Aan de beurt':view.schedule.includes(id)?past?'Niet gegooid':'Wacht op de beurt':past?'Deze ronde niet aan de beurt':'Volgende ronde aan de beurt';
+   let detail=record?record.map(w=>(w.tieBreakRound?'K'+w.tieBreakRound+': ':'')+w.score).join(' → ')+(active?' · aan de beurt':' · laatste worp telt'):active?'Aan de beurt':view.schedule.includes(id)?past?'Niet gegooid':'Wacht op de beurt':past?'Deze ronde niet aan de beurt':'Volgende ronde aan de beurt';
    const extraPenalties=(view.incidents||[]).filter(incident=>incident.player===id).length;
    if(extraPenalties)detail+=` · ${String(extraPenalties/2).replace('.',',')} adtje extra`;
    if(out)detail+=' · RIP, ronde afgelopen';else if(view.outcome?.loserIds.includes(id))detail+=' · verloren';row.append(name,score,textNode('p',detail,'score-detail'));list.append(row);
@@ -611,6 +612,7 @@ function renderScores(){
 function showIncident(kind){
  const details={offTable:['Van tafel!','Je gooide de losse stenen van tafel. Deze worp telt niet; je mag opnieuw gooien.'],fourth:['Te vaak gegooid!','Dit was je vierde worp. Die telt niet: je derde, geldige score blijft staan. Geef de beurt nu door.'],held:['Vergeten los te maken!','Je drukte op gooien met een vastgezette steen van de vorige speler. De stenen zijn nu los; je mag opnieuw gooien.']};
  state.rolling=false;state.incidentOpen=true;
+ state.adtHalfUnits[currentId()]=(state.adtHalfUnits[currentId()]||0)+1;
  state.incidents.push({player:currentId(),kind,amount:0.5});
  $('#incident-title').textContent=details[kind][0];$('#incident-reason').textContent=details[kind][1];$('#incident-player').textContent=currentPlayer().name;
  renderGame();$('#incident-dialog').showModal();
@@ -638,18 +640,21 @@ function roll(){
   }
   const values=state.values.map((v,i)=>state.held[i]?v:randomFace());state.values=values;state.inheritedHeld=[false,false];dice.forEach((die,i)=>showFace(die,values[i],i));
   if(fourth){$('#result-label').textContent='LAATSTE GELDIGE SCORE';showIncident('fourth');return}
-  const score=scoreFor(...values);state.turn.push({values:[...values],score});state.records.set(currentId(),[...state.turn]);
+  const score=scoreFor(...values),entry={values:[...values],score,...(state.tieBreak?{tieBreakRound:state.tieBreak.round}:{})};state.turn.push(entry);
+  if(state.tieBreak){state.records.set(currentId(),[...(state.records.get(currentId())||[]),entry]);state.tieBreak.records[currentId()]=entry}
+  else state.records.set(currentId(),[...state.turn]);
   if(isMexx(score))state.stars.set(currentId(),state.stars.get(currentId())+1);
   if(isOutScore(score))state.out.add(currentId());
   state.rolling=false;$('#total').textContent=score;$('#result-label').textContent=`${values[0]} EN ${values[1]} · LAATSTE WORP`;
   if(isOutScore(score)){finishRound(currentId(),config.nouri&&score===43?'nouri':'extra');return}
+  if(state.tieBreak){if(state.index+1<state.schedule.length){state.index++;startTurn(true)}else finishRound();return}
   if(state.index===state.schedule.length-1&&state.turn.length>=turnLimit()&&!fourthAvailable()){finishRound();return}
   renderGame();
  },650);
 }
 function passDice(){
  if(ONLINE_MODE){sendOnlineAction('pass');return}
- if(!state||state.rolling||state.incidentOpen||state.complete||!state.turn.length)return;
+ if(!state||state.tieBreak||state.rolling||state.incidentOpen||state.complete||!state.turn.length)return;
  if(state.index===0)state.limit=state.turn.length;
  if(state.index+1>=state.schedule.length){finishRound()}else{state.index++;startTurn()}
 }
@@ -658,12 +663,19 @@ function finishRound(instantLoser=null,instantReason=null){
  if(state.complete)return;
  cancelTimers();state.rolling=false;
  if(state.index===0)state.limit=state.turn.length;
- const played=state.schedule.filter(id=>state.records.has(id));
+ if(state.tieBreak&&!instantLoser&&state.schedule.some(id=>!state.tieBreak.records[id]))return;
+ const played=state.schedule.filter(id=>state.tieBreak?state.tieBreak.records[id]:state.records.has(id));
  if(!played.length)return;
  const minimum=Math.min(...played.map(id=>rankScore(state.records.get(id).at(-1).score)));
  const loserIds=instantLoser!==null?[instantLoser]:played.filter(id=>rankScore(state.records.get(id).at(-1).score)===minimum);
+ if(instantLoser===null&&loserIds.length>1){
+  state.roundSchedule??=[...state.schedule];
+  state.tieBreak={round:(state.tieBreak?.round||0)+1,participants:[...loserIds],records:{}};
+  state.schedule=[...loserIds];state.index=0;state.limit=1;startTurn(true);return;
+ }
  const mexxes=[...state.records.values()].flat().filter(w=>isMexx(w.score)).length;
- state.outcome={loserIds,starter:loserIds[0],mexxes,halfUnits:1+mexxes,instant:instantLoser!==null,nouri:instantReason==='nouri',eliminationScore:instantLoser!==null?state.records.get(instantLoser).at(-1).score:null};state.complete=true;
+ for(const id of loserIds)state.adtHalfUnits[id]=(state.adtHalfUnits[id]||0)+1+mexxes;
+ state.outcome={kavelRounds:state.tieBreak?.round||0,loserIds,starter:loserIds[0],mexxes,halfUnits:1+mexxes,instant:instantLoser!==null,nouri:instantReason==='nouri',eliminationScore:instantLoser!==null?state.records.get(instantLoser).at(-1).score:null};state.complete=true;
  state.outcomePending=instantLoser!==null;
  renderGame();
  if(state.outcomePending){
@@ -683,18 +695,18 @@ function showOutcome(){
  $('#outcome-title').textContent=joinNames(labels)+(labels.length===1?' heeft verloren':' hebben verloren');
  $('#outcome-rip').hidden=!outcome.instant;
  const score=state.records.get(outcome.starter).at(-1).score;
- $('#outcome-reason').textContent=outcome.instant?`${joinNames(names)} gooide ${outcome.nouri?34:outcome.eliminationScore}${outcome.nouri?' in Nouri mode':' (direct-af-score)'}. De ronde is direct afgelopen.`:`${joinNames(names)} ${names.length===1?'had':'hadden'} de laagste eindscore: ${score}.${names.length>1?' Gelijke laagste scores tellen als verlies.':''}`;
+ $('#outcome-reason').textContent=outcome.instant?`${joinNames(names)} gooide ${outcome.nouri?34:outcome.eliminationScore}${outcome.nouri?' in Nouri mode':' (direct-af-score)'}. De ronde is direct afgelopen.`:`${joinNames(names)} ${names.length===1?'had':'hadden'} de laagste eindscore: ${score}.${outcome.kavelRounds?' Beslist na '+outcome.kavelRounds+' kavelronde(n).':''}`;
  $('#penalty-scope').textContent=config.mode==='team'?'STRAF PER VERLIEZEND TEAM':'STRAF PER VERLIEZER';
  const amount=outcome.halfUnits/2;
  $('#penalty-value').textContent=amount===0.5?'Een half adtje':`${String(amount).replace('.',',')} ${amount===1?'adtje':'adtjes'}`;
  $('#penalty-breakdown').textContent=`½ basis + ${outcome.mexxes} × ½ voor ${outcome.mexxes===1?'één Mexx':outcome.mexxes+' Mexx-worpen'} in deze ronde`;
  const nextStarter=orderWithStarter(scheduleForRound(state.round+1),outcome.starter)[0];
  const nextName=config.players.find(p=>p.id===nextStarter).name;
- $('#outcome-starter').textContent=config.mode==='team'?`${teamFor(nextStarter).name} begint de volgende ronde. ${nextName} is aan de beurt.`:`${nextName} begint de volgende ronde.${names.length>1?' Bij gelijkspel begint de eerste in de speelvolgorde.':''}`;
+ $('#outcome-starter').textContent=config.mode==='team'?`${teamFor(nextStarter).name} begint de volgende ronde. ${nextName} is aan de beurt.`:`${nextName} begint de volgende ronde.`;
  $('#outcome-dialog').showModal();
 }
 function confirm(title,copy,action){confirmAction=action;$('#confirm-title').textContent=title;$('#confirm-copy').textContent=copy;$('#confirm-dialog').showModal()}
-function requestNewRound(){if(ONLINE_MODE){if(state?.complete)sendOnlineAction('newRound');else if(window.confirm('Ronde nu afsluiten?'))sendOnlineAction('endRound');return}if(state.complete)beginRound();else if(state.records.size)confirm('Ronde nu afsluiten?','De gespeelde eindworpen bepalen de verliezer. Je krijgt eerst de uitslag en de straf te zien.',()=>finishRound());else confirm('Nieuwe ronde beginnen?','Er is nog niet gegooid; er wordt geen straf toegekend.',beginRound)}
+function requestNewRound(){if(state?.tieBreak&&!state.complete)return;if(ONLINE_MODE){if(state?.complete)sendOnlineAction('newRound');else if(window.confirm('Ronde nu afsluiten?'))sendOnlineAction('endRound');return}if(state.complete)beginRound();else if(state.records.size)confirm('Ronde nu afsluiten?','De gespeelde eindworpen bepalen de verliezer. Je krijgt eerst de uitslag en de straf te zien.',()=>finishRound());else confirm('Nieuwe ronde beginnen?','Er is nog niet gegooid; er wordt geen straf toegekend.',beginRound)}
 $('#start-game').addEventListener('click',startGame);
 $('#setup').addEventListener('submit',event=>{if($('#settings-panel').hidden)startGame(event);else{event.preventDefault();saveSettings()}});
 $('#setup').addEventListener('keydown',event=>{
@@ -757,7 +769,7 @@ function applyOnlineControls(){
  $('#online-round-help').hidden=admin;
  if(!onlineConnected||onlinePending){$('#new-round').disabled=true;$('#reset').disabled=true;$('#next-round').disabled=true;$('#outcome-next').disabled=true}else{$('#next-round').disabled=false;$('#outcome-next').disabled=false}
  $('#incident-continue').textContent=active?'Verder spelen →':'Bekijk scores';$('#incident-continue').disabled=active&&(!onlineConnected||onlinePending);
- if(!active&&!state.complete)$('#arena-hint').textContent='Je kijkt live mee. '+currentPlayer().name+' is aan de beurt.';
+ if(!active&&!state.complete)$('#arena-hint').textContent=(state.tieBreak?'Kavelen · één worp per speler. ':'Je kijkt live mee. ')+currentPlayer().name+' is aan de beurt.';
 }
 function updateOnlineAnimation(){
  clearInterval(onlineAnimation);onlineAnimation=null;$('.dice-area').classList.remove('rolling');dice.forEach(die=>die.classList.remove('flying'));

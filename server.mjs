@@ -27,11 +27,25 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   function persist(room){room.updated=Date.now();saveStatement.run(room.pin,JSON.stringify(room))}
   function live(room){return streams.get(room.pin)||new Map()}
   function snapshot(room,viewerId) {
-    return {pin:room.pin,revision:room.revision,phase:room.phase,viewer:{id:viewerId,isAdmin:room.adminId===viewerId},members:room.members.map(m=>({...m,connected:live(room).has(m.id),isAdmin:m.id===room.adminId})),rules:room.rules,config:room.config||null,state:room.game||null,now:Date.now()};
+    return {pin:room.pin,revision:room.revision,phase:room.phase,viewer:{id:viewerId,isAdmin:room.adminId===viewerId},members:room.members.map(m=>({...m,adtHalfUnits:m.adtHalfUnits||0,connected:live(room).has(m.id),isAdmin:m.id===room.adminId})),rules:room.rules,config:room.config||null,state:room.game||null,now:Date.now()};
   }
   function broadcast(room){for(const [memberId,connections]of live(room))for(const res of connections){if(!res.destroyed)res.write('event: state\ndata: '+JSON.stringify(snapshot(room,memberId))+'\n\n')}}
   function disconnectMember(room,memberId){const connections=live(room).get(memberId);live(room).delete(memberId);if(connections)for(const res of connections)res.end()}
-  function changed(room){room.revision++;persist(room);broadcast(room);schedulePending(room)}
+  // Credit only new game penalties; keep lobby totals across games and restarts.
+  function syncAdts(room){
+    if(!room.game||!room.config)return;
+    const totals=engine.penaltyTotals(room.config,room.game);
+    room.game.adtHalfUnits={...totals};
+    const accounted=room.accountedHalfUnits||{};
+    for(const member of room.members){
+      const delta=(totals[member.id]||0)-(accounted[member.id]||0);
+      member.adtHalfUnits=(member.adtHalfUnits||0)+Math.max(0,delta);
+    }
+    room.accountedHalfUnits={...totals};
+  }
+  // Upgrade saved lobbies, including penalties from games started before counters existed.
+  for(const room of rooms.values()){syncAdts(room);saveStatement.run(room.pin,JSON.stringify(room))}
+  function changed(room){syncAdts(room);room.revision++;persist(room);broadcast(room);schedulePending(room)}
   function schedulePending(room){
     clearTimeout(timers.get(room.pin));timers.delete(room.pin);
     if(!room.pending||closed)return;
@@ -96,14 +110,14 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         disconnectMember(room,input.memberId);break;
       }
       case 'admin':requireLobby(room);if(!room.members.some(m=>m.id===input.memberId))throw new ApiError(404,'Speler niet gevonden.');room.adminId=input.memberId;break;
-      case 'start':requireLobby(room);room.config=engine.configFrom(room);room.game=engine.startGame(room.config);room.phase='playing';break;
+      case 'start':requireLobby(room);room.config=engine.configFrom(room);room.game=engine.startGame(room.config);room.accountedHalfUnits={};room.phase='playing';break;
       case 'newRound':if(room.phase!=='playing'||!room.game.complete||room.game.outcomePending)throw new ApiError(409,'Sluit eerst deze ronde af.');room.pending=null;engine.nextRound(room.config,room.game);break;
       case 'endRound':if(room.phase!=='playing')throw new ApiError(409,'Er is geen actieve ronde.');engine.finishRound(room.config,room.game);break;
       case 'lobby':room.pending=null;room.phase='lobby';room.game=null;room.config=null;break;
       case 'roll':case 'hold':case 'pass':case 'ack':{
         if(room.phase!=='playing')throw new ApiError(409,'Het spel is nog niet gestart.');
         if(memberId!==engine.currentId(room.game))throw new ApiError(403,'Alleen de speler aan de beurt kan spelen.');
-        if(input.turnKey!==`${room.game.round}:${room.game.index}`)throw new ApiError(409,'De beurt is inmiddels veranderd.');
+        if(input.turnKey!==engine.turnKey(room.game))throw new ApiError(409,'De beurt is inmiddels veranderd.');
         if(action==='roll')room.pending=engine.beginRoll(room.config,room.game,memberId,rng);
         if(action==='hold')engine.hold(room.config,room.game,memberId,input.index);
         if(action==='pass')engine.pass(room.config,room.game,memberId);

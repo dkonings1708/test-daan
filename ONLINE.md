@@ -50,6 +50,28 @@ via Mijn lokale instellingen door de beheerder uit lokale instellingen worden
 overgenomen. Stel het logo eerst in de lokale modus op dezelfde website in en
 sla het daar op; laad die instellingen daarna in de online lobby. Het logo moet kleiner zijn dan ongeveer 250 kB aan beeldgegevens.
 
+## Adt-teller en kavelen
+
+Achter elke naam in de lobby en het spel staat de adt-teller: het totale aantal
+opgelegde adtjes, inclusief halve adtjes en de extra straffen voor van tafel,
+een vierde worp of vastgezette stenen. Een rondeverlies wordt alleen bij de
+speler met de verliezende worp geteld, ook in teammodus. Het totaal blijft binnen
+de lobby bewaard bij nieuwe rondes, opnieuw starten vanuit de lobby, verversen
+en serverherstarts. Oude opgeslagen spelstanden worden bij opstarten één keer
+bijgewerkt op basis van de nog bewaarde rondes en straffen.
+
+Bij een gedeelde laagste eindscore kavelen alleen de betrokken spelers: ieder
+gooit één keer met twee losse stenen. De beurt gaat automatisch door en alleen
+de laagste kavelscore verliest. Bij opnieuw gelijkspel kavelen de spelers met
+die laagste score opnieuw. Gewone en extra Mexx-scores tellen als hoogste en
+verhogen de rondestraf; Nouri en extra direct-af-scores beëindigen ook tijdens
+kavelen direct de ronde. Vastzetten en een vierde worp zijn dan uitgeschakeld.
+De oorspronkelijke en kavelworpen blijven samen in het scoreoverzicht staan.
+
+Van tafel gooien heeft bij inschakelen **2% kans per beurt**, gecontroleerd bij
+de eerste normale worp. Extra worpen en opnieuw gooien na van tafel verhogen
+die kans niet. Dezelfde regels werken in de lokale spelmodus.
+
 ## Lobbychat
 
 Via **Chat** rechtsboven kunnen alle lobbyleden tekst, foto’s, video’s en
@@ -147,6 +169,12 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 ## Uitgevoerde controles
 
+- Kavelen online en lokaal via de echte spelknoppen, uitslag met Mexx-straf,
+  chat tijdens kavelen, adt-teller in lobby en spel, mobiele weergave en verversen.
+- Automatische controles voor herhaald kavelen, extra Mexx/direct-af/Nouri,
+  precies 2% per beurt, persoonlijke teamtellers, meer dan 100 rondes, herstart
+  tijdens kavelen, oude verzoeknummers en het bijwerken van oude opgeslagen spellen.
+
 - Docker-build met chatbestanden: healthcheck, laden van de chatmodule, server
   als gebruiker 1000 en behoud van sessie, tekst en foto na containerherstart.
 
@@ -157,7 +185,7 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 - Geweigerde microfoontoegang en een mislukte verzending: chat blijft bruikbaar
   en het concept blijft behouden. De lokale spelmodus start en kan nog gooien.
 
-- 13 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
+- 20 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
   het overdragen van beheer en hervatten na een serverherstart.
 - Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
   gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel

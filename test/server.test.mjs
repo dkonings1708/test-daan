@@ -6,7 +6,7 @@ import { join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { createApplication } from '../server.mjs';
 const wait=ms=>new Promise(r=>setTimeout(r,ms));
-async function boot(dir,scale=.03){const app=createApplication({dataDir:dir,timingScale:scale,rng:(min,max)=>max===7?3:123});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));return {...app,url:'http://127.0.0.1:'+app.server.address().port}}
+async function boot(dir,scale=.03,rng){const app=createApplication({dataDir:dir,timingScale:scale,rng:rng||(()=>{let dice=0;return (min,max)=>max===7?[3,3,4,4][dice++%4]:123})()});await new Promise(r=>app.server.listen(0,'127.0.0.1',r));return {...app,url:'http://127.0.0.1:'+app.server.address().port}}
 function client(app){return{cookie:'',async call(path,body){const res=await fetch(app.url+path,{method:body?'POST':'GET',headers:{...(body?{'Content-Type':'application/json'}:{}),...(this.cookie?{Cookie:this.cookie}:{})},body:body?JSON.stringify(body):undefined});const cookie=res.headers.get('set-cookie');if(cookie)this.cookie=cookie.split(';')[0];const text=await res.text();let data;try{data=JSON.parse(text)}catch{data=text}return{status:res.status,data}},async act(pin,action,extra={}){return this.call('/api/rooms/'+pin+'/command',{action,requestId:randomUUID(),...extra})}}}
 async function eventually(fn){for(let i=0;i<60;i++){const result=await fn();if(result)return result;await wait(30)}throw new Error('Timed out waiting for shared state')}
 
@@ -39,5 +39,51 @@ test('lobby roles, SSE state, actor-only dice, idempotency, reconnect and sessio
 test('stored sessions and a pending authoritative roll survive a server restart',async()=>{
  const dir=await mkdtemp(join(tmpdir(),'dmc-restart-'));let app=await boot(dir,1);const host=client(app);
  try{const created=await host.call('/api/rooms',{name:'Daan'}),pin=created.data.pin,id=created.data.viewer.id;await host.act(pin,'start');const rolling=await host.act(pin,'roll',{turnKey:'1:0'});assert.equal(rolling.data.state.rolling,true);const cookie=host.cookie;await app.close();app=await boot(dir,1);const resumed=client(app);resumed.cookie=cookie;const state=await eventually(async()=>{const r=await resumed.call('/api/me');return r.data.state&&!r.data.state.rolling?r.data:null});assert.equal(state.viewer.id,id);assert.equal(state.state.turn[0].score,300);assert.equal(state.state.complete,false);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});
+
+test('kavelen survives restart; adt counters persist across rounds and games without duplicate penalties',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'dmc-kavel-'));let faces=[3,1,3,1,2,1,6,5,3,1,6,5],face=0;
+ const rng=(min,max)=>max===7?faces[face++]:123;
+ let app=await boot(dir,.03,rng),host=client(app),guest=client(app);
+ try{
+  const created=await host.call('/api/rooms',{name:'Ada'}),pin=created.data.pin,hostId=created.data.viewer.id;
+  const joined=await guest.call(`/api/rooms/${pin}/join`,{name:'Bo'}),guestId=joined.data.viewer.id;
+  await host.act(pin,'start');await host.act(pin,'roll',{turnKey:'1:0'});
+  await eventually(async()=>(await host.call('/api/me')).data.state.turn.length===1);
+  await host.act(pin,'pass',{turnKey:'1:0'});await guest.act(pin,'roll',{turnKey:'1:1'});
+  await eventually(async()=>(await host.call('/api/me')).data.state.tieBreak?.round===1);
+  assert.equal((await host.act(pin,'roll',{turnKey:'1:0'})).status,409);
+  assert.equal((await host.act(pin,'endRound')).status,409);
+  const oldHost=host.cookie,oldGuest=guest.cookie;await app.close();app=await boot(dir,.03,rng);host=client(app);host.cookie=oldHost;guest=client(app);guest.cookie=oldGuest;
+  const restored=(await host.call('/api/me')).data;assert.equal(restored.state.tieBreak.round,1);assert.equal(restored.state.schedule[0],hostId);
+  const requestId=randomUUID(),rolled=await host.call(`/api/rooms/${pin}/command`,{action:'roll',requestId,turnKey:'1:k1:0'});assert.equal(rolled.status,200);
+  await eventually(async()=>(await guest.call('/api/me')).data.state.index===1);
+  assert.equal((await host.call(`/api/rooms/${pin}/command`,{action:'roll',requestId,turnKey:'1:k1:0'})).status,200);
+  await guest.act(pin,'roll',{turnKey:'1:k1:1'});
+  const finished=await eventually(async()=>{const data=(await guest.call('/api/me')).data;return data.state.complete?data:null});
+  assert.deepEqual(finished.state.outcome.loserIds,[guestId]);assert.equal(finished.members.find(m=>m.id===guestId).adtHalfUnits,2);assert.equal(finished.members.find(m=>m.id===hostId).adtHalfUnits,0);
+  await host.act(pin,'endRound');assert.equal((await guest.call('/api/me')).data.members.find(m=>m.id===guestId).adtHalfUnits,2);
+  await host.act(pin,'newRound');assert.equal((await guest.call('/api/me')).data.members.find(m=>m.id===guestId).adtHalfUnits,2);
+  await host.act(pin,'lobby');await host.act(pin,'start');assert.equal((await guest.call('/api/me')).data.members.find(m=>m.id===guestId).adtHalfUnits,2);
+  await host.act(pin,'roll',{turnKey:'1:0'});await eventually(async()=>(await host.call('/api/me')).data.state.turn.length===1);await host.act(pin,'pass',{turnKey:'1:0'});await guest.act(pin,'roll',{turnKey:'1:1'});
+  const next=await eventually(async()=>{const data=(await host.call('/api/me')).data;return data.state.complete?data:null});assert.equal(next.members.find(m=>m.id===hostId).adtHalfUnits,1);assert.equal(next.members.find(m=>m.id===guestId).adtHalfUnits,2);
+  await host.act(pin,'lobby');await app.close();app=await boot(dir,.03,rng);host=client(app);host.cookie=oldHost;
+  const lobby=(await host.call('/api/me')).data;assert.equal(lobby.phase,'lobby');assert.equal(lobby.members.find(m=>m.id===hostId).adtHalfUnits,1);assert.equal(lobby.members.find(m=>m.id===guestId).adtHalfUnits,2);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});
+
+test('saved games from before the adt counter are upgraded once, including historical penalties',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'dmc-upgrade-'));let app=await boot(dir),host=client(app);
+ try{
+  const created=await host.call('/api/rooms',{name:'Ada'}),pin=created.data.pin,id=created.data.viewer.id,cookie=host.cookie;
+  await host.act(pin,'start');await host.act(pin,'roll',{turnKey:'1:0'});await eventually(async()=>(await host.call('/api/me')).data.state.turn.length===1);await host.act(pin,'endRound');await host.act(pin,'newRound');
+  await app.close();const {DatabaseSync}=await import('node:sqlite'),db=new DatabaseSync(join(dir,'rooms.sqlite'));
+  const room=JSON.parse(db.prepare('SELECT body FROM rooms WHERE pin=?').get(pin).body);const savedUpdated=Date.now()-60000;room.updated=savedUpdated;delete room.accountedHalfUnits;delete room.game.adtHalfUnits;for(const member of room.members)delete member.adtHalfUnits;
+  db.prepare('UPDATE rooms SET body=? WHERE pin=?').run(JSON.stringify(room),pin);db.close();
+  app=await boot(dir);host=client(app);host.cookie=cookie;assert.equal((await host.call('/api/me')).data.members[0].adtHalfUnits,1);
+  const check=new DatabaseSync(join(dir,'rooms.sqlite'));assert.equal(JSON.parse(check.prepare('SELECT body FROM rooms WHERE pin=?').get(pin).body).updated,savedUpdated);check.close();
+  await app.close();app=await boot(dir);host=client(app);host.cookie=cookie;assert.equal((await host.call('/api/me')).data.members[0].adtHalfUnits,1);
+  await host.act(pin,'endRound');assert.equal((await host.call('/api/me')).data.members[0].id,id);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });

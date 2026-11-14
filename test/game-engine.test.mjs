@@ -35,3 +35,50 @@ test('whole teams stay grouped; one-per-team rotates even when that team loses',
 test('invalid settings cannot turn 21 into an out-score or create contradictory custom rules',()=>{
  assert.throws(()=>game.rulesFrom({extraOut:[21]}));assert.throws(()=>game.rulesFrom({extraMexx:[31],extraOut:[31]}));assert.throws(()=>game.rulesFrom({extraMexx:[99]}));assert.throws(()=>game.rulesFrom({logo:'javascript:alert(1)'}));
 });
+
+test('lowest ties kavel once per player, retain normal scores and count Mexx in the final penalty',()=>{
+ const members=[{id:'a',name:'Ada',playing:true},{id:'b',name:'Bo',playing:true},{id:'c',name:'Cy',playing:true}];
+ const c=config({heldTrap:true,fourthRoll:true},members),s=game.startGame(c);
+ roll(c,s,[3,1]);game.pass(c,s,'a');roll(c,s,[3,1]);game.pass(c,s,'b');roll(c,s,[6,5]);
+ assert.equal(s.complete,false);assert.deepEqual(s.schedule,['a','b']);assert.equal(s.tieBreak.round,1);assert.equal(game.turnKey(s),'1:k1:0');assert.deepEqual(s.held,[false,false]);assert.deepEqual(s.adtHalfUnits,{});
+ assert.throws(()=>game.hold(c,s,'a',0),/kavelen/);assert.throws(()=>game.finishRound(c,s),/kavelaars/);assert.throws(()=>game.pass(c,s,'a'),/kavelen/);
+ roll(c,s,[2,1]);assert.equal(game.currentId(s),'b');assert.equal(s.stars.a,1);assert.throws(()=>game.beginRoll(c,s,'a'),/beurt/);
+ roll(c,s,[4,1]);assert.equal(s.complete,true);assert.deepEqual(s.outcome.loserIds,['b']);assert.equal(s.outcome.halfUnits,2);assert.equal(s.outcome.kavelRounds,1);assert.deepEqual(s.adtHalfUnits,{b:2});assert.equal(s.records.c[0].score,65);assert.deepEqual(s.records.a.map(w=>w.score),[31,21]);
+ game.finishRound(c,s);assert.deepEqual(s.adtHalfUnits,{b:2});game.nextRound(c,s);assert.equal(s.tieBreak,null);assert.equal(game.currentId(s),'b');assert.deepEqual(s.history[0].schedule,['a','b','c']);assert.deepEqual(s.adtHalfUnits,{b:2});
+});
+
+test('repeated ties only retain the lowest kavelaars and reject an old turn identity',()=>{
+ const c=config({},['a','b','c'].map(id=>({id,name:id,playing:true}))),s=game.startGame(c);
+ for(const id of ['a','b','c']){roll(c,s,[3,1]);if(!s.tieBreak)game.pass(c,s,id)}
+ roll(c,s,[4,1]);roll(c,s,[4,1]);roll(c,s,[6,5]);
+ assert.deepEqual(s.schedule,['a','b']);assert.equal(s.tieBreak.round,2);assert.equal(game.turnKey(s),'1:k2:0');assert.deepEqual(s.adtHalfUnits,{});
+ roll(c,s,[5,4]);roll(c,s,[4,2]);assert.deepEqual(s.outcome.loserIds,['b']);assert.deepEqual(s.adtHalfUnits,{b:1});assert.equal(s.records.c.at(-1).score,65);
+});
+
+test('custom Mexx, direct-out and Nouri also apply during kavelen',()=>{
+ for(const [rules,faces,expected,units]of [[{extraMexx:[31]},[3,1],'b',2],[{extraOut:[32]},[3,2],'a',1],[{nouri:true,extraMexx:[43]},[4,3],'a',1]]){
+  const c=config(rules),s=game.startGame(c);roll(c,s,[4,1]);game.pass(c,s,'a');roll(c,s,[4,1]);assert.equal(s.tieBreak.round,1);
+  const pending=roll(c,s,faces);
+  if(expected==='b')roll(c,s,[6,6]);else{assert.equal(pending.type,'outcome');assert.equal(s.outcomePending,true)}
+  assert.deepEqual(s.outcome.loserIds,[expected]);assert.equal(s.outcome.halfUnits,units);assert.equal(s.adtHalfUnits[expected],units);
+ }
+});
+
+test('off-table is exactly 2 percent and checked only once per turn, including a retry',()=>{
+ const c=config({offTable:true}),s=game.startGame(c);
+ const plan=game.beginRoll(c,s,'a',(min,max)=>max===10000?199:max===7?6:123);assert.equal(plan.type,'fly');
+ const after=game.settleRoll(c,s,plan);game.settleRoll(c,s,after);assert.equal(s.adtHalfUnits.a,1);game.acknowledge(c,s,'a');
+ const retry=game.beginRoll(c,s,'a',(min,max)=>max===10000?0:max===7?6:123);assert.equal(retry.type,'roll');game.settleRoll(c,s,retry);game.pass(c,s,'a');
+ const safe=game.beginRoll(c,s,'b',(min,max)=>max===10000?200:max===7?5:123);assert.equal(safe.type,'roll');game.settleRoll(c,s,safe);assert.equal(s.complete,true);
+ const t=game.startGame(c);roll(c,t,[6,5],200);const later=game.beginRoll(c,t,'a',(min,max)=>max===10000?0:max===7?3:123);assert.equal(later.type,'roll');
+});
+
+test('team penalties are credited only to the losing player and counters outlive archived rounds',()=>{
+ const members=[{id:'a1',name:'A1',team:'Rood',playing:true},{id:'a2',name:'A2',team:'Rood',playing:true},{id:'b1',name:'B1',team:'Groen',playing:true}];
+ const c=config({mode:'team',wholeTeam:true},members),s=game.startGame(c);
+ roll(c,s,[6,5]);game.pass(c,s,'a1');roll(c,s,[3,1]);game.pass(c,s,'a2');roll(c,s,[6,4]);
+ assert.deepEqual(s.adtHalfUnits,{a2:1});
+ const d=config(),t=game.startGame(d);
+ for(let n=0;n<103;n++){const first=game.currentId(t);roll(d,t,[3,1]);game.pass(d,t,first);roll(d,t,[6,5]);game.nextRound(d,t)}
+ assert.equal(t.history.length,100);assert.deepEqual(t.adtHalfUnits,{a:103});
+});
