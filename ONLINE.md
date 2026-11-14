@@ -22,7 +22,8 @@ npm test
 ```
 
 De tests controleren spelregels, rechten, realtime updates, dubbele verzoeken,
-het herstellen van sessies en het afronden van een worp na een serverherstart.
+het herstellen van sessies, chat en media, opslaglimieten en het afronden van
+een worp na een serverherstart.
 
 ## Wie doet wat?
 
@@ -42,12 +43,43 @@ Namen en teams worden ingesteld vóór het starten van een partij. Sluit de
 beheerder de lobby opnieuw open, dan kunnen de samenstelling en regels worden
 gewijzigd. Late deelnemers komen dus in de lobby voordat een partij start.
 
-Geluiden en zelf ingesproken kreten blijven persoonlijk per browser. Er is geen
-microfoonstream of audiogesprek tussen deelnemers. De bestaande soundboardknop,
+Geluiden en zelf ingesproken kreten blijven persoonlijk per browser. Spraakmemo’s in de lobbychat worden pas gedeeld nadat je op Verzenden klikt;
+er is geen live audiogesprek tussen deelnemers. De bestaande soundboardknop,
 voice recorder en lokale spelmodus blijven beschikbaar. Het gedeelde logo kan
 via Mijn lokale instellingen door de beheerder uit lokale instellingen worden
 overgenomen. Stel het logo eerst in de lokale modus op dezelfde website in en
 sla het daar op; laad die instellingen daarna in de online lobby. Het logo moet kleiner zijn dan ongeveer 250 kB aan beeldgegevens.
+
+## Lobbychat
+
+Via **Chat** rechtsboven kunnen alle lobbyleden tekst, foto’s, video’s en
+spraakmemo’s delen, ook tijdens het spel en als ze alleen meekijken. Nieuwe
+berichten verschijnen direct; bij een gesloten paneel toont de knop het aantal
+nieuwe berichten. Chatten verandert geen worpen, scores, regels of speelvolgorde.
+
+Schrijf een bericht (maximaal 2000 tekens), kies een foto, video of audiobestand,
+of klik op **Spraakmemo opnemen**. Opnemen vraagt microfoontoestemming en werkt
+via HTTPS of localhost. Na **Stop opname** kun je terugluisteren en zelf op
+**Verzenden** klikken. Opnamen stoppen na maximaal 60 seconden. Annuleren, de chat
+sluiten, de pagina verlaten of verbindingsverlies stopt een lopende opname en
+geeft de microfoon vrij. Zonder microfoontoegang kun je nog tekst en bestanden
+delen. Foto’s en video’s worden gekozen uit bestanden; cameratoegang is niet nodig.
+
+Bestanden mogen maximaal 10 MB zijn. Ondersteund zijn JPEG, PNG, GIF, WebP,
+MP4, WebM, MOV en audio als WebM, Ogg, MP4/M4A, MP3 of WAV. Afspelen hangt af
+van de codecs die de browser ondersteunt. De server controleert bestandstype,
+bestandssignatuur, grootte en lobbysessie; SVG en andere actieve documenten
+worden niet geaccepteerd. Alleen leden van dezelfde lobby kunnen berichten en
+media ophalen. Verwijderde of afgemelde leden verliezen die toegang.
+
+Chatberichten en media worden in dezelfde SQLite-database opgeslagen en blijven
+bij een serverherstart behouden wanneer `DMC_DATA_DIR` op blijvende opslag staat.
+Per lobby blijven de laatste 100 berichten en maximaal 50 MB aan media bewaard;
+bij overschrijding verdwijnen de oudste berichten met hun bijlagen. Bij het
+verlopen van een lobby of vertrek van het laatste lid wordt de chat verwijderd.
+Iedere deelnemer kan maximaal 30 berichten/uploads per minuut versturen.
+Bestaande lobby’s krijgen de chattabel automatisch bij de volgende serverstart;
+er zijn geen extra pakketten, externe opslagdiensten of configuratievariabelen nodig.
 
 ## Realtime en opslag
 
@@ -115,7 +147,17 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 ## Uitgevoerde controles
 
-- 10 Node-tests voor de spelregels, HTTP-rechten, live updates, meerdere tabbladen,
+- Docker-build met chatbestanden: healthcheck, laden van de chatmodule, server
+  als gebruiker 1000 en behoud van sessie, tekst en foto na containerherstart.
+
+- Lobbychat in twee aparte Chromium-browsersessies: tekst als gewone tekst,
+  foto’s, afspeelbare video/audio, microfoonopname met terugluisteren,
+  ongelezen berichten, chat tijdens een beurt, echte worp via de spelknop,
+  hervatten na verversen, mobiel scherm, annuleren en verbindingsherstel.
+- Geweigerde microfoontoegang en een mislukte verzending: chat blijft bruikbaar
+  en het concept blijft behouden. De lokale spelmodus start en kan nog gooien.
+
+- 13 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
   het overdragen van beheer en hervatten na een serverherstart.
 - Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
   gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel

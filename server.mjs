@@ -5,6 +5,7 @@ import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as engine from './game-engine.mjs';
+import { createChat } from './chat.mjs';
 
 const root=dirname(fileURLToPath(import.meta.url));
 const MAX_AGE=24*60*60*1000;
@@ -113,6 +114,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     }
     room.receipts.push(key);if(room.receipts.length>200)room.receipts.shift();changed(room);
   }
+  const chat=createChat(db,{authorize,limitRequest,json,ApiError,persist,live});
   const server=http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');res.setHeader('Permissions-Policy','microphone=(self), camera=()');
     try{
@@ -120,12 +122,14 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='POST'){
         if(req.headers.origin){let origin;try{origin=new URL(req.headers.origin)}catch{throw new ApiError(403,'Ongeldige herkomst.')}if(origin.host!==req.headers.host)throw new ApiError(403,'Open het spel op dezelfde website.');}
         if(req.headers['sec-fetch-site']==='cross-site')throw new ApiError(403,'Ongeldige herkomst.');
-        if(!String(req.headers['content-type']||'').startsWith('application/json'))throw new ApiError(415,'Verstuur de actie als JSON.');
+        if(!/^\/api\/rooms\/\d{6}\/chat\/media$/.test(path)&&!String(req.headers['content-type']||'').startsWith('application/json'))throw new ApiError(415,'Verstuur de actie als JSON.');
       }
+      if(await chat.handle(req,res,path))return;
       if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true});return}
       if(req.method==='GET'&&['/','/index.html','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.startsWith('/online')?'online.html':'index.html')));return;
       }
+      if(req.method==='GET'&&path==='/lobby-chat.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,'lobby-chat.js')));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }
@@ -133,7 +137,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         const {room,memberId}=authorize(req);if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om die te verlaten.');
         room.members=room.members.filter(m=>m.id!==memberId);for(const [token,member]of Object.entries(room.sessions))if(member===memberId)delete room.sessions[token];
         disconnectMember(room,memberId);
-        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin)}
+        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin)}
         res.setHeader('Set-Cookie','dmc_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');json(res,200,{ok:true});return;
       }
       if(req.method==='POST'&&path==='/api/rooms'){
@@ -162,7 +166,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(!streams.has(room.pin))streams.set(room.pin,new Map());const members=streams.get(room.pin),connections=members.get(memberId)||new Set();
         if(connections.size>=8)throw new ApiError(429,'Je hebt dit spel al in veel tabbladen open. Sluit een ouder tabblad.');
         res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write('retry: 1500\n\n');
-        connections.add(res);members.set(memberId,connections);broadcast(room);
+        connections.add(res);members.set(memberId,connections);broadcast(room);chat.sendHistory(res,room);
         const heartbeat=setInterval(()=>{if(!res.destroyed)res.write(': ping\n\n')},15000);
         res.on('close',()=>{clearInterval(heartbeat);connections.delete(res);if(!connections.size&&members.get(memberId)===connections)members.delete(memberId);if(!closed)broadcast(room)});return;
       }
@@ -180,7 +184,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     }
   });
   const cleanup=setInterval(()=>{
-    for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin)}
+    for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin);chat.remove(pin)}
   },60000);cleanup.unref();
   return {server,close:async()=>{closed=true;clearInterval(cleanup);for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));db.close()}};
 }

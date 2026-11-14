@@ -3,7 +3,8 @@
 Nederlandstalig dobbelspel in DMC-rood, groen, wit en zwart, met lokale en online
 multiplayer-modus. De lokale versie staat volledig in `index.html` en heeft geen
 installatie of accounts nodig. Online multiplayer gebruikt de meegeleverde
-Node.js-server en een lobbycode. Zie `ONLINE.md` voor starten en publiceren. Open het bestand in een browser met JavaScript ingeschakeld;
+Node.js-server en een lobbycode. De lobbychat deelt tekst, foto’s, video’s en
+spraakmemo’s met de deelnemers, ook tijdens het spel. Zie `ONLINE.md` voor starten en publiceren. Open het bestand in een browser met JavaScript ingeschakeld;
 een bestandsvoorbeeld in een berichtenapp voert het spel mogelijk niet uit.
 
 ## Soundboard
