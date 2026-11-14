@@ -178,5 +178,12 @@ niet meer gerold kan worden verdwijnt de rolknop en neemt Doorgeven exact die
 plek in; de ruimte voor twee knoppen blijft gereserveerd. Bij veel spelers scrollt alleen het overzicht;
 het dashboard heeft een eigen scrollgebied voor lange namenlijsten.
 
+De dobbelsteenogen worden als SVG-cirkels met vaste posities getekend, zodat ze
+niet afhangen van CSS-grid binnen een knop (een compatibiliteitsprobleem in
+oudere Safari-versies). De groene en rode ogen blijven ook op uitgeschakelde
+stenen zichtbaar. Alle zes waarden, rollen en vastzetten zijn gecontroleerd in
+Chromium met iPhone X-emulatie (staand en liggend) en op desktop, zowel lokaal
+als online. Dit is geen controle op een fysieke iPhone of in Safari.
+
 Voor ontwikkeling: `python3 -m http.server 8000` vanuit deze map.
 Cloudtaken gebruiken de bestaande checkout; een extra Git-worktree is niet nodig.

@@ -36,14 +36,14 @@ function render(snapshot){
  $('#rules-fields').disabled=!room.viewer.isAdmin;$('#start-online').hidden=!room.viewer.isAdmin;$('#admin-note').textContent=room.viewer.isAdmin?'Jij beheert de lobby. Sla instellingen op voordat je start.':'De beheerder past instellingen en volgorde aan en start het spel.';
  $('#back-to-lobby').hidden=!room.viewer.isAdmin;$('#end-online-round').hidden=!room.viewer.isAdmin||!!room.state?.complete||!!room.state?.tieBreak;
  const mine=room.members.find(m=>m.id===room.viewer.id);const active=room.config?.players.find(p=>p.id===room.state?.schedule[room.state.index]);
- $('#player-status').textContent=playing?`${mine?.name||''} · ${((mine?.adtHalfUnits||0)/2).toLocaleString('nl-NL')} adt${room.viewer.isAdmin?' · beheerder':''} · ${active?.id===mine?.id?'Jij bent aan de beurt':active?.name+' is aan de beurt'}`:'';
+ $('#player-status').textContent=playing?`${mine?.name||''} · ${((mine?.adtHalfUnits||0)/2).toLocaleString('nl-NL')} adtjes${room.viewer.isAdmin?' · beheerder':''} · ${active?.id===mine?.id?'Jij bent aan de beurt':active?.name+' is aan de beurt'}`:'';
  updateConnection();sendFrame();
 }
 function actionButton(text,fn,disabled=false){const button=document.createElement('button');button.type='button';button.textContent=text;button.disabled=disabled;button.onclick=fn;return button}
 function renderMembers(){
  if(document.activeElement?.matches('#members input'))return;
  $('#members').replaceChildren();room.members.forEach((member,index)=>{
- const row=document.createElement('div');row.className='member';const line=document.createElement('div');line.className='member-line';const name=document.createElement('strong');name.textContent=member.name+(member.id===room.viewer.id?' (jij)':'')+' · '+((member.adtHalfUnits||0)/2).toLocaleString('nl-NL')+' adt';const badge=document.createElement('small');badge.textContent=(member.connected?'● online':'○ offline')+(member.isAdmin?' · beheerder':'')+(!member.playing?' · kijkt mee':'');line.append(name,badge);row.append(line);
+ const row=document.createElement('div');row.className='member';const line=document.createElement('div');line.className='member-line';const name=document.createElement('strong');name.textContent=member.name+(member.id===room.viewer.id?' (jij)':'')+' · '+((member.adtHalfUnits||0)/2).toLocaleString('nl-NL')+' adtjes';const badge=document.createElement('small');badge.textContent=(member.connected?'● online':'○ offline')+(member.isAdmin?' · beheerder':'')+(!member.playing?' · kijkt mee':'');line.append(name,badge);row.append(line);
  if(room.viewer.isAdmin){const controls=document.createElement('div');controls.className='member-buttons';controls.append(actionButton('↑',()=>command('move',{memberId:member.id,step:-1}),index===0),actionButton('↓',()=>command('move',{memberId:member.id,step:1}),index===room.members.length-1));
  if(room.rules.mode==='team'){const input=document.createElement('input');input.value=member.team;input.setAttribute('aria-label','Team van '+member.name);input.maxLength=40;input.onchange=()=>command('team',{memberId:member.id,team:input.value});controls.append(input)}
  controls.append(actionButton(member.playing?'Speelt mee':'Kijkt mee',()=>command('playing',{memberId:member.id,playing:!member.playing})));
