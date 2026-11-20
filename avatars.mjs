@@ -13,27 +13,59 @@ export const AVATARS=[
  {id:'beer-shark',name:'Bierhaai',svg:art('#cde5ed','<path d="M7 42 27 16l2 15q20-12 28 4l-9 15H22L8 56l5-12" fill="#69a8bd"/><path d="M22 41q15 13 29-2l-5 14H28Z" fill="#fff6e2"/><path d="m27 41 4 7 4-6 4 5 4-8" fill="#28647c"/>'+eye(45,33))}
 ];
 export const AVATAR_IDS=new Set(AVATARS.map(avatar=>avatar.id));
+export const isUploadedAvatar=value=>typeof value==='string'&&/^photo:[a-f0-9]{24}$/.test(value);
+export const isCustomAvatar=value=>typeof value==='string'&&value.startsWith('data:image/png;base64,');
 export function avatarFrom(value){
  if(value===undefined||value===null||value==='')return null;
- if(typeof value!=='string'||!AVATAR_IDS.has(value))throw new Error('Kies een avatar uit de lijst.');
- return value;
+ if(typeof value==='string'&&AVATAR_IDS.has(value))return value;
+ if(isCustomAvatar(value)&&value.length<=140000){
+  const encoded=value.slice(22);
+  if(encoded.length%4===0&&/^[A-Za-z0-9+/]+={0,2}$/.test(encoded)){
+   const raw=atob(encoded),byte=index=>raw.charCodeAt(index),size=offset=>byte(offset)*16777216+byte(offset+1)*65536+byte(offset+2)*256+byte(offset+3);
+   if(raw.length>=57&&raw.slice(0,8)==='\x89PNG\r\n\x1a\n'&&raw.slice(12,16)==='IHDR'&&size(16)>0&&size(16)<=256&&size(20)>0&&size(20)<=256&&raw.slice(-8,-4)==='IEND')return value;
+  }
+ }
+ throw new Error('Kies een avatar of upload een foto als PNG, JPG, WebP of GIF.');
 }
-export function renderAvatar(element,value,name=''){
+export function renderAvatar(element,value,name='',pin=''){
  const avatar=AVATARS.find(avatar=>avatar.id===value);element.replaceChildren();
  if(avatar){element.innerHTML=avatar.svg;element.dataset.avatar=avatar.id;element.title=avatar.name}
- else{element.textContent=name.trim().slice(0,2).toUpperCase()||'JIJ';delete element.dataset.avatar;element.title='Initialen'}
+ else if(isCustomAvatar(value)||isUploadedAvatar(value)){
+  const image=document.createElement('img');image.src=isCustomAvatar(value)?value:`/api/rooms/${pin}/avatars/${value.slice(6)}`;image.alt='';image.loading='lazy';image.decoding='async';image.className='avatar-photo';element.append(image);element.dataset.avatar='custom';element.title='Eigen foto';
+ }else{element.textContent=name.trim().slice(0,2).toUpperCase()||'JIJ';delete element.dataset.avatar;element.title='Initialen'}
 }
-export function createAvatarPicker(root,{value=null,getName=()=>'',onChange=()=>{}}={}){
- let selected=value;
+export function createAvatarPicker(root,{value=null,getName=()=>'',getPin=()=>'',onChange=()=>{},onBusy=()=>{}}={}){
+ let selected=value,customValue=isCustomAvatar(value)||isUploadedAvatar(value)?value:null,busy=false,generation=0;
  const details=document.createElement('details');details.className='avatar-picker';
  const summary=document.createElement('summary'),preview=document.createElement('span'),label=document.createElement('span');preview.className='avatar';label.textContent='Kies je avatar';summary.append(preview,label);details.append(summary);
  const grid=document.createElement('div');grid.className='avatar-grid';grid.setAttribute('role','radiogroup');grid.setAttribute('aria-label','Kies je avatar');
- const choices=[{id:null,name:'Initialen'},...AVATARS],buttons=[];
- function update(){renderAvatar(preview,selected,getName());buttons.forEach((button,index)=>{const chosen=choices[index].id===selected;button.setAttribute('aria-checked',String(chosen));button.tabIndex=chosen?0:-1;renderAvatar(button,choices[index].id,getName())})}
- function select(id,notify=false){selected=id;update();if(notify)onChange(id)}
- for(const [index,choice]of choices.entries()){
-  const button=document.createElement('button');button.type='button';button.className='avatar-choice';button.setAttribute('role','radio');button.setAttribute('aria-label',choice.name);button.onclick=()=>select(choice.id,true);
-  button.onkeydown=event=>{const step={ArrowRight:1,ArrowLeft:-1,ArrowDown:6,ArrowUp:-6}[event.key];if(step||event.key==='Home'||event.key==='End'){event.preventDefault();const next=event.key==='Home'?0:event.key==='End'?choices.length-1:(index+step+choices.length)%choices.length;select(choices[next].id,true);buttons[next].focus()}};buttons.push(button);grid.append(button);
+ const choices=[{id:null,name:'Initialen'},...AVATARS,{id:'__custom__',name:'Eigen foto'}],buttons=[];
+ const status=document.createElement('p');status.className='avatar-upload-status';status.setAttribute('role','status');
+ const input=document.createElement('input');input.type='file';input.accept='image/png,image/jpeg,image/webp,image/gif';input.className='sr-only';input.tabIndex=-1;input.setAttribute('aria-label','Avatarfoto kiezen');
+ const upload=document.createElement('button');upload.type='button';upload.className='avatar-upload';upload.textContent='＋ Upload je eigen foto';upload.onclick=()=>input.click();
+ const hint=document.createElement('p');hint.className='avatar-upload-hint';hint.textContent='PNG, JPG, WebP of GIF · max. 5 MB';
+ function setBusy(value){busy=value;onBusy(value)}
+ function update(){
+  renderAvatar(preview,selected,getName(),getPin());
+  buttons.forEach((button,index)=>{const value=choices[index].id==='__custom__'?customValue:choices[index].id,chosen=value===selected;button.hidden=choices[index].id==='__custom__'&&!customValue;button.setAttribute('aria-checked',String(chosen&&!button.hidden));button.tabIndex=chosen&&!button.hidden?0:-1;renderAvatar(button,value,getName(),getPin())});
  }
- details.append(grid);root.replaceChildren(details);update();return {select,update};
+ function select(value,notify=false){
+  generation++;setBusy(false);selected=value;if(isCustomAvatar(value)||isUploadedAvatar(value))customValue=value;else if(!notify)customValue=null;status.textContent='';update();if(notify)onChange(value);
+ }
+ for(const [index,choice]of choices.entries()){
+  const button=document.createElement('button');button.type='button';button.className='avatar-choice';button.setAttribute('role','radio');button.setAttribute('aria-label',choice.name);button.onclick=()=>select(choice.id==='__custom__'?customValue:choice.id,true);
+  button.onkeydown=event=>{const step={ArrowRight:1,ArrowLeft:-1,ArrowDown:1,ArrowUp:-1}[event.key];if(step||event.key==='Home'||event.key==='End'){event.preventDefault();const visible=buttons.filter(button=>!button.hidden),i=visible.indexOf(button),next=event.key==='Home'?0:event.key==='End'?visible.length-1:(i+step+visible.length)%visible.length;visible[next].click();visible[next].focus()}};buttons.push(button);grid.append(button);
+ }
+ input.onchange=async()=>{
+  const file=input.files[0];input.value='';if(!file)return;const token=++generation;
+  if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)||file.size>5*1024*1024){status.textContent='Kies een PNG, JPG, WebP of GIF van maximaal 5 MB.';setBusy(false);return}
+  setBusy(true);status.textContent='Foto klaarmaken…';const url=URL.createObjectURL(file);
+  try{
+   const image=new Image();image.src=url;await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=reject});if(token!==generation)return;
+   const canvas=document.createElement('canvas');canvas.width=160;canvas.height=160;const context=canvas.getContext('2d'),side=Math.min(image.naturalWidth,image.naturalHeight);context.drawImage(image,(image.naturalWidth-side)/2,(image.naturalHeight-side)/2,side,side,0,0,160,160);
+   const result=avatarFrom(canvas.toDataURL('image/png'));customValue=result;selected=result;update();onChange(result);status.textContent='Foto klaar. Je keuze wordt met je avatar opgeslagen.';
+  }catch{if(token===generation)status.textContent='Deze afbeelding kon niet worden geopend. Kies een andere foto.'}
+  finally{URL.revokeObjectURL(url);if(token===generation)setBusy(false)}
+ };
+ details.append(grid,upload,input,hint,status);root.replaceChildren(details);update();return {select,update,isBusy:()=>busy};
 }

@@ -105,6 +105,12 @@
 .online-game .score-list{padding-bottom:76px}
 
 .unsaved-dialog{width:min(400px,calc(100vw - 32px))}.unsaved-dialog h2{font-size:23px;letter-spacing:-.7px}.unsaved-actions{display:flex;flex-direction:column;gap:8px}.unsaved-actions button{padding:12px;font-size:12px}.unsaved-actions [data-decision=discard]{color:#c5a6a6;background:transparent}.setup-footer{flex-wrap:wrap}.setup-footer #download-game,.setup-footer #save-settings{font-size:12px;padding:12px 13px}
+.beer-mugs{display:inline-flex;align-items:center;justify-content:center;gap:3px;vertical-align:middle;flex-wrap:wrap;line-height:1}.beer-mugs .mug-icon{display:block;width:24px;height:29px;flex-shrink:0;overflow:visible}.beer-mugs .mug-multiplier,.beer-mugs .mug-zero{font-size:11px;color:#d9dfd6;font-weight:600;margin:0 3px}.beer-inline .mug-icon{width:16px;height:19px}.beer-inline{margin:0 2px}.adt-count .mug-icon,.score-adts .mug-icon{width:17px;height:21px}.score-adts{margin-left:8px}.score-adts .mug-zero,.adt-count .mug-zero{font-size:10px;color:#809687}.penalty-extra .mug-icon{width:15px;height:18px}.penalty-extra{margin-left:6px;vertical-align:middle}
+
+body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{color:#c88f94}.dashboard-tabs button[aria-selected=true]{box-shadow:inset 0 -2px 0 #cf6370,0 2px 8px #0002}.score-row.active{border-left-color:#dc6570;background:#e66a7309}.die.held{outline:2px solid #df6772;outline-offset:4px;box-shadow:0 7px #c6d0c9,0 0 0 6px #df67721c,0 16px 25px #0004}.die.held::after{content:'';position:absolute;right:7px;bottom:7px;width:7px;height:7px;border-radius:50%;background:#d65e69}.die.held+.hold-state{opacity:1;color:#f0adb5;font-weight:650;font-size:9px}
+#outcome-dialog{padding:30px 25px 23px;width:min(350px,calc(100vw - 32px));border:1px solid #ffffff1c;border-top:2px solid #d56570;text-align:center}#outcome-dialog h2{font-size:27px;letter-spacing:-.8px;line-height:1.2;margin:8px 0 16px}#outcome-dialog .penalty{padding:12px 4px 23px;margin:0;background:none!important;border:0;border-radius:0}#penalty-value{display:flex;gap:7px;font-size:0}#penalty-value .mug-icon{width:46px;height:55px}#penalty-value .mug-multiplier{font-size:20px}#outcome-rip{display:inline-block;font-size:10px;letter-spacing:1px;font-weight:700;color:#efa1a8;background:#dc62651b;padding:5px 9px;border-radius:7px;width:auto;margin:0 0 6px}.outcome-buttons{gap:7px}.outcome-buttons #outcome-view,.outcome-buttons #outcome-next{font-size:11px;padding:11px 9px;border-radius:11px}#online-round-help{font-size:10px;margin-bottom:13px}#incident-dialog{padding:25px;width:min(350px,calc(100vw - 32px));border-top:2px solid #d56570}#incident-dialog h2{font-size:24px;margin:0 0 9px}#incident-dialog p{font-size:12px;margin-bottom:14px}#incident-dialog .incident-penalty{background:none;padding:4px;margin:8px 0 21px;gap:10px;align-items:center}#incident-amount .mug-icon{width:43px;height:51px}#incident-player{font-size:12px!important}
+
+.outcome-buttons.single-action{grid-template-columns:1fr}
 </style>
 </head>
 <body>
@@ -124,14 +130,16 @@
 
 
 </div><div id="settings-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
+<section class="settings-card" aria-label="Spelregels"><label class="toggle"><span><strong>Nouri</strong><small>3 + 4 = direct af.</small></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
+<label class="toggle"><span><strong>Van tafel gooien</strong><small>2% kans per beurt. <span class="beer-inline" data-beer-units="1"></span> en opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
+<label class="toggle"><span><strong>Vierde worp</strong><small>Extra worp voor <span class="beer-inline" data-beer-units="1"></span>. Telt niet mee.</small></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
+<label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong><small>Niet losgemaakt? <span class="beer-inline" data-beer-units="1"></span></small></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
+</section>
+
+
+<section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text" aria-describedby="mexx-help"><p class="small muted" id="mexx-help">Extra hoogste scores, met een Mexx-ster.</p><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text" aria-describedby="out-help"><p class="small muted" id="out-help">Bij deze scores eindigt de ronde direct.</p><p class="small muted">21 blijft Mexx. Nouri gaat vóór extra regels.</p></section>
 
 <section class="settings-card" aria-labelledby="members-title"><h2 id="members-title">DMC-leden</h2><p class="small muted">Jullie vaste namenlijst.</p><div id="members-editor"></div><div class="member-add"><label class="sr-only" for="new-member-name">Naam nieuw DMC-lid</label><input id="new-member-name" type="text" placeholder="Naam nieuw lid" maxlength="45"><button type="button" id="add-dmc-member">+ Lid toevoegen</button></div><p id="member-message" class="small muted" role="status"></p></section>
-<section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text" aria-describedby="mexx-help"><p class="small muted" id="mexx-help">Extra hoogste scores, met een Mexx-ster.</p><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text" aria-describedby="out-help"><p class="small muted" id="out-help">Bij deze scores eindigt de ronde direct.</p><p class="small muted">21 blijft Mexx. Nouri gaat vóór extra regels.</p></section>
-<section class="settings-card" aria-label="Spelregels"><label class="toggle"><span><strong>Nouri</strong><small>3 + 4 = direct af.</small></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
-<label class="toggle"><span><strong>Van tafel gooien</strong><small>2% kans per beurt. Half adtje, daarna opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
-<label class="toggle"><span><strong>Vierde worp</strong><small>Extra worp voor een half adtje. De score telt niet.</small></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
-<label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong><small>Vergeten los te maken? Half adtje.</small></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
-</section>
 <p id="settings-status" class="small muted" role="status" aria-live="polite">Sla je wijzigingen op voordat je gaat spelen.</p>
 </div>
 </div>
@@ -151,15 +159,9 @@
 </div>
 <dialog id="unsaved-dialog" class="unsaved-dialog" aria-labelledby="unsaved-title" aria-describedby="unsaved-copy"><h2 id="unsaved-title">Nog even opslaan?</h2><p id="unsaved-copy">Je hebt wijzigingen die nog niet zijn opgeslagen.</p><div class="unsaved-actions"><button type="button" data-decision="stay" autofocus>Verder bewerken</button><button type="button" data-decision="discard">Niet opslaan</button><button type="button" data-decision="save" class="green">Opslaan en verder</button></div></dialog>
 <dialog id="confirm-dialog"><h2 id="confirm-title"></h2><p id="confirm-copy"></p><div class="dialog-actions"><button type="button" id="cancel-confirm">Annuleren</button><button type="button" class="primary" id="accept-confirm">Doorgaan</button></div></dialog>
-<dialog id="outcome-dialog" aria-labelledby="outcome-title" aria-describedby="outcome-reason penalty-breakdown">
-<button type="button" id="outcome-close" aria-label="Uitslag sluiten">×</button>
-<p class="outcome-kicker" id="outcome-round"></p><div id="outcome-rip" hidden><span class="cross" aria-hidden="true"></span><strong>RIP</strong></div>
-<h2 id="outcome-title"></h2><p id="outcome-reason"></p>
-<div class="penalty"><span class="small muted" id="penalty-scope">STRAF PER VERLIEZER</span><strong id="penalty-value"></strong><span id="penalty-breakdown"></span></div>
-<p class="small" id="outcome-starter"></p><p id="online-round-help" class="small" hidden>De beheerder start de volgende ronde.</p><div class="outcome-buttons"><button type="button" id="outcome-view">Bekijk scores</button><button type="button" class="green" id="outcome-next">Nieuwe ronde →</button></div>
-</dialog>
+<dialog id="outcome-dialog" aria-labelledby="outcome-title"><button type="button" id="outcome-close" aria-label="Uitslag sluiten">×</button><span id="outcome-rip" hidden>RIP</span><h2 id="outcome-title"></h2><div class="penalty"><div id="penalty-value"></div></div><p id="online-round-help" class="small" hidden>Wachten op de beheerder</p><div class="outcome-buttons"><button type="button" id="outcome-view">Scores</button><button type="button" class="green" id="outcome-next">Volgende ronde →</button></div></dialog>
 <dialog id="incident-dialog" aria-labelledby="incident-title" aria-describedby="incident-reason">
-<p class="eyebrow">EXTRA STRAF · DE RONDE GAAT VERDER</p><h2 id="incident-title"></h2><p id="incident-reason"></p><div class="incident-penalty"><strong>Een half adtje</strong><span id="incident-player"></span></div><button type="button" class="green" id="incident-continue">Verder spelen →</button>
+<h2 id="incident-title"></h2><p id="incident-reason"></p><div class="incident-penalty"><div id="incident-amount" data-beer-units="1"></div><span id="incident-player"></span></div><button type="button" class="green" id="incident-continue">Verder spelen →</button>
 </dialog>
 <span id="sort-status" class="sr-only" role="status"></span>
 <noscript>Schakel JavaScript in je browser in om DMC mexx te spelen.</noscript>
@@ -421,6 +423,22 @@ function currentPlayer(){return config.players.find(p=>p.id===currentId())}
 function teamFor(id){return config.teams.find(t=>t.members.includes(id))}
 function scoreFor(a,b){return a===b?a*100:10*Math.max(a,b)+Math.min(a,b)}
 function randomFace(){return Math.floor(Math.random()*6)+1}
+function renderMugs(element,halfUnits,{compact=false}={}){
+ const units=Number.isFinite(Number(halfUnits))?Math.max(0,Math.floor(Number(halfUnits))):0;
+ const amount=units/2,label=amount.toLocaleString('nl-NL')+' '+(amount===1?'adtje':'adtjes');
+ element.replaceChildren();element.classList.add('beer-mugs');element.setAttribute('role','img');element.setAttribute('aria-label',label);element.title=label;
+ const whole=Math.floor(units/2),limit=compact?2:5;
+ function mug(fill){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 44 52');svg.setAttribute('class','mug-icon');svg.setAttribute('aria-hidden','true');svg.dataset.fill=fill===1?'full':fill===.5?'half':'empty';
+  const top=fill===1?15:29;
+  svg.innerHTML=`<path d="M32 17h4a6 6 0 0 1 6 6v9a6 6 0 0 1-6 6h-4" fill="none" stroke="#c6d7cc" stroke-width="3"/><path d="M6 12h27v30a4 4 0 0 1-4 4H10a4 4 0 0 1-4-4Z" fill="#e7f2e912" stroke="#c6d7cc" stroke-width="2.6"/>${fill?`<path d="M9 ${top}h21v${42-top}H9Z" fill="#edb64d"/><path d="M9 ${top}h21" stroke="#fff1d5" stroke-width="4"/><path d="M15 ${top+5}V40M24 ${top+5}V40" stroke="#ffe09a" stroke-width="2" stroke-linecap="round"/>`:''}`;
+  element.append(svg);
+ }
+ if(!units){mug(0);const zero=document.createElement('span');zero.className='mug-zero';zero.textContent='0';element.append(zero);return}
+ if(whole>limit){mug(1);const count=document.createElement('span');count.className='mug-multiplier';count.textContent='× '+whole;element.append(count)}else for(let i=0;i<whole;i++)mug(1);
+ if(units%2)mug(.5);
+}
+
 function showFace(die,value,index){
  // Explicit SVG geometry also works in Safari versions that mis-size grid children inside buttons.
  const ns='http://www.w3.org/2000/svg',face=document.createElementNS(ns,'svg');
@@ -443,7 +461,7 @@ function renderGame(){
  $('#rip').hidden=!out||state.outcomePending;$('.arena').classList.toggle('eliminated',out&&!state.outcomePending);
  $('#pass').textContent=state.index===state.schedule.length-1?'Ronde afsluiten →':'Doorgeven →';
  $('#arena-hint').textContent=state.outcomePending?'De uitslag verschijnt zo…':state.complete?'De Mexx-sterren worden bij de volgende ronde gereset.':out?'Deze speler kan pas in een nieuwe ronde weer gooien.':state.tieBreak?'Kavelen: één worp met twee losse stenen. De laagste score verliest.':'Tik na je eerste worp op een dobbelsteen om hem vast te zetten.';
- dice.forEach((die,i)=>{die.disabled=!!state.tieBreak||state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'vast':' '});
+ dice.forEach((die,i)=>{die.disabled=!!state.tieBreak||state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'Vast':' '});
  $('#board-mode').textContent=config.mode==='single'?'Individueel':config.wholeTeam?'Hele team':'1 per team';$('#board-rules').textContent=`${config.nouri?'Nouri aan: 43 stopt de ronde · ':''}Rondelimiet: ${state.tieBreak?'1 worp per kavelaar':state.index===0&&!state.complete?'wordt bepaald':state.limit+' worpen'}`;
  renderScores();
 }
@@ -456,18 +474,17 @@ function renderScores(){
   for(const id of group.members){
    const person=config.players.find(p=>p.id===id),record=view.records.get(id),active=!past&&!state.complete&&id===currentId(),out=view.out.has(id);const row=document.createElement('div');row.className='score-row'+(active?' active':'')+(out?' out':'')+(view.outcome?.loserIds.includes(id)?' lost':'');row.dataset.player=id;
    const total=ONLINE_MODE?(onlineSnapshot.members.find(m=>m.id===id)?.adtHalfUnits||0):(state.adtHalfUnits?.[id]||0);
-   const name=textNode('div',person.name+' · '+(total/2).toLocaleString('nl-NL')+' adtjes','score-name');const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
+   const name=textNode('div',person.name,'score-name'),adts=document.createElement('span');adts.className='score-adts';renderMugs(adts,total,{compact:true});name.append(adts);const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
    const last=record?.at(-1);const score=textNode('span',out?'RIP':last?String(last.score):'—','score-number');
    let detail=record?record.map(w=>(w.tieBreakRound?'K'+w.tieBreakRound+': ':'')+w.score).join(' → ')+(active?' · aan de beurt':''):active?'Aan de beurt':view.schedule.includes(id)?past?'Niet gegooid':'Wacht op de beurt':past?'Deze ronde niet aan de beurt':'Volgende ronde aan de beurt';
    const extraPenalties=(view.incidents||[]).filter(incident=>incident.player===id).length;
-   if(extraPenalties)detail+=` · ${String(extraPenalties/2).replace('.',',')} adtje extra`;
-   if(out)detail+=' · RIP, ronde afgelopen';else if(view.outcome?.loserIds.includes(id))detail+=' · verloren';row.append(name,score,textNode('p',detail,'score-detail'));list.append(row);
+   if(out)detail+=' · RIP, ronde afgelopen';else if(view.outcome?.loserIds.includes(id))detail+=' · verloren';const detailNode=textNode('p',detail,'score-detail');if(extraPenalties){const extra=document.createElement('span');extra.className='penalty-extra';renderMugs(extra,extraPenalties,{compact:true});detailNode.append(extra)}row.append(name,score,detailNode);list.append(row);
   }
  }
  list.scrollTop=scrollTop;
 }
 function showIncident(kind){
- const details={offTable:['Van tafel!','Je gooide de losse stenen van tafel. Deze worp telt niet; je mag opnieuw gooien.'],fourth:['Te vaak gegooid!','Dit was je vierde worp. Die telt niet: je derde, geldige score blijft staan. Geef de beurt nu door.'],held:['Vergeten los te maken!','Je drukte op gooien met een vastgezette steen van de vorige speler. De stenen zijn nu los; je mag opnieuw gooien.']};
+ const details={offTable:['Van tafel!','Deze worp telt niet. Probeer opnieuw.'],fourth:['Te vaak gegooid!','Je derde score blijft staan. Geef de beurt door.'],held:['Vergeten los te maken!','De stenen zijn nu los. Probeer opnieuw.']};
  state.rolling=false;state.incidentOpen=true;
  state.adtHalfUnits[currentId()]=(state.adtHalfUnits[currentId()]||0)+1;
  state.incidents.push({player:currentId(),kind,amount:0.5});
@@ -544,24 +561,13 @@ function finishRound(instantLoser=null,instantReason=null){
  }else showOutcome();
 }
 function showOutcome(){
- const outcome=state.outcome;const names=outcome.loserIds.map(id=>config.players.find(p=>p.id===id).name);
- const joinNames=items=>items.length===1?items[0]:items.slice(0,-1).join(', ')+' en '+items.at(-1);
- const losingTeams=config.mode==='team'?[...new Set(outcome.loserIds.map(id=>teamFor(id).id))].map(id=>config.teams.find(t=>t.id===id).name):[];
- const labels=config.mode==='team'?losingTeams:names;
- $('#outcome-round').textContent=`RONDE ${state.round} · UITSLAG`;
- $('#outcome-title').textContent=joinNames(labels)+(labels.length===1?' heeft verloren':' hebben verloren');
- $('#outcome-rip').hidden=!outcome.instant;
- const score=state.records.get(outcome.starter).at(-1).score;
- $('#outcome-reason').textContent=outcome.instant?`${joinNames(names)} gooide ${outcome.nouri?34:outcome.eliminationScore}${outcome.nouri?' in Nouri mode':' (direct-af-score)'}. De ronde is direct afgelopen.`:`${joinNames(names)} ${names.length===1?'had':'hadden'} de laagste eindscore: ${score}.${outcome.kavelRounds?' Beslist na '+outcome.kavelRounds+' kavelronde(n).':''}`;
- $('#penalty-scope').textContent=config.mode==='team'?'STRAF PER VERLIEZEND TEAM':'STRAF PER VERLIEZER';
- const amount=outcome.halfUnits/2;
- $('#penalty-value').textContent=amount===0.5?'Een half adtje':`${String(amount).replace('.',',')} ${amount===1?'adtje':'adtjes'}`;
- $('#penalty-breakdown').textContent=`½ basis + ${outcome.mexxes} × ½ voor ${outcome.mexxes===1?'één Mexx':outcome.mexxes+' Mexx-worpen'} in deze ronde`;
- const nextStarter=orderWithStarter(scheduleForRound(state.round+1),outcome.starter)[0];
- const nextName=config.players.find(p=>p.id===nextStarter).name;
- $('#outcome-starter').textContent=config.mode==='team'?`${teamFor(nextStarter).name} begint de volgende ronde. ${nextName} is aan de beurt.`:`${nextName} begint de volgende ronde.`;
- $('#outcome-dialog').showModal();
+ const outcome=state.outcome,losers=outcome.loserIds;
+ const names=config.mode==='team'?[...new Set(losers.map(id=>teamFor(id).name))]:losers.map(id=>config.players.find(player=>player.id===id).name);
+ const labels=names.length===1?names[0]:names.slice(0,-1).join(', ')+' en '+names.at(-1);
+ $('#outcome-title').textContent=labels+(names.length===1?' verliest':' verliezen');$('#outcome-rip').hidden=!outcome.instant;
+ renderMugs($('#penalty-value'),outcome.halfUnits);$('#outcome-dialog').showModal();
 }
+
 function confirm(title,copy,action){confirmAction=action;$('#confirm-title').textContent=title;$('#confirm-copy').textContent=copy;$('#confirm-dialog').showModal()}
 function requestNewRound(){if(state?.tieBreak&&!state.complete)return;if(ONLINE_MODE){if(state?.complete)sendOnlineAction('newRound');else if(window.confirm('Ronde nu afsluiten?'))sendOnlineAction('endRound');return}if(state.complete)beginRound();else if(state.records.size)confirm('Ronde nu afsluiten?','De gespeelde eindworpen bepalen de verliezer. Je krijgt eerst de uitslag en de straf te zien.',()=>finishRound());else confirm('Nieuwe ronde beginnen?','Er is nog niet gegooid; er wordt geen straf toegekend.',beginRound)}
 $('#start-game').addEventListener('click',startGame);
@@ -622,7 +628,7 @@ function applyOnlineControls(){
  if(!ready){$('#roll').disabled=true;$('#pass').disabled=true;dice.forEach(die=>die.disabled=true)}
  $('#new-round').hidden=!admin;$('#reset').hidden=!admin;
  if(!admin){$('#next-round').hidden=true;$('#outcome-next').hidden=true}else{$('#outcome-next').hidden=false}
- $('#online-round-help').hidden=admin;
+ $('.outcome-buttons').classList.toggle('single-action',!admin);$('#online-round-help').hidden=admin;
  if(!onlineConnected||onlinePending){$('#new-round').disabled=true;$('#reset').disabled=true;$('#next-round').disabled=true;$('#outcome-next').disabled=true}else{$('#next-round').disabled=false;$('#outcome-next').disabled=false}
  $('#incident-continue').textContent=active?'Verder spelen →':'Bekijk scores';$('#incident-continue').disabled=active&&(!onlineConnected||onlinePending);
  if(!active&&!state.complete)$('#arena-hint').textContent=(state.tieBreak?'Kavelen · één worp per speler. ':'Je kijkt live mee. ')+currentPlayer().name+' is aan de beurt.';
@@ -656,7 +662,7 @@ function receiveOnlineSnapshot(snapshot,connected,pending){
  if(!state.complete&&$('#outcome-dialog').open)$('#outcome-dialog').close();
  if(state.activeIncident&&state.activeIncident.id!==onlineIncidentId){
   onlineIncidentId=state.activeIncident.id;
-  const detail={held:['Vergeten los te maken!','Er is gegooid met een vastgezette steen van de vorige speler.'],fourth:['Te vaak gegooid!','De vierde worp telt niet. De laatste geldige score blijft staan.'],offTable:['Van tafel!','De losse stenen zijn van tafel gegooid. De speler mag opnieuw gooien.']}[state.activeIncident.kind];
+  const detail={held:['Vergeten los te maken!','De stenen zijn nu los. Probeer opnieuw.'],fourth:['Te vaak gegooid!','Je derde score blijft staan. Geef de beurt door.'],offTable:['Van tafel!','Deze worp telt niet. Probeer opnieuw.']}[state.activeIncident.kind];
   $('#incident-title').textContent=detail[0];$('#incident-reason').textContent=detail[1];$('#incident-player').textContent=currentPlayer().name;$('#incident-dialog').showModal();applyOnlineControls();
  }
  if(!state.activeIncident&&$('#incident-dialog').open)$('#incident-dialog').close();
@@ -686,6 +692,8 @@ document.addEventListener('keydown',event=>{if(event.key==='Escape')$('#local-ga
 
 localSettingsBaseline=localSettingsSnapshot();
 const localSettingsGuard=createUnsavedGuard({dialog:$('#unsaved-dialog'),isDirty:()=>localSettingsSnapshot()!==localSettingsBaseline,save:saveSettings,discard:restoreLocalSettings});
+
+for(const amount of document.querySelectorAll('[data-beer-units]'))renderMugs(amount,Number(amount.dataset.beerUnits));
 </script>
 </body>
 </html>

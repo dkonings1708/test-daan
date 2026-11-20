@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 import * as engine from './game-engine.mjs';
 import { createChat } from './chat.mjs';
 import { avatarFrom } from './avatars.mjs';
+import { createAvatarStore } from './avatar-store.mjs';
 
 const root=dirname(fileURLToPath(import.meta.url));
 const MAX_AGE=24*60*60*1000;
@@ -97,7 +98,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     if(room.receipts.includes(key))return;
     if(['rules','move','reorder','team','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
     switch(action){
-      case 'avatar':requireLobby(room);room.members.find(member=>member.id===memberId).avatar=validatedAvatar(input.avatar);break;
+      case 'avatar':requireLobby(room);room.members.find(member=>member.id===memberId).avatar=avatarStore.set(room,memberId,input.avatar);break;
       case 'rules':requireLobby(room);room.rules=validatedRules(input.rules);break;
       case 'move':{
         requireLobby(room);const index=room.members.findIndex(m=>m.id===input.memberId),step=input.step;
@@ -116,7 +117,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         requireLobby(room);if(input.memberId===room.adminId)throw new ApiError(400,'Draag eerst het beheer over.');
         room.members=room.members.filter(m=>m.id!==input.memberId);
         for(const [token,member]of Object.entries(room.sessions))if(member===input.memberId)delete room.sessions[token];
-        disconnectMember(room,input.memberId);break;
+        disconnectMember(room,input.memberId);avatarStore.removeMember(room.pin,input.memberId);break;
       }
       case 'admin':requireLobby(room);if(!room.members.some(m=>m.id===input.memberId))throw new ApiError(404,'Speler niet gevonden.');room.adminId=input.memberId;break;
       case 'start':requireLobby(room);room.config=engine.configFrom(room);room.game=engine.startGame(room.config);room.accountedHalfUnits={};room.phase='playing';break;
@@ -138,6 +139,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.receipts.push(key);if(room.receipts.length>200)room.receipts.shift();changed(room);
   }
   const chat=createChat(db,{authorize,limitRequest,json,ApiError,persist,live});
+  const avatarStore=createAvatarStore(db,{rooms,authorize,ApiError});
   const server=http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');res.setHeader('Permissions-Policy','microphone=(self), camera=()');
     try{
@@ -147,20 +149,21 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(req.headers['sec-fetch-site']==='cross-site')throw new ApiError(403,'Ongeldige herkomst.');
         if(!/^\/api\/rooms\/\d{6}\/chat\/media$/.test(path)&&!String(req.headers['content-type']||'').startsWith('application/json'))throw new ApiError(415,'Verstuur de actie als JSON.');
       }
+      if(avatarStore.handle(req,res,path))return;
       if(await chat.handle(req,res,path))return;
       if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true});return}
       if(req.method==='GET'&&['/','/index.html','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }
       if(req.method==='POST'&&path==='/api/logout'){
         const {room,memberId}=authorize(req);if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om die te verlaten.');
         room.members=room.members.filter(m=>m.id!==memberId);for(const [token,member]of Object.entries(room.sessions))if(member===memberId)delete room.sessions[token];
-        disconnectMember(room,memberId);
-        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin)}
+        disconnectMember(room,memberId);avatarStore.removeMember(room.pin,memberId);
+        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin);avatarStore.removeRoom(room.pin)}
         res.setHeader('Set-Cookie','dmc_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');json(res,200,{ok:true});return;
       }
       if(req.method==='POST'&&path==='/api/rooms'){
@@ -169,7 +172,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
         const memberId=id(),token=randomBytes(32).toString('hex');
         const room={pin,adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
-        rooms.set(pin,room);persist(room);sessionCookie(req,res,token);json(res,201,snapshot(room,memberId));return;
+        room.members[0].avatar=avatarStore.set(room,memberId,room.members[0].avatar);rooms.set(pin,room);persist(room);sessionCookie(req,res,token);json(res,201,snapshot(room,memberId));return;
       }
       const join=path.match(/^\/api\/rooms\/(\d{6})\/join$/);
       if(req.method==='POST'&&join){
@@ -181,7 +184,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         const display=name(input.name);if(!display)throw new ApiError(400,'Vul je naam in.');
         if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
         const memberId=id(),token=randomBytes(32).toString('hex');
-        room.members.push({id:memberId,name:display,avatar:validatedAvatar(input.avatar),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);changed(room);json(res,200,snapshot(room,memberId));return;
+        const avatar=avatarStore.set(room,memberId,input.avatar);room.members.push({id:memberId,name:display,avatar,team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);changed(room);json(res,200,snapshot(room,memberId));return;
       }
       const event=path.match(/^\/api\/rooms\/(\d{6})\/events$/);
       if(req.method==='GET'&&event){
@@ -207,7 +210,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     }
   });
   const cleanup=setInterval(()=>{
-    for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin);chat.remove(pin)}
+    for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin);chat.remove(pin);avatarStore.removeRoom(pin)}
   },60000);cleanup.unref();
   return {server,close:async()=>{closed=true;clearInterval(cleanup);for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));db.close()}};
 }

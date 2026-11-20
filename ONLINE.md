@@ -66,11 +66,15 @@ Bij het maken van of meedoen aan een lobby kun je naast je naam een avatar
 kiezen: tien ingebouwde illustraties met dobbel-, bier- en dierenthema’s. Initialen
 blijven ook mogelijk. In de lobby kun je je eigen avatar opnieuw kiezen. Andere
 leden zien de wijziging direct; de keuze wordt met je lobbysessie opgeslagen.
-Alleen je eigen avatar kan worden gewijzigd. Afbeeldingsuploads zijn niet nodig.
+Alleen je eigen avatar kan worden gewijzigd. Je kunt daarnaast een eigen foto kiezen (PNG, JPG, WebP of GIF, maximaal 5 MB).
+De browser snijdt de foto vierkant bij en verkleint hem. De server bewaart alleen
+de kleine PNG als apart, uitsluitend voor lobbyleden toegankelijk bestand; live
+spelupdates bevatten geen afbeeldingsdata. Vervangen, verwijderen of verlopen
+van een lobby ruimt de bijbehorende foto op.
 
 ## Adt-teller en kavelen
 
-Achter elke naam in de lobby en het spel staat de adt-teller: het totale aantal
+Achter elke naam in de lobby en het spel staan bierpullen voor het totale aantal
 opgelegde adtjes, inclusief halve adtjes en de extra straffen voor van tafel,
 een vierde worp of vastgezette stenen. Een rondeverlies wordt alleen bij de
 speler met de verliezende worp geteld, ook in teammodus. Het totaal blijft binnen
@@ -89,6 +93,10 @@ De oorspronkelijke en kavelworpen blijven samen in het scoreoverzicht staan.
 Van tafel gooien heeft bij inschakelen **2% kans per beurt**, gecontroleerd bij
 de eerste normale worp. Extra worpen en opnieuw gooien na van tafel verhogen
 die kans niet. Dezelfde regels werken in de lokale spelmodus.
+
+De uitslagpopup toont de verliezer en de bierpullen. Een half gevulde pul staat
+voor een half adtje, een volle voor één adtje. Rondenummer, optelsom en volgende
+starter zijn uit de popup verwijderd; de berekening en spelvolgorde zijn gelijk.
 
 ## Lobbychat
 
@@ -187,6 +195,11 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 ## Uitgevoerde controles
 
+- Eigen avatarfoto kiezen, bijsnijden, delen en hervatten na verversen/herstart;
+  ongeldige en te grote uploads, toegangscontrole en het opruimen van oude foto’s.
+- Halfvolle/volle bierpullen, compacte uitslag en strafpopup, duidelijk vastzetten,
+  rode accenten, Lobby-titel en instellingenvolgorde gecontroleerd in de browser.
+
 - Lokale en online waarschuwing voor niet-opgeslagen wijzigingen: verder
   bewerken, wegdoen, opslaan, ongeldige invoer en behoud van concepten bij live updates.
 - Avatars kiezen bij maken/meedoen, eigen avatar wijzigen, gedeelde weergave,
@@ -218,7 +231,7 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 - Geweigerde microfoontoegang en een mislukte verzending: chat blijft bruikbaar
   en het concept blijft behouden. De lokale spelmodus start en kan nog gooien.
 
-- 22 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
+- 24 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
   het overdragen van beheer en hervatten na een serverherstart.
 - Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
   gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel

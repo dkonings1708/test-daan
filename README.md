@@ -9,7 +9,8 @@ een bestandsvoorbeeld in een berichtenapp voert het spel mogelijk niet uit.
 
 ## Instellingen
 
-Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**.
+Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**. De vaste
+DMC-ledenlijst staat onder de normale spelinstellingen.
 Het clublogo is geen instelling meer; het blijft onderdeel van de kop van de app.
 Bij niet-opgeslagen wijzigingen krijg je bij het verlaten van de instellingentab
 keuze uit verder bewerken, wegdoen of opslaan. Dit werkt lokaal en online, ook
@@ -145,11 +146,26 @@ Bij het maken van of meedoen aan een lobby kies je optioneel één van tien avat
 Dobbelduivel, Bierbaas, Feestkikker, Dobbelkat, Gelukseend, Pintpinguïn, Sluwe vos,
 Dorstige draak, Nachtuil en Bierhaai. Je kunt ook je initialen houden. Klik in de
 lobby op je eigen avatar om hem te veranderen. De keuze blijft na verversen of
-een serverherstart behouden. De illustraties zijn ingebouwd en gebruiken geen
-externe afbeeldingen of uploads.
+een serverherstart behouden. De illustraties zijn ingebouwd. Je kunt ook een eigen foto kiezen: PNG, JPG,
+WebP of GIF van maximaal 5 MB. De foto wordt vierkant bijgesneden en verkleind
+voordat hij wordt verstuurd. De foto is alleen beschikbaar voor leden van je
+lobby en wordt bij vervangen, verwijderen van de deelnemer of verlopen van de
+lobby opgeruimd.
 
 De chat opent zonder het berichtveld te focussen, zodat je op mobiel eerst kunt
 lezen. Foto’s, video’s en spraakmemo’s blijven via de lobbychat beschikbaar.
+
+## Bierpullen en uitslag
+
+Opgelegde adtjes verschijnen als bierpullen: een half gevulde pul voor een half
+adtje, een volle pul voor een heel adtje. Grotere aantallen worden compact met
+een vermenigvuldiger getoond. De teller achter je naam gebruikt dezelfde iconen.
+De bedragen blijven ook voor schermlezers beschikbaar.
+
+De uitslag toont alleen de verliezer, de bierpullen en de knoppen om verder te
+gaan. Rondenummer, optelsom en volgende starter staan niet meer in de popup.
+De spelregels, strafberekening en startvolgorde blijven gelijk. Een vastgezette
+steen heeft een rode rand, een stip en het label Vast.
 
 ## Bediening en scherm
 
