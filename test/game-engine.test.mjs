@@ -82,3 +82,16 @@ test('team penalties are credited only to the losing player and counters outlive
  for(let n=0;n<103;n++){const first=game.currentId(t);roll(d,t,[3,1]);game.pass(d,t,first);roll(d,t,[6,5]);game.nextRound(d,t)}
  assert.equal(t.history.length,100);assert.deepEqual(t.adtHalfUnits,{a:103});
 });
+
+test('off-table percentage accepts whole values 0–5 and uses the exact configured boundary',()=>{
+ for(const percent of [0,1,2,3,4,5]){
+  const c=config({offTable:true,offTablePercent:percent});
+  for(const sample of [Math.max(0,percent*100-1),percent*100]){
+   const s=game.startGame(c),plan=game.beginRoll(c,s,'a',(min,max)=>max===10000?sample:max===7?6:123);
+   assert.equal(plan.type,percent>0&&sample<percent*100?'fly':'roll',`${percent}% at ${sample}`);
+  }
+ }
+ for(const value of [-1,6,1.5,'2',null,NaN])assert.throws(()=>game.rulesFrom({offTablePercent:value}),/heel percentage/);
+ const legacy=config({offTable:true});delete legacy.offTablePercent;
+ assert.equal(game.beginRoll(legacy,game.startGame(legacy),'a',(min,max)=>max===10000?199:max===7?6:123).type,'fly');
+});

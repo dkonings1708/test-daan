@@ -104,13 +104,14 @@
 .arrow-icon{width:15px;height:15px;display:inline-block;vertical-align:middle;margin-left:5px;flex-shrink:0}
 .online-game .score-list{padding-bottom:76px}
 
-.unsaved-dialog{width:min(400px,calc(100vw - 32px))}.unsaved-dialog h2{font-size:23px;letter-spacing:-.7px}.unsaved-actions{display:flex;flex-direction:column;gap:8px}.unsaved-actions button{padding:12px;font-size:12px}.unsaved-actions [data-decision=discard]{color:#c5a6a6;background:transparent}.setup-footer{flex-wrap:wrap}.setup-footer #download-game,.setup-footer #save-settings{font-size:12px;padding:12px 13px}
+.unsaved-dialog{width:min(400px,calc(100vw - 32px))}.unsaved-dialog h2{font-size:23px;letter-spacing:-.7px}.unsaved-actions{display:flex;flex-direction:column;gap:8px}.unsaved-actions button{padding:12px;font-size:12px}.unsaved-actions [data-decision=discard]{color:#c5a6a6;background:transparent}.setup-footer{flex-wrap:wrap}.setup-footer #save-settings{font-size:12px;padding:12px 13px}
 .beer-mugs{display:inline-flex;align-items:center;justify-content:center;gap:3px;vertical-align:middle;flex-wrap:wrap;line-height:1}.beer-mugs .mug-icon{display:block;width:24px;height:29px;flex-shrink:0;overflow:visible}.beer-mugs .mug-multiplier,.beer-mugs .mug-zero{font-size:11px;color:#d9dfd6;font-weight:600;margin:0 3px}.beer-inline .mug-icon{width:16px;height:19px}.beer-inline{margin:0 2px}.adt-count .mug-icon,.score-adts .mug-icon{width:17px;height:21px}.score-adts{margin-left:8px}.score-adts .mug-zero,.adt-count .mug-zero{font-size:10px;color:#809687}.penalty-extra .mug-icon{width:15px;height:18px}.penalty-extra{margin-left:6px;vertical-align:middle}
 
-body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{color:#c88f94}.dashboard-tabs button[aria-selected=true]{box-shadow:inset 0 -2px 0 #cf6370,0 2px 8px #0002}.score-row.active{border-left-color:#dc6570;background:#e66a7309}.die.held{outline:2px solid #df6772;outline-offset:4px;box-shadow:0 7px #c6d0c9,0 0 0 6px #df67721c,0 16px 25px #0004}.die.held::after{content:'';position:absolute;right:7px;bottom:7px;width:7px;height:7px;border-radius:50%;background:#d65e69}.die.held+.hold-state{opacity:1;color:#f0adb5;font-weight:650;font-size:9px}
+body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{color:#c88f94}.dashboard-tabs button[aria-selected=true]{box-shadow:inset 0 -2px 0 #cf6370,0 2px 8px #0002}.score-row.active{border-left-color:#dc6570;background:#e66a7309}.die.held{outline:2px solid #dc657066;outline-offset:3px;box-shadow:0 7px #c6d0c9,0 16px 25px #0004}.die.held+.hold-state{opacity:1;color:#f0adb5;font-weight:650;font-size:9px}
 #outcome-dialog{padding:30px 25px 23px;width:min(350px,calc(100vw - 32px));border:1px solid #ffffff1c;border-top:2px solid #d56570;text-align:center}#outcome-dialog h2{font-size:27px;letter-spacing:-.8px;line-height:1.2;margin:8px 0 16px}#outcome-dialog .penalty{padding:12px 4px 23px;margin:0;background:none!important;border:0;border-radius:0}#penalty-value{display:flex;gap:7px;font-size:0}#penalty-value .mug-icon{width:46px;height:55px}#penalty-value .mug-multiplier{font-size:20px}#outcome-rip{display:inline-block;font-size:10px;letter-spacing:1px;font-weight:700;color:#efa1a8;background:#dc62651b;padding:5px 9px;border-radius:7px;width:auto;margin:0 0 6px}.outcome-buttons{gap:7px}.outcome-buttons #outcome-view,.outcome-buttons #outcome-next{font-size:11px;padding:11px 9px;border-radius:11px}#online-round-help{font-size:10px;margin-bottom:13px}#incident-dialog{padding:25px;width:min(350px,calc(100vw - 32px));border-top:2px solid #d56570}#incident-dialog h2{font-size:24px;margin:0 0 9px}#incident-dialog p{font-size:12px;margin-bottom:14px}#incident-dialog .incident-penalty{background:none;padding:4px;margin:8px 0 21px;gap:10px;align-items:center}#incident-amount .mug-icon{width:43px;height:51px}#incident-player{font-size:12px!important}
 
 .outcome-buttons.single-action{grid-template-columns:1fr}
+.off-table-control{display:grid;gap:12px;padding:16px 0}.off-table-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.off-table-heading output{color:#ed919a;font-variant-numeric:tabular-nums}.off-table-control input[type=range]{width:100%;height:24px;padding:0;accent-color:#dc6570;cursor:pointer}
 </style>
 </head>
 <body>
@@ -121,34 +122,32 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 <div class="setup-header"><p class="eyebrow">DMC MEXX / LOKAAL</p><h1 id="dashboard-title">Wie doet er mee?</h1><div class="dashboard-tabs" role="tablist" aria-label="Dashboard"><button id="tab-game" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Spelers</button><button id="tab-settings" type="button" role="tab" aria-selected="false" aria-controls="settings-panel" tabindex="-1">Spelregels</button></div></div>
 <div class="setup-body"><div id="dashboard-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-game">
 
-<label class="toggle"><span><strong>DMC-leden inladen</strong><small>Jullie opgeslagen namen, meteen klaar.</small></span><input id="load-members" type="checkbox" role="switch" aria-label="DMC-leden inladen"></label>
+
 <div class="mode-options"><label class="choice"><input type="radio" name="mode" value="single" checked><span><strong>Individueel</strong><span>Iedere speler voor zichzelf</span></span></label><label class="choice"><input type="radio" name="mode" value="team"><span><strong>Teams</strong><span>Speel samen als team</span></span></label></div>
-<label class="toggle" id="team-option" hidden><span><strong>Hele team achter elkaar</strong><small id="team-turn-help">Uit: één teamlid per ronde.</small></span><input id="whole-team" type="checkbox" role="switch" aria-label="Het hele team gooit"></label>
+<label class="toggle" id="team-option" hidden><span><strong>Hele team achter elkaar</strong></span><input id="whole-team" type="checkbox" role="switch" aria-label="Het hele team gooit"></label>
 <div id="single-setup"><div class="list-heading"><h2>Spelers & volgorde</h2></div><p class="small muted" style="font-size:10px;margin-bottom:7px">Sleep voor de speelvolgorde</p><div id="players-editor"></div><button type="button" id="add-player" class="add-member">+ Speler toevoegen</button></div>
 <div id="team-setup" hidden><div class="list-heading"><h2>Teams & volgorde</h2><button type="button" id="add-team">+ Team</button></div><p class="small muted" id="team-help">Sleep teams en spelers in de juiste volgorde.</p><div id="teams-editor"></div></div>
-
-
-
+<label class="toggle"><span><strong>DMC-leden inladen</strong></span><input id="load-members" type="checkbox" role="switch" aria-label="DMC-leden inladen"></label>
 </div><div id="settings-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
-<section class="settings-card" aria-label="Spelregels"><label class="toggle"><span><strong>Nouri</strong><small>3 + 4 = direct af.</small></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
-<label class="toggle"><span><strong>Van tafel gooien</strong><small>2% kans per beurt. <span class="beer-inline" data-beer-units="1"></span> en opnieuw.</small></span><input type="checkbox" role="switch" id="rule-off-table" aria-label="Van tafel gooien"></label>
-<label class="toggle"><span><strong>Vierde worp</strong><small>Extra worp voor <span class="beer-inline" data-beer-units="1"></span>. Telt niet mee.</small></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
-<label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong><small>Niet losgemaakt? <span class="beer-inline" data-beer-units="1"></span></small></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
+<section class="settings-card" aria-label="Spelregels"><label class="toggle"><span><strong>Nouri</strong></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
+<label class="off-table-control" for="rule-off-table"><span class="off-table-heading"><strong>Van tafel gooien</strong><output id="off-table-value" for="rule-off-table">0%</output></span><input type="range" id="rule-off-table" min="0" max="5" step="1" value="0" aria-valuetext="0 procent"></label>
+<label class="toggle"><span><strong>Vierde worp</strong></span><input type="checkbox" role="switch" id="rule-fourth-roll" aria-label="Een vierde worp toestaan"></label>
+<label class="toggle"><span><strong>Vastgezette stenen doorgeven</strong></span><input type="checkbox" role="switch" id="rule-held-trap" aria-label="Vastgezette stenen doorgeven"></label>
 </section>
 
 
-<section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text" aria-describedby="mexx-help"><p class="small muted" id="mexx-help">Extra hoogste scores, met een Mexx-ster.</p><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text" aria-describedby="out-help"><p class="small muted" id="out-help">Bij deze scores eindigt de ronde direct.</p><p class="small muted">21 blijft Mexx. Nouri gaat vóór extra regels.</p></section>
+<section class="settings-card custom-rules" aria-labelledby="rules-title"><h2 id="rules-title">Extra worpen</h2><label for="extra-mexx">Extra Mexx-scores</label><input type="text" id="extra-mexx" placeholder="Bijvoorbeeld 31, 65, 200" inputmode="text"><label for="extra-out">Extra direct-af-scores</label><input type="text" id="extra-out" placeholder="Bijvoorbeeld 32, 54, 100" inputmode="text"></section>
 
-<section class="settings-card" aria-labelledby="members-title"><h2 id="members-title">DMC-leden</h2><p class="small muted">Jullie vaste namenlijst.</p><div id="members-editor"></div><div class="member-add"><label class="sr-only" for="new-member-name">Naam nieuw DMC-lid</label><input id="new-member-name" type="text" placeholder="Naam nieuw lid" maxlength="45"><button type="button" id="add-dmc-member">+ Lid toevoegen</button></div><p id="member-message" class="small muted" role="status"></p></section>
+<section class="settings-card" aria-labelledby="members-title"><h2 id="members-title">DMC-leden</h2><div id="members-editor"></div><div class="member-add"><label class="sr-only" for="new-member-name">Naam nieuw DMC-lid</label><input id="new-member-name" type="text" placeholder="Naam nieuw lid" maxlength="45"><button type="button" id="add-dmc-member">+ Lid toevoegen</button></div><p id="member-message" class="small muted" role="status"></p></section>
 <p id="settings-status" class="small muted" role="status" aria-live="polite">Sla je wijzigingen op voordat je gaat spelen.</p>
 </div>
 </div>
-<div class="setup-footer"><span class="small muted" id="setup-summary">Geen naam ingevuld? Dan gebruiken we Speler 1, Speler 2, enz.</span><span id="setup-error" role="alert"></span><button type="button" id="download-game" hidden>Download spel</button><button type="button" class="green" id="save-settings" hidden>Instellingen opslaan</button><button class="primary" id="start-game" type="button">Start het spel →</button></div>
+<div class="setup-footer"><span class="small muted" id="setup-summary">Geen naam ingevuld? Dan gebruiken we Speler 1, Speler 2, enz.</span><span id="setup-error" role="alert"></span><button type="button" class="green" id="save-settings" hidden>Instellingen opslaan</button><button class="primary" id="start-game" type="button">Start het spel →</button></div>
 </form>
 <main id="game" hidden>
 <section class="arena" aria-labelledby="turn-name">
 <div><p class="eyebrow" id="turn-team">AAN DE BEURT</p><h1 class="turn-title" id="turn-name"></h1><p class="turn-meta" id="turn-status" role="status" aria-live="polite"></p></div>
-<div class="dice-area" aria-label="Dobbelstenen"><div class="die-wrap"><button class="die" id="die-one" type="button" aria-pressed="false" aria-describedby="arena-hint"></button><span class="hold-state" id="hold-one">Los</span></div><div class="die-wrap"><button class="die" id="die-two" type="button" aria-pressed="false" aria-describedby="arena-hint"></button><span class="hold-state" id="hold-two">Los</span></div></div>
+<div class="dice-area" aria-label="Dobbelstenen"><div class="die-wrap"><button class="die" id="die-one" type="button" aria-pressed="false" aria-describedby="arena-hint"></button></div><div class="die-wrap"><button class="die" id="die-two" type="button" aria-pressed="false" aria-describedby="arena-hint"></button></div></div>
 <div class="result" role="status" aria-live="polite" aria-atomic="true"><span class="result-label" id="result-label">JOUW BEURT</span><strong id="total">—</strong></div>
 <div class="rip-banner" id="rip" role="alert" hidden><span class="cross" aria-hidden="true">✝︎</span><div class="rip-copy"><strong>RIP</strong><p>43 gegooid. De ronde is direct afgelopen.</p></div></div>
 <div class="actions"><button type="button" class="primary" id="roll">↻ <span id="roll-label">Rol de dobbelstenen</span></button><button type="button" class="green" id="pass">Doorgeven →</button><button type="button" class="green" id="next-round" hidden>Nieuwe ronde →</button></div>
@@ -168,7 +167,6 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 
 <script type="application/json" id="saved-settings">{}</script>
 <script>
-const sourceDocument='<!doctype html>'+document.documentElement.outerHTML;
 const $=s=>document.querySelector(s);
 const ONLINE_MODE=new URLSearchParams(location.search).get('online')==='1'&&window.parent!==window;
 let onlineSnapshot=null,onlineConnected=false,onlinePending=false,onlineClockOffset=0,onlineAnimation=null,onlineOutcomeId=null,onlineIncidentId=null;
@@ -189,12 +187,12 @@ function cleanSettings(value){
  if(!value||!Array.isArray(value.members)||!value.members.length||value.members.some(n=>typeof n!=='string'||!n.trim()))return null;
  const mexx=Array.isArray(value.extraMexx)?value.extraMexx:[],out=Array.isArray(value.extraOut)?value.extraOut:[];
  if([...mexx,...out].some(n=>!VALID_SCORES.has(n))||out.includes(21)||out.some(n=>mexx.includes(n)))return null;
- return {nouri:!!value.nouri,offTable:!!value.offTable,fourthRoll:!!value.fourthRoll,heldTrap:!!value.heldTrap,members:[...new Set(value.members.map(n=>n.trim().slice(0,45)))],extraMexx:[...new Set(mexx)].filter(n=>n!==21),extraOut:[...new Set(out)],logo:typeof value.logo==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(value.logo)?value.logo:null};
+ return {nouri:!!value.nouri,offTable:!!value.offTable,offTablePercent:Number.isInteger(value.offTablePercent)&&value.offTablePercent>=0&&value.offTablePercent<=5?value.offTablePercent:2,fourthRoll:!!value.fourthRoll,heldTrap:!!value.heldTrap,members:[...new Set(value.members.map(n=>n.trim().slice(0,45)))],extraMexx:[...new Set(mexx)].filter(n=>n!==21),extraOut:[...new Set(out)],logo:typeof value.logo==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(value.logo)?value.logo:null};
 }
 let embeddedSettings=null,storedSettings=null;
 try{embeddedSettings=cleanSettings(JSON.parse($('#saved-settings').textContent))}catch{}
 try{storedSettings=cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY)))}catch{}
-let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTable:false,fourthRoll:false,heldTrap:false};
+let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTablePercent:2,offTable:false,fourthRoll:false,heldTrap:false};
 if(JSON.stringify(settings.members)===JSON.stringify(DEFAULT_MEMBERS.filter(name=>name!=='Daan')))settings.members.push('Daan');
 let settingsDraft=structuredClone(settings),memberBackup=null,localSettingsBaseline='';
 function renderMembers(){
@@ -226,10 +224,10 @@ function saveSettings(){
   if(extraOut.includes(21))throw new Error('21 blijft altijd Mexx en kan niet als direct-af-score worden ingesteld.');
   if(extraOut.some(n=>extraMexx.includes(n)))throw new Error('Een score kan niet tegelijk extra Mexx en direct af zijn.');
   const membersChanged=JSON.stringify(members)!==JSON.stringify(settings.members);
-  settings={members,extraMexx,extraOut,nouri:$('#nouri').checked,offTable:$('#rule-off-table').checked,fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,logo:$('#club-logo').getAttribute('src')?.startsWith('data:image/')?$('#club-logo').getAttribute('src'):null};settingsDraft=structuredClone(settings);
+  settings={members,extraMexx,extraOut,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,logo:$('#club-logo').getAttribute('src')?.startsWith('data:image/')?$('#club-logo').getAttribute('src'):null};settingsDraft=structuredClone(settings);
   let persisted=true;try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}catch{persisted=false}
   $('#extra-mexx').value=extraMexx.join(', ');$('#extra-out').value=extraOut.join(', ');
-  $('#settings-status').textContent=persisted?'Instellingen opgeslagen op dit apparaat.':'Instellingen actief voor deze sessie. Download het spel met instellingen om ze te bewaren.';
+  $('#settings-status').textContent=persisted?'Instellingen opgeslagen op dit apparaat.':'Instellingen actief voor deze sessie. Bewaren op dit apparaat is niet gelukt.';
   $('#settings-status').classList.remove('settings-error');
   if($('#load-members').checked&&membersChanged)applyMemberRoster();localSettingsBaseline=localSettingsSnapshot();return true;
  }catch(error){$('#settings-status').textContent=error.message;$('#settings-status').classList.add('settings-error');return false}
@@ -262,13 +260,15 @@ function createUnsavedGuard({dialog,isDirty,save,discard}){
   return {request(){if(!isDirty())return Promise.resolve(true);if(resolve)return Promise.resolve(false);dialog.showModal();return new Promise(done=>resolve=done)}};
 }
 
+function updateOffTableValue(){const value=$('#rule-off-table').value;$('#off-table-value').textContent=value+'%';$('#rule-off-table').setAttribute('aria-valuetext',value+' procent')}
+$('#rule-off-table').addEventListener('input',updateOffTableValue);
 function localSettingsSnapshot(){
- return JSON.stringify({members:settingsDraft.members,newMember:$('#new-member-name').value,nouri:$('#nouri').checked,offTable:$('#rule-off-table').checked,fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,extraMexx:$('#extra-mexx').value,extraOut:$('#extra-out').value});
+ return JSON.stringify({members:settingsDraft.members,newMember:$('#new-member-name').value,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,extraMexx:$('#extra-mexx').value,extraOut:$('#extra-out').value});
 }
 function restoreLocalSettings(){
  settingsDraft=structuredClone(settings);$('#new-member-name').value='';
  $('#extra-mexx').value=settings.extraMexx.join(', ');$('#extra-out').value=settings.extraOut.join(', ');
- $('#nouri').checked=!!settings.nouri;$('#rule-off-table').checked=!!settings.offTable;$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
+ $('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
  renderMembers();$('#member-message').textContent='';$('#settings-status').textContent='Wijzigingen teruggezet.';$('#settings-status').classList.remove('settings-error');localSettingsBaseline=localSettingsSnapshot();
 }
 async function selectDashboardTab(tab){
@@ -277,19 +277,10 @@ async function selectDashboardTab(tab){
 }
 function applyDashboardTab(tab){
  const showSettings=tab==='settings';$('#dashboard-panel').hidden=showSettings;$('#settings-panel').hidden=!showSettings;
- $('#start-game').hidden=showSettings;$('#save-settings').hidden=!showSettings;$('#download-game').hidden=!showSettings;$('#setup-summary').hidden=showSettings;$('#setup-error').hidden=showSettings;
+ $('#start-game').hidden=showSettings;$('#save-settings').hidden=!showSettings;$('#setup-summary').hidden=showSettings;$('#setup-error').hidden=showSettings;
  $('#dashboard-title').textContent=showSettings?'Instellingen':'Wie doet er mee?';
  for(const [id,active]of[['#tab-game',!showSettings],['#tab-settings',showSettings]]){$(id).setAttribute('aria-selected',String(active));$(id).tabIndex=active?0:-1}
  $('.setup-body').scrollTop=0;
-}
-function downloadConfiguredGame(){
- if(!saveSettings())return;
- const copy=new DOMParser().parseFromString(sourceDocument,'text/html');
- const logo=$('#club-logo').getAttribute('src');
- if(logo?.startsWith('data:image/')){copy.querySelector('#club-logo').setAttribute('src',logo);copy.querySelector('#club-logo').hidden=false;copy.querySelector('#logo-fallback').hidden=true}
- copy.querySelector('#saved-settings').textContent=JSON.stringify(settings).replace(/</g,'\\u003c');
- const blob=new Blob(['<!doctype html>'+copy.documentElement.outerHTML],{type:'text/html;charset=utf-8'});
- const url=URL.createObjectURL(blob),link=document.createElement('a');link.href=url;link.download='DMC-mexx-met-instellingen.html';document.body.append(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 function isOutScore(score){return config.extraOut.includes(score)||(config.nouri&&score===43)}
 function isMexx(score){return config.mexxScores.includes(score)&&!isOutScore(score)}
@@ -377,7 +368,7 @@ function updateSetupMode(){const teams=$('input[name=mode]:checked').value==='te
 function startGame(event){
  event.preventDefault();if(!saveSettings()){selectDashboardTab('settings');return}const mode=$('input[name=mode]:checked').value;const people=mode==='single'?draftPlayers:draftTeams.flatMap(t=>t.members);
  $('#setup-error').textContent='';
- config={offTable:settings.offTable,fourthRoll:settings.fourthRoll,heldTrap:settings.heldTrap,mexxScores:[21,...settings.extraMexx],extraOut:[...settings.extraOut],mode,wholeTeam:$('#whole-team').checked,nouri:$('#nouri').checked,players:people.map((p,i)=>({id:p.id,name:p.name.trim()||`Speler ${i+1}`})),teams:mode==='team'?draftTeams.map((t,i)=>({id:t.id,name:t.name.trim()||`Team ${i+1}`,members:t.members.map(p=>p.id)})):[]};
+ config={offTable:settings.offTable,offTablePercent:settings.offTablePercent??2,fourthRoll:settings.fourthRoll,heldTrap:settings.heldTrap,mexxScores:[21,...settings.extraMexx],extraOut:[...settings.extraOut],mode,wholeTeam:$('#whole-team').checked,nouri:$('#nouri').checked,players:people.map((p,i)=>({id:p.id,name:p.name.trim()||`Speler ${i+1}`})),teams:mode==='team'?draftTeams.map((t,i)=>({id:t.id,name:t.name.trim()||`Team ${i+1}`,members:t.members.map(p=>p.id)})):[]};
  state={round:0,history:[],outcome:null,adtHalfUnits:{},stars:new Map(config.players.map(p=>[p.id,0]))};$('#setup').hidden=true;$('#setup-tag').hidden=true;$('#game').hidden=false;$('#game-controls').hidden=false;beginRound();
 }
 function scheduleForRound(round=state.round){
@@ -417,7 +408,7 @@ function turnLimit(){return state.tieBreak?1:state.index===0?3:state.limit}
 function fourthAvailable(){return !state.tieBreak&&config.fourthRoll&&turnLimit()===3&&state.turn.length===3&&!state.fourthUsed}
 function inheritedTrap(){return config.heldTrap&&state.inheritedHeld.some((held,i)=>held&&state.held[i])}
 function canRollNow(){return !!state&&!state.complete&&!state.rolling&&!state.incidentOpen&&!state.out.has(currentId())&&(state.turn.length<turnLimit()||fourthAvailable())&&(!state.held.every(Boolean)||inheritedTrap())}
-function rollsOffTable(){if(state.offTableChecked)return false;state.offTableChecked=true;return config.offTable&&Math.random()<0.02}
+function rollsOffTable(){if(state.offTableChecked)return false;state.offTableChecked=true;return config.offTable&&Math.random()<(config.offTablePercent??2)/100}
 function currentId(){return state.schedule[state.index]}
 function currentPlayer(){return config.players.find(p=>p.id===currentId())}
 function teamFor(id){return config.teams.find(t=>t.members.includes(id))}
@@ -461,7 +452,7 @@ function renderGame(){
  $('#rip').hidden=!out||state.outcomePending;$('.arena').classList.toggle('eliminated',out&&!state.outcomePending);
  $('#pass').textContent=state.index===state.schedule.length-1?'Ronde afsluiten →':'Doorgeven →';
  $('#arena-hint').textContent=state.outcomePending?'De uitslag verschijnt zo…':state.complete?'De Mexx-sterren worden bij de volgende ronde gereset.':out?'Deze speler kan pas in een nieuwe ronde weer gooien.':state.tieBreak?'Kavelen: één worp met twee losse stenen. De laagste score verliest.':'Tik na je eerste worp op een dobbelsteen om hem vast te zetten.';
- dice.forEach((die,i)=>{die.disabled=!!state.tieBreak||state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`);$(i===0?'#hold-one':'#hold-two').textContent=state.held[i]?'Vast':' '});
+ dice.forEach((die,i)=>{die.disabled=!!state.tieBreak||state.complete||state.rolling||state.incidentOpen||out||(!state.turn.length&&!state.inheritedHeld[i]);die.classList.toggle('held',state.held[i]);die.setAttribute('aria-pressed',String(state.held[i]));die.setAttribute('aria-label',`Dobbelsteen ${i+1}: ${state.values[i]}, ${state.held[i]?'vastgezet':'los'}`)});
  $('#board-mode').textContent=config.mode==='single'?'Individueel':config.wholeTeam?'Hele team':'1 per team';$('#board-rules').textContent=`${config.nouri?'Nouri aan: 43 stopt de ronde · ':''}Rondelimiet: ${state.tieBreak?'1 worp per kavelaar':state.index===0&&!state.complete?'wordt bepaald':state.limit+' worpen'}`;
  renderScores();
 }
@@ -576,7 +567,6 @@ $('#setup').addEventListener('keydown',event=>{
  if(event.key==='Enter'&&event.target.matches('#dashboard-panel input[type=text]'))startGame(event);
 });
 document.querySelectorAll('input[name=mode]').forEach(n=>n.addEventListener('change',updateSetupMode));
-$('#whole-team').addEventListener('change',()=>$('#team-turn-help').textContent=$('#whole-team').checked?'Aan: eerst gooit het ene team helemaal, daarna het volgende team.':'Uit: één teamlid per ronde.');
 $('#add-player').addEventListener('click',()=>{draftPlayers.push(makePerson());renderEditors();$('#players-editor .person:last-child input').focus()});$('#add-team').addEventListener('click',()=>{draftTeams.push({id:nextId++,name:`Team ${draftTeams.length+1}`,members:[makePerson()]});renderEditors();$('#teams-editor .team-box:last-child input').focus()});
 $('#round-view').addEventListener('change',renderScores);
 $('#outcome-next').addEventListener('click',beginRound);
@@ -605,10 +595,9 @@ $('.dashboard-tabs').addEventListener('keydown',async event=>{if(['ArrowLeft','A
 $('#load-members').addEventListener('change',toggleMemberRoster);
 $('#add-dmc-member').addEventListener('click',addMember);
 $('#save-settings').addEventListener('click',saveSettings);
-$('#download-game').addEventListener('click',downloadConfiguredGame);
 $('#settings-panel').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.matches('input[type=text]')){event.preventDefault();if(event.target.id==='new-member-name')addMember();else saveSettings()}});
 $('#extra-mexx').value=settings.extraMexx.join(', ');$('#extra-out').value=settings.extraOut.join(', ');
-$('#nouri').checked=!!settings.nouri;$('#rule-off-table').checked=!!settings.offTable;$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
+$('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
 if(settings.logo){$('#club-logo').src=settings.logo;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true}
 renderMembers();renderEditors();updateSetupMode();
 
