@@ -99,13 +99,14 @@ export function hold(c,s,id,index) {
   if(!s.turn.length&&!s.inheritedHeld[index])throw new Error('Gooi eerst een keer.');
   s.held[index]=!s.held[index];if(!s.held[index])s.inheritedHeld[index]=false;
 }
-export function beginRoll(c,s,id,rng=randomInt,now=Date.now()) {
+export function beginRoll(c,s,id,rng=randomInt,now=Date.now(),source='button') {
+  if(!['button','shake'].includes(source))throw new Error('Ongeldige manier van gooien.');
   assertPlayable(c,s,id);
   if(!(s.turn.length<limit(s)||fourthAvailable(c,s)))throw new Error('Je worpen zijn op. Geef de beurt door.');
   if(s.held.every(Boolean)&&!inheritedTrap(c,s))throw new Error('Maak minstens één dobbelsteen los.');
   if(inheritedTrap(c,s)){s.held=[false,false];s.inheritedHeld=[false,false];incident(c,s,'held');return null}
   const fourth=fourthAvailable(c,s);if(fourth)s.fourthUsed=true;
-  const offTable=!fourth&&c.offTable&&!s.offTableChecked&&rng(0,10000)<(c.offTablePercent??2)*100;
+  const offTable=!fourth&&c.offTable&&!s.offTableChecked&&rng(0,10000)<(c.offTablePercent??2)*100*(source==='shake'?2:1);
   if(!fourth)s.offTableChecked=true;
   const values=s.values.map((v,i)=>s.held[i]?v:rng(1,7));
   s.rolling=true;s.animation={kind:'roll',started:now,seed:rng(1,2147483647)};

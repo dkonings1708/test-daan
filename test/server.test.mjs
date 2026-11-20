@@ -142,3 +142,15 @@ test('random teams are admin-only, preserve every playing member and spectator, 
   const started=await host.act(pin,'start');assert.equal(started.status,200);assert.deepEqual(started.data.config.teams.map(t=>t.members.length),[2,2,2,3]);assert.equal(started.data.config.players.length,9);assert.equal(started.data.state.schedule.length,4);assert.equal((await host.act(pin,'randomTeams',params(restored))).status,409);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });
+
+test('shake rolls use the increased server-controlled chance, enforce ownership and leave retry and button probabilities intact',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'dmc-shake-api-')),app=await boot(dir,.03,(min,max)=>max===10000?150:max===7?6:123),host=client(app),guest=client(app);
+ try{
+  const pin=(await host.call('/api/rooms',{name:'Ada'})).data.pin;await guest.call(`/api/rooms/${pin}/join`,{name:'Bo'});let state=(await host.act(pin,'start')).data.state;
+  const key=()=>`${state.round}:${state.tieBreak?'k'+state.tieBreak.round+':':''}${state.index}`;
+  assert.equal((await guest.act(pin,'roll',{rollSource:'shake',turnKey:key()})).status,403);assert.equal((await host.act(pin,'roll',{rollSource:'unknown',turnKey:key()})).status,409);assert.deepEqual((await host.call('/api/me')).data.state,state);
+  assert.equal((await host.act(pin,'roll',{rollSource:'shake',turnKey:key(),offTablePercent:0})).status,200);state=await eventually(async()=>{const s=(await host.call('/api/me')).data.state;return s.incidentOpen?s:null});assert.equal(state.activeIncident.kind,'offTable');assert.equal(state.incidents.length,1);
+  await host.act(pin,'ack',{turnKey:key()});await host.act(pin,'roll',{rollSource:'shake',turnKey:key()});state=await eventually(async()=>{const s=(await host.call('/api/me')).data.state;return !s.rolling&&s.turn.length===1?s:null});assert.equal(state.incidents.length,1);assert.equal(state.turn[0].score,600);
+  await host.act(pin,'pass',{turnKey:key()});state=(await guest.call('/api/me')).data.state;assert.equal((await guest.act(pin,'roll',{rollSource:'button',turnKey:key()})).status,200);await eventually(async()=>{const s=(await guest.call('/api/me')).data.state;return !s.rolling&&s.records[s.schedule[1]]?.length});const after=(await guest.call('/api/me')).data.state;assert.equal(after.incidents.length,1);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});

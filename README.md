@@ -259,3 +259,32 @@ teamleden worden opnieuw ingedeeld, met behoud van hun namen en identiteit.
 De grootte wordt met de lokale spelinstellingen opgeslagen. De bestaande
 handmatige teamindeling, sleepvolgorde en optie ‘Hele team achter elkaar’ blijven
 beschikbaar. De lokale HTML werkt nog steeds zonder externe bestanden.
+
+
+## Schudden om te gooien
+
+Op ondersteunde telefoons kun je schudden inschakelen. Online staat **Schudden**
+boven de dobbeltafel; lokaal staat de knop in het spelmenu **•••**. Op iPhones
+verschijnt na het aantikken zo nodig de browservraag om toegang tot
+bewegingssensoren. De functie gebruikt een beveiligde context (HTTPS of
+localhost). Als toegang wordt geweigerd of sensoren ontbreken, blijft de
+gewone gooiknop beschikbaar. Opnieuw aantikken schakelt schudden uit.
+
+Een duidelijke schudbeweging met meerdere richtingswisselingen start één worp.
+Er geldt een afkoeltijd en een pauze tussen bewegingen; doorlopend schudden
+start geen reeks worpen. Schudden werkt alleen wanneer je mag gooien: tijdens
+je eigen online beurt, binnen de worplimiet en zonder open straf/uitslagvenster.
+Ook bij een geopende online chat of invoerveld wordt niet automatisch gegooid.
+Online worden de sensoren in de hoofdpagina gebruikt, zodat een iPhone geen
+toestemming vanuit het spel-iframe hoeft te vragen.
+
+Bij de **eerste worp van een beurt** is de kans op van tafel gooien bij schudden
+tweemaal de ingestelde kans: standaard 1% wordt 2%, maximaal 5% wordt 10%.
+0% blijft uit. De bestaande controle gebeurt nog steeds eenmaal per beurt;
+na de eerste worp of een van-tafel-straf wordt niet opnieuw voor die beurt
+geloot. Een vierde bonusworp behoudt zijn bestaande regels. De server bepaalt
+de kans en bewaakt beurt, worplimiet en vastgezette stenen.
+
+De detectie, permissies, blokkades en bron van online worpen zijn getest met
+gesimuleerde bewegingssignalen en iPhone X-emulatie. De knopbediening, lokale
+standalone versie, avatars, profielen en teamregels blijven beschikbaar.

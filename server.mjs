@@ -157,7 +157,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(room.phase!=='playing')throw new ApiError(409,'Het spel is nog niet gestart.');
         if(memberId!==engine.currentId(room.game))throw new ApiError(403,'Alleen de speler aan de beurt kan spelen.');
         if(input.turnKey!==engine.turnKey(room.game))throw new ApiError(409,'De beurt is inmiddels veranderd.');
-        if(action==='roll')room.pending=engine.beginRoll(room.config,room.game,memberId,rng);
+        if(action==='roll')room.pending=engine.beginRoll(room.config,room.game,memberId,rng,Date.now(),input.rollSource===undefined?'button':input.rollSource);
         if(action==='hold')engine.hold(room.config,room.game,memberId,input.index);
         if(action==='pass')engine.pass(room.config,room.game,memberId);
         if(action==='ack')engine.acknowledge(room.config,room.game,memberId);
@@ -185,7 +185,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }

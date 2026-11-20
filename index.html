@@ -116,11 +116,13 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 .score-row{grid-template-columns:30px minmax(0,1fr) auto;column-gap:10px}.score-avatar{grid-column:1;grid-row:1 / span 2;align-self:center;width:30px;height:30px;border-radius:9px;overflow:hidden;background:#25372b;color:#c4efbc;display:grid;place-items:center;font-size:10px;font-weight:750}.score-avatar svg,.score-avatar img{display:block;width:100%;height:100%;object-fit:cover}.score-name{grid-column:2;grid-row:1;min-width:0}.score-number{grid-column:3;grid-row:1 / span 2}.score-detail{grid-column:2;grid-row:2}@media(max-width:700px){.score-row{grid-template-columns:26px minmax(0,1fr) auto;column-gap:8px}.score-avatar{width:26px;height:26px;border-radius:8px}}
 .team-generator{display:grid;grid-template-columns:minmax(0,1fr) 65px auto;gap:10px;align-items:center;margin:14px 0 18px;padding:14px;border:1px solid var(--line);border-radius:12px}.team-generator label{font-size:11px}.team-generator input{width:100%;padding:9px}.team-generator button{font-size:11px;padding:10px}.team-generator p{grid-column:1/-1;margin:0;font-size:10px}
 #local-team-size{font-size:16px;color:#f4f6f1;background:#0f1512;border:1px solid #ffffff21;border-radius:9px}
+#shake-toggle-local[aria-pressed=true]{color:#efa1a8}#motion-message{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:130;max-width:calc(100vw - 30px);padding:12px 16px;border:1px solid #ffffff24;border-radius:12px;background:#24372a;color:#e4f5df;font-size:12px;box-shadow:0 8px 28px #0005}
+@media(max-width:700px){body:not(.online-game) .topbar{flex-wrap:wrap}body:not(.online-game) .header-tools{margin-left:auto;max-width:100%;min-width:0;flex-wrap:wrap;justify-content:flex-end}}
 </style>
 </head>
 <body>
 <div class="shell">
-<header class="topbar"><div class="brand"><span class="mark" id="logo-fallback" aria-hidden="true">DMC</span><img id="club-logo" alt="DMC Swalmen-logo" width="42" height="42" hidden><span>DMC <i>mexx</i></span></div><div class="header-tools"><span id="setup-tag" hidden></span><div class="top-actions" id="game-controls" hidden><span class="tag" id="round-tag">Ronde 1</span></div><button type="button" id="open-online">Online multiplayer <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button><details id="local-game-menu" class="local-game-menu" hidden><summary aria-label="Spelmenu">•••</summary><div class="game-menu-content"><button id="new-round" type="button" hidden>Ronde stoppen<small>Bepaal nu de verliezer</small></button><button id="reset" type="button" hidden>Terug naar spelers<small>Beëindigt je huidige spel</small></button></div></details></div>
+<header class="topbar"><div class="brand"><span class="mark" id="logo-fallback" aria-hidden="true">DMC</span><img id="club-logo" alt="DMC Swalmen-logo" width="42" height="42" hidden><span>DMC <i>mexx</i></span></div><div class="header-tools"><span id="setup-tag" hidden></span><div class="top-actions" id="game-controls" hidden><span class="tag" id="round-tag">Ronde 1</span></div><button type="button" id="open-online">Online multiplayer <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><path d="M5 19 19 5M5 5h14v14"/></svg></button><details id="local-game-menu" class="local-game-menu" hidden><summary aria-label="Spelmenu">•••</summary><div class="game-menu-content"><button type="button" id="shake-toggle-local" hidden aria-pressed="false">Schudden</button><button id="new-round" type="button" hidden>Ronde stoppen<small>Bepaal nu de verliezer</small></button><button id="reset" type="button" hidden>Terug naar spelers<small>Beëindigt je huidige spel</small></button></div></details></div>
 </header>
 <form id="setup">
 <div class="setup-header"><p class="eyebrow">DMC MEXX / LOKAAL</p><h1 id="dashboard-title">Wie doet er mee?</h1><div class="dashboard-tabs" role="tablist" aria-label="Dashboard"><button id="tab-game" type="button" role="tab" aria-selected="true" aria-controls="dashboard-panel">Spelers</button><button id="tab-settings" type="button" role="tab" aria-selected="false" aria-controls="settings-panel" tabindex="-1">Spelregels</button></div></div>
@@ -438,7 +440,7 @@ function turnLimit(){return state.tieBreak?1:state.index===0?3:state.limit}
 function fourthAvailable(){return !state.tieBreak&&config.fourthRoll&&turnLimit()===3&&state.turn.length===3&&!state.fourthUsed}
 function inheritedTrap(){return config.heldTrap&&state.inheritedHeld.some((held,i)=>held&&state.held[i])}
 function canRollNow(){return !!state&&!state.complete&&!state.rolling&&!state.incidentOpen&&!state.out.has(currentId())&&(state.turn.length<turnLimit()||fourthAvailable())&&(!state.held.every(Boolean)||inheritedTrap())}
-function rollsOffTable(){if(state.offTableChecked)return false;state.offTableChecked=true;return config.offTable&&Math.random()<(config.offTablePercent??2)/100}
+function rollsOffTable(source='button'){if(state.offTableChecked)return false;state.offTableChecked=true;return config.offTable&&Math.random()<(config.offTablePercent??2)/100*(source==='shake'?2:1)}
 function currentId(){return state.schedule[state.index]}
 function currentPlayer(){return config.players.find(p=>p.id===currentId())}
 function teamFor(id){return config.teams.find(t=>t.members.includes(id))}
@@ -520,14 +522,15 @@ function closeIncident(){
  $('#incident-dialog').close();if(!state)return;state.incidentOpen=false;renderGame();
  const target=canRollNow()?$('#roll'):$('#pass');target.focus({preventScroll:true});
 }
-function roll(){
- if(ONLINE_MODE){sendOnlineAction('roll');return}
+function roll(source='button'){
+ source=source==='shake'?'shake':'button';
+ if(ONLINE_MODE){sendOnlineAction('roll',{rollSource:source});return}
  if(!state||$('#game').hidden||!canRollNow())return;
  if(inheritedTrap()){
   state.held=[false,false];state.inheritedHeld=[false,false];showIncident('held');return;
  }
  const fourth=fourthAvailable();if(fourth)state.fourthUsed=true;
- const offTable=!fourth&&rollsOffTable();
+ const offTable=!fourth&&rollsOffTable(source);
  state.rolling=true;renderGame();$('.dice-area').classList.add('rolling');
  animation=setInterval(()=>dice.forEach((die,i)=>{if(!state.held[i])showFace(die,randomFace(),i)}),90);
  finishRoll=setTimeout(()=>{
@@ -716,6 +719,60 @@ localSettingsBaseline=localSettingsSnapshot();
 const localSettingsGuard=createUnsavedGuard({dialog:$('#unsaved-dialog'),isDirty:()=>localSettingsSnapshot()!==localSettingsBaseline,save:saveSettings,discard:restoreLocalSettings});
 
 for(const amount of document.querySelectorAll('[data-beer-units]'))renderMugs(amount,Number(amount.dataset.beerUnits));
+
+// Standalone motion controls: keep in sync with shake.js.
+function createShakeDetector({onShake,isAllowed=()=>true,now=()=>Date.now()}){
+ let previous=null,lastSample=-Infinity,lastPeak=-Infinity,lastShake=-Infinity,quietSince=null,peaks=0,direction=null,armed=true;
+ const clear=()=>{peaks=0;direction=null;lastPeak=-Infinity};
+ function reset(){previous=null;lastSample=-Infinity;lastShake=-Infinity;quietSince=null;armed=true;clear()}
+ function sample(event){
+  const time=now(),valid=v=>v&&['x','y','z'].every(axis=>Number.isFinite(v[axis]));
+  const free=valid(event.acceleration),raw=free?event.acceleration:event.accelerationIncludingGravity;
+  if(!valid(raw)){previous=null;clear();return false}
+  const gap=time-lastSample;lastSample=time;
+  if(gap>900){previous=null;clear();if(time-lastShake>=1800)armed=true}
+  const vector=free?raw:previous?{x:raw.x-previous.x,y:raw.y-previous.y,z:raw.z-previous.z}:null;previous={x:raw.x,y:raw.y,z:raw.z};
+  if(!vector)return false;
+  const force=Math.hypot(vector.x,vector.y,vector.z);
+  if(force<7){if(quietSince===null)quietSince=time;if(time-quietSince>=600&&time-lastShake>=1800)armed=true;if(time-lastPeak>750)clear();return false}
+  quietSince=null;
+  if(!isAllowed()||!armed||time-lastShake<1800){clear();return false}
+  if(force<14||time-lastPeak<80)return false;
+  if(time-lastPeak>750)clear();
+  if(direction&&vector.x*direction.x+vector.y*direction.y+vector.z*direction.z>=0)return false;
+  direction=vector;lastPeak=time;peaks++;
+  if(peaks<3)return false;
+  lastShake=time;armed=false;clear();onShake();return true;
+ }
+ return {sample,reset};
+}
+
+function createShakeControl({button,onShake,isAllowed,onMessage=()=>{}}){
+ const Motion=window.DeviceMotionEvent;
+ const supported=!!Motion&&window.isSecureContext&&(navigator.maxTouchPoints>0||window.matchMedia('(pointer:coarse)').matches);
+ let enabled=false;
+ const detector=createShakeDetector({onShake,isAllowed:()=>enabled&&!document.hidden&&isAllowed()});
+ const listener=event=>detector.sample(event);
+ function render(){button.hidden=!supported;button.textContent=enabled?'Schudden aan':'Schudden';button.setAttribute('aria-pressed',String(enabled));button.setAttribute('aria-label',enabled?'Schudden om te gooien uitschakelen':'Schudden om te gooien inschakelen');button.title='Schudden om te gooien · dubbele tafelkans bij je eerste worp (0% blijft uit)'}
+ function disable(){enabled=false;window.removeEventListener('devicemotion',listener);detector.reset();render()}
+ button.onclick=async()=>{
+  if(enabled){disable();onMessage('Schudden uit.');return}
+  button.disabled=true;
+  try{
+   if(typeof Motion.requestPermission==='function'&&await Motion.requestPermission()!=='granted'){onMessage('Geen toegang tot bewegingssensoren. Gooien met de knop blijft werken.');return}
+   enabled=true;detector.reset();window.addEventListener('devicemotion',listener,{passive:true});onMessage('Schudden aan · dubbele tafelkans bij je eerste worp.');
+  }catch{onMessage('Bewegingssensoren zijn niet beschikbaar. Gooien met de knop blijft werken.')}
+  finally{button.disabled=false;render()}
+ };
+ window.addEventListener('pagehide',disable);document.addEventListener('visibilitychange',detector.reset);render();
+ return {disable,isEnabled:()=>enabled};
+}
+
+if(!ONLINE_MODE){
+ let motionMessageTimer;
+ const message=document.createElement('p');message.id='motion-message';message.setAttribute('role','status');message.hidden=true;document.body.append(message);
+ createShakeControl({button:$('#shake-toggle-local'),onShake:()=>roll('shake'),onMessage:text=>{$('#local-game-menu').open=false;message.textContent=text;message.hidden=false;clearTimeout(motionMessageTimer);motionMessageTimer=setTimeout(()=>message.hidden=true,5500)},isAllowed:()=>!!state&&!$('#game').hidden&&canRollNow()&&!document.querySelector('dialog[open]')&&!$('#local-game-menu').open&&!document.activeElement?.matches('input,textarea,select')});
+}
 </script>
 </body>
 </html>
