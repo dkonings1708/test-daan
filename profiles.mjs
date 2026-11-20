@@ -2,7 +2,7 @@ import {randomBytes,createHash} from 'node:crypto';
 import {avatarFrom} from './avatars.mjs';
 
 // A private device cookie identifies a profile; lobby snapshots never expose its key.
-export function createProfiles(db,{ApiError,json,body,limitRequest}){
+export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange=()=>{}}){
  db.exec('CREATE TABLE IF NOT EXISTS device_profiles(id TEXT PRIMARY KEY, token_hash TEXT UNIQUE NOT NULL, body TEXT NOT NULL); CREATE TABLE IF NOT EXISTS profile_rounds(profile TEXT NOT NULL, game TEXT NOT NULL, round INTEGER NOT NULL, PRIMARY KEY(profile,game,round))');
  const byId=db.prepare('SELECT body FROM device_profiles WHERE id=?');
  const read=id=>{const row=byId.get(id);return row?JSON.parse(row.body):null};
@@ -35,7 +35,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest}){
   if(!name)throw new ApiError(400,'Vul je profielnaam in.');
   let avatar;try{avatar=avatarFrom(input.avatar)}catch(error){throw new ApiError(400,error.message)}
   let profile;
-  if(existing){profile={...existing,name,avatar};save(profile)}
+  if(existing){profile={...existing,name,avatar};save(profile);onAvatarChange(profile)}
   else{
    const token=randomBytes(32).toString('hex');profile={id:randomBytes(12).toString('hex'),name,avatar,joinedAt:Date.now(),rounds:0,adtHalfUnits:0};
    db.prepare('INSERT INTO device_profiles(id,token_hash,body) VALUES(?,?,?)').run(profile.id,createHash('sha256').update(token).digest('hex'),JSON.stringify(profile));cookie(req,res,token,31536000);
@@ -43,11 +43,12 @@ export function createProfiles(db,{ApiError,json,body,limitRequest}){
   json(res,200,{profile:publicProfile(profile)});return true;
  }
  function forEntry(req,input){if(input.useProfile!==true)return null;const p=current(req);if(!p)throw new ApiError(401,'Maak eerst een profiel of speel als gast.');return p}
+ function setAvatar(profileId,avatar){if(!profileId)return null;const profile=read(profileId);if(!profile||profile.avatar===avatar)return null;profile.avatar=avatarFrom(avatar);save(profile);return profile}
  function penalty(profileId,delta){if(!profileId||delta<=0)return;const p=read(profileId);if(p){p.adtHalfUnits+=delta;save(p)}}
  function round(profileId,game,number){
   if(!profileId)return;const p=read(profileId);if(!p)return;
   const inserted=db.prepare('INSERT OR IGNORE INTO profile_rounds(profile,game,round) VALUES(?,?,?)').run(profileId,game,number);
   if(inserted.changes){p.rounds++;save(p)}
  }
- return {handle,forEntry,penalty,round};
+ return {handle,forEntry,penalty,round,setAvatar};
 }

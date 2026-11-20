@@ -49,10 +49,20 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.accountedHalfUnits={...totals};
     if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round)}
   }
-  const profiles=createProfiles(db,{ApiError,json,body,limitRequest});
+  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar});
   // Upgrade saved lobbies, including penalties from games started before counters existed.
   for(const room of rooms.values()){syncAdts(room);saveStatement.run(room.pin,JSON.stringify(room))}
   function changed(room){db.exec("BEGIN IMMEDIATE");try{syncAdts(room);room.revision++;persist(room);db.exec("COMMIT")}catch(error){db.exec("ROLLBACK");throw error}broadcast(room);schedulePending(room)}
+  // Copy profile photos into each linked room's private avatar storage and send
+  // a fresh snapshot. Game state and guest avatars stay independent.
+  function syncProfileAvatar(profile,sourceRoom=null){
+    for(const room of rooms.values()){
+      if(room===sourceRoom)continue;
+      let updated=false;
+      for(const member of room.members)if(member.profileId===profile.id){member.avatar=avatarStore.set(room,member.id,profile.avatar);updated=true}
+      if(updated)changed(room);
+    }
+  }
   function schedulePending(room){
     clearTimeout(timers.get(room.pin));timers.delete(room.pin);
     if(!room.pending||closed)return;
@@ -102,7 +112,12 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     if(room.receipts.includes(key))return;
     if(['rules','move','reorder','team','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
     switch(action){
-      case 'avatar':requireLobby(room);room.members.find(member=>member.id===memberId).avatar=avatarStore.set(room,memberId,input.avatar);break;
+      case 'avatar':{
+        const member=room.members.find(member=>member.id===memberId);
+        if(input.avatar===member.avatar)break;
+        const avatar=validatedAvatar(input.avatar);member.avatar=avatarStore.set(room,memberId,avatar);
+        const profile=profiles.setAvatar(member.profileId,avatar);if(profile)syncProfileAvatar(profile,room);break;
+      }
       case 'rules':requireLobby(room);room.rules=validatedRules(input.rules);break;
       case 'move':{
         requireLobby(room);const index=room.members.findIndex(m=>m.id===input.memberId),step=input.step;

@@ -67,3 +67,31 @@ test('resetting adts during an incident does not re-add old penalties but counts
  await a.call('/api/profile/reset',{scope:'adts'});await restart();state=(await a.call('/api/me')).value.state;await a.act(pin,'ack',{turnKey:turnKey(state)});assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,0);
  await a.act(pin,'lobby');await a.act(pin,'start');state=(await a.call('/api/me')).value.state;await a.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>(await a.call('/api/profile')).value.profile.adtHalfUnits===1);
 },{off:0}));
+
+test('profile and lobby avatars synchronize across linked rooms during play, preserve game state, and stay private',()=>fixture(async({client,restart})=>{
+ const a=client(),b=client();await a.call('/api/profile',{name:'Ada',avatar:'beer-boss'});
+ const first=(await a.call('/api/rooms',{useProfile:true,avatar:'dice-cat'})).value,pin=first.pin,aid=first.viewer.id;
+ await a.call('/api/profile',{name:'Ada',avatar:'beer-boss'});assert.equal((await a.call('/api/me')).value.members[0].avatar,'beer-boss');
+ await b.call(`/api/rooms/${pin}/join`,{name:'Guest',avatar:'party-frog'});
+ const originalSession=client();originalSession.cookies=new Map(a.cookies);
+ const second=(await a.call('/api/rooms',{useProfile:true})).value;
+ await originalSession.act(pin,'start');const before=(await originalSession.call('/api/me')).value;
+ await a.call('/api/profile',{name:'Ada',avatar:png});
+ const live=(await b.call('/api/me')).value,photo=live.members.find(m=>m.id===aid).avatar;
+ assert.match(photo,/^photo:/);assert.deepEqual(live.state,before.state);assert.deepEqual(live.config,before.config);assert.equal(live.members.find(m=>m.id!==aid).avatar,'party-frog');
+ const asset=`/api/rooms/${pin}/avatars/${photo.slice(6)}`;assert.equal((await b.call(asset)).status,200);assert.equal((await client().call(asset)).status,401);
+ assert.match((await a.call('/api/me')).value.members[0].avatar,/^photo:/);
+ // Saving through the lobby avatar picker updates the linked device profile
+ // and its other room, without allowing the guest to change another player.
+ assert.equal((await originalSession.act(pin,'avatar',{avatar:'night-owl'})).status,200);assert.equal((await a.call('/api/profile')).value.profile.avatar,'night-owl');assert.equal((await a.call('/api/me')).value.members[0].avatar,'night-owl');assert.equal((await b.call(asset)).status,404);
+ await b.act(pin,'avatar',{avatar:'dice-cat',memberId:aid});const afterGuest=(await b.call('/api/me')).value;assert.equal(afterGuest.members.find(m=>m.id===aid).avatar,'night-owl');assert.equal((await a.call('/api/profile')).value.profile.avatar,'night-owl');assert.deepEqual(afterGuest.state,before.state);
+ await a.call('/api/profile',{name:'Ada',avatar:png});const replacement=(await b.call('/api/me')).value.members.find(m=>m.id===aid).avatar;assert.notEqual(replacement,photo);
+ await restart();assert.equal((await a.call('/api/profile')).value.profile.avatar,png);assert.equal((await b.call('/api/me')).value.members.find(m=>m.id===aid).avatar,replacement);assert.deepEqual((await b.call('/api/me')).value.state,before.state);
+ assert.equal((await a.call('/api/me')).value.pin,second.pin);
+}));
+
+test('profile photo edits leave guest participation independent from the saved profile',()=>fixture(async({client})=>{
+ const a=client();await a.call('/api/profile',{name:'Ada',avatar:'beer-boss'});const room=(await a.call('/api/rooms',{name:'Guest Ada',avatar:'party-frog',useProfile:false})).value;
+ await a.call('/api/profile',{name:'Ada',avatar:png});assert.equal((await a.call('/api/me')).value.members[0].avatar,'party-frog');
+ await a.act(room.pin,'avatar',{avatar:'dice-cat'});assert.equal((await a.call('/api/profile')).value.profile.avatar,png);
+}));

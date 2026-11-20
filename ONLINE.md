@@ -67,6 +67,11 @@ Bij het maken van of meedoen aan een lobby kun je naast je naam een avatar
 kiezen: tien ingebouwde illustraties met dobbel-, bier- en dierenthema’s. Initialen
 blijven ook mogelijk. In de lobby kun je je eigen avatar opnieuw kiezen. Andere
 leden zien de wijziging direct; de keuze wordt met je lobbysessie opgeslagen.
+Voor deelnemers met een profiel worden profiel en lobby-avatar beide kanten op
+bijgewerkt, ook in lopende spellen en andere gekoppelde lobbies. De privéfoto
+krijgt bij vervangen een nieuwe URL, zodat een oude browsercache niet wordt
+hergebruikt. Gastavatars blijven onafhankelijk. De spelerslijst in het spel
+toont dezelfde foto of illustratie naast de naam, score en numerieke adt-teller.
 Alleen je eigen avatar kan worden gewijzigd. Je kunt daarnaast een eigen foto kiezen (PNG, JPG, WebP of GIF, maximaal 5 MB).
 De browser snijdt de foto vierkant bij en verkleint hem. De server bewaart alleen
 de kleine PNG als apart, uitsluitend voor lobbyleden toegankelijk bestand; live

@@ -34,6 +34,6 @@ test('avatar uploads reject active files, oversized images and malformed data wi
   for(const invalid of ['data:image/svg+xml;base64,'+Buffer.from('<svg/>').toString('base64'),'data:image/png;base64,AAAA','data:image/png;base64,'+tooWide.toString('base64'),'data:image/png;base64,'+Buffer.alloc(110000).toString('base64'),'photo:'+'a'.repeat(24),{url:'https://other.example'}]){
    assert.equal((await host.act(pin,'avatar',{avatar:invalid})).status,400);assert.equal(memberPhoto((await host.call('/api/me')).data,id),original);
   }
-  await host.act(pin,'start');assert.equal((await host.act(pin,'avatar',{avatar:photo})).status,409);assert.deepEqual((await host.call(url(pin,original))).bytes,png);
+  const started=await host.act(pin,'start'),updated=await host.act(pin,'avatar',{avatar:photo});assert.equal(updated.status,200);assert.deepEqual(updated.data.state,started.data.state);assert.equal((await host.call(url(pin,original))).status,404);assert.deepEqual((await host.call(url(pin,memberPhoto(updated.data,id)))).bytes,png);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });

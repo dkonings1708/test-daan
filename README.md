@@ -145,12 +145,19 @@ via browseropslag of de gedownloade kopie met instellingen.
 Bij het maken van of meedoen aan een lobby kies je optioneel één van tien avatars:
 Dobbelduivel, Bierbaas, Feestkikker, Dobbelkat, Gelukseend, Pintpinguïn, Sluwe vos,
 Dorstige draak, Nachtuil en Bierhaai. Je kunt ook je initialen houden. Klik in de
-lobby op je eigen avatar om hem te veranderen. De keuze blijft na verversen of
+lobby op je eigen avatar om hem te veranderen. Wijzigingen via **Mijn profiel**
+werken direct door in gekoppelde lobbies en lopende spellen. Een wijziging via
+je lobby-avatar wordt ook in je profiel bewaard wanneer je met dat profiel
+meespeelt. Gasten houden een eigen lobby-avatar. De keuze blijft na verversen of
 een serverherstart behouden. De illustraties zijn ingebouwd. Je kunt ook een eigen foto kiezen: PNG, JPG,
 WebP of GIF van maximaal 5 MB. De foto wordt vierkant bijgesneden en verkleind
 voordat hij wordt verstuurd. De foto is alleen beschikbaar voor leden van je
 lobby en wordt bij vervangen, verwijderen van de deelnemer of verlopen van de
 lobby opgeruimd.
+
+De spelerslijst tijdens het spel toont dezelfde avatar naast iedere naam,
+met initialen als terugval. Ook lokale spelers krijgen initialen; de lokale
+HTML-versie blijft zonder externe bestanden werken.
 
 De chat opent zonder het berichtveld te focussen, zodat je op mobiel eerst kunt
 lezen. Foto’s, video’s en spraakmemo’s blijven via de lobbychat beschikbaar.
