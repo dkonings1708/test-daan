@@ -44,3 +44,26 @@ test('incident penalties count once before round completion and independently of
  await a.act(pin,'lobby');await a.call('/api/logout',{});assert.equal((await a.call('/api/me')).status,401);assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,1);
  const next=(await a.call('/api/rooms',{useProfile:true})).value;assert.notEqual(next.pin,pin);assert.equal(next.members[0].adtHalfUnits,0);assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,1);
 },{off:0}));
+
+test('personal stat resets preserve identity, lobby counters and accounting across later events and restart',()=>fixture(async({client,restart})=>{
+ const a=client(),b=client(),outsider=client();await a.call('/api/profile',{name:'Ada',avatar:png});await b.call('/api/profile',{name:'Bo'});
+ const pin=(await a.call('/api/rooms',{useProfile:true})).value.pin;await b.call(`/api/rooms/${pin}/join`,{useProfile:true});
+ let state=(await a.act(pin,'start')).value.state;await a.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>!(await a.call('/api/me')).value.state.rolling);state=(await a.call('/api/me')).value.state;await a.act(pin,'pass',{turnKey:turnKey(state)});state=(await b.call('/api/me')).value.state;await b.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>(await b.call('/api/profile')).value.profile.adtHalfUnits===1);await eventually(async()=>!(await a.call('/api/me')).value.state.outcomePending);
+ const before=(await b.call('/api/profile')).value.profile,roomBefore=(await b.call('/api/me')).value;
+ assert.equal((await outsider.call('/api/profile/reset',{scope:'all'})).status,401);assert.equal((await b.call('/api/profile/reset',{scope:'invalid'})).status,400);
+ const adts=(await b.call('/api/profile/reset',{scope:'adts'})).value.profile;assert.deepEqual(adts,{...before,adtHalfUnits:0});assert.deepEqual((await b.call('/api/me')).value.state,roomBefore.state);assert.deepEqual((await b.call('/api/me')).value.members.map(m=>m.adtHalfUnits),roomBefore.members.map(m=>m.adtHalfUnits));
+ await restart();assert.equal((await b.call('/api/profile')).value.profile.adtHalfUnits,0);assert.equal((await b.call('/api/profile')).value.profile.rounds,1);
+ const all=(await b.call('/api/profile/reset',{scope:'all'})).value.profile;assert.deepEqual(all,{...before,rounds:0,adtHalfUnits:0});assert.equal((await a.call('/api/profile')).value.profile.rounds,1);
+ // Repeating a completed action while the finished round is still current must
+ // not re-count it after reset. The round ledger deliberately survives reset.
+ await a.act(pin,'endRound');assert.equal((await b.call('/api/profile')).value.profile.rounds,0);await restart();assert.deepEqual((await b.call('/api/profile')).value.profile,all);
+ await a.act(pin,'newRound');state=(await b.call('/api/me')).value.state;assert.equal((await b.act(pin,'roll',{turnKey:turnKey(state)})).status,200);await eventually(async()=>!(await b.call('/api/me')).value.state.rolling);state=(await b.call('/api/me')).value.state;await b.act(pin,'pass',{turnKey:turnKey(state)});state=(await a.call('/api/me')).value.state;await a.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>(await b.call('/api/profile')).value.profile.rounds===1);
+ assert.equal((await b.call('/api/profile')).value.profile.adtHalfUnits,0);assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,1);
+}));
+
+test('resetting adts during an incident does not re-add old penalties but counts later ones',()=>fixture(async({client,restart})=>{
+ const a=client();await a.call('/api/profile',{name:'Ada'});const pin=(await a.call('/api/rooms',{useProfile:true})).value.pin;
+ let state=(await a.act(pin,'start')).value.state;await a.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>(await a.call('/api/me')).value.state.incidentOpen);assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,1);
+ await a.call('/api/profile/reset',{scope:'adts'});await restart();state=(await a.call('/api/me')).value.state;await a.act(pin,'ack',{turnKey:turnKey(state)});assert.equal((await a.call('/api/profile')).value.profile.adtHalfUnits,0);
+ await a.act(pin,'lobby');await a.act(pin,'start');state=(await a.call('/api/me')).value.state;await a.act(pin,'roll',{turnKey:turnKey(state)});await eventually(async()=>(await a.call('/api/profile')).value.profile.adtHalfUnits===1);
+},{off:0}));

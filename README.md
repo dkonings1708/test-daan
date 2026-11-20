@@ -159,7 +159,8 @@ lezen. Foto’s, video’s en spraakmemo’s blijven via de lobbychat beschikbaa
 
 Opgelegde adtjes verschijnen als bierpullen: een half gevulde pul voor een half
 adtje, een volle pul voor een heel adtje. Grotere aantallen worden compact met
-een vermenigvuldiger getoond. De teller achter je naam gebruikt dezelfde iconen.
+een vermenigvuldiger getoond. De tellers in de lobby en naast je naam in het spel tonen cijfers (bijvoorbeeld
+`12,5 adtjes`), ook bij grote aantallen.
 De bedragen blijven ook voor schermlezers beschikbaar.
 
 De uitslag toont alleen de verliezer, de bierpullen en de knoppen om verder te
@@ -208,3 +209,20 @@ Dit is geen account voor meerdere apparaten. Bij het wissen van cookies of een
 andere browser wordt het profiel niet herkend. Google/Apple-login is nog niet
 ingebouwd en vereist OAuth-configuratie bij die diensten. Lokale spellen tellen
 niet mee voor profielstatistieken.
+
+
+## Chat en tellers op mobiel
+
+Het chatveld gebruikt minimaal 16px tekst om automatisch inzoomen door iOS te
+voorkomen. Bij typen volgt het chatvenster de zichtbare schermruimte, inclusief
+het schermtoetsenbord. De verstuurknop blijft naast het veld staan; inzoomen met
+je vingers blijft beschikbaar.
+
+Onder **Mijn profiel → Statistieken resetten** kun je alleen je persoonlijke
+adtjes of zowel adtjes als rondes op nul zetten. Naam, foto en lid-sindsdatum
+blijven bewaard. Lobbytellers veranderen niet door een persoonlijke reset.
+Eerdere rondes en straffen worden na herladen of een serverherstart niet opnieuw
+bijgeteld; nieuwe rondes en straffen tellen weer vanaf de reset.
+
+Op het startscherm staan **Lobby maken** en **Meedoen** voorop. De keuze tussen
+profiel en gast staat als kleinere bediening eronder; de slogans zijn verwijderd.

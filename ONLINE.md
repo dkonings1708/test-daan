@@ -250,7 +250,7 @@ met een eigen hostingaccount en permanente opslag nodig.
 ## Apparaatprofielen
 
 Optionele apparaatprofielen gebruiken `/api/profile` (GET/POST) en
-`/api/profile/forget` (POST). Een aparte HttpOnly-cookie `dmc_profile` identificeert
+`/api/profile/forget` en `/api/profile/reset` (POST). Een aparte HttpOnly-cookie `dmc_profile` identificeert
 het profiel; de lobbycookie blijft onafhankelijk. `useProfile: true` bij maken of
 joinen koppelt de deelnemer aan het eigen profiel. Zonder die keuze speel je als
 gast, ook wanneer dit apparaat een profiel heeft. Naam en foto worden vooraf
@@ -264,3 +264,16 @@ straffen worden samen met de spelstand binnen een transactie verwerkt.
 Profiel-ID's en cookies worden niet in lobbysnapshots gedeeld. Alleen online
 spel telt mee. Er zijn geen OAuth-sleutels of extra diensten nodig. Een profiel
 werkt uitsluitend zolang de cookie op dit apparaat beschikbaar is.
+
+
+### Persoonlijke statistieken resetten
+
+`POST /api/profile/reset` met `{"scope":"adts"}` reset alleen persoonlijke adtjes;
+`{"scope":"all"}` reset adtjes en gespeelde rondes. De profielcookie is vereist.
+Identiteit, lid-sindsdatum, lobbytellers en de verwerkingsregistratie van eerdere
+rondes blijven behouden. Daardoor worden oude gebeurtenissen niet nogmaals
+geteld, ook na opnieuw verbinden of een serverherstart.
+
+Lobby- en speltellers tonen numerieke adtjes met een Nederlandse decimale komma.
+De bierpullen in uitslag- en incidentpopups blijven beschikbaar. De mobiele chat
+gebruikt 16px invoertekst en volgt `visualViewport` bij typen, scrollen en draaien.

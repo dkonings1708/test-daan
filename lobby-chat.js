@@ -5,6 +5,23 @@ export function createLobbyChat({getRoom,isConnected,toast}){
   const text=$('#chat-text'),file=$('#chat-file'),record=$('#chat-record'),send=$('#chat-send'),status=$('#chat-status');
   let received=false,pin=null,items=[],unread=0,busy=false,attachment=null,previewUrl=null,recorder=null,stream=null,timer=null,recording=false,requesting=false,generation=0,alertTimer;
   const nodes=new Map();
+  // Safari keeps a larger layout viewport when its keyboard opens. Anchor the
+  // composer inside the visible viewport instead of underneath the keyboard.
+  function fitViewport(){
+    const viewport=window.visualViewport;
+    const handheld=window.matchMedia('(max-width:700px), (pointer:coarse)').matches;
+    const composing=handheld&&!panel.hidden&&(document.activeElement===text||(viewport&&viewport.height<document.documentElement.clientHeight-120));
+    panel.classList.toggle('chat-composing',!!composing);
+    if(composing){
+      panel.style.top=((viewport?.offsetTop||0)+8)+'px';panel.style.bottom='auto';
+      panel.style.height=Math.min(610,Math.max(0,(viewport?.height||window.innerHeight)-16))+'px';
+    }else for(const name of ['top','bottom','height'])panel.style.removeProperty(name);
+  }
+  window.visualViewport?.addEventListener('resize',fitViewport);
+  window.visualViewport?.addEventListener('scroll',fitViewport);
+  window.addEventListener('resize',fitViewport);
+  text.addEventListener('focus',fitViewport);
+  panel.addEventListener('focusout',()=>requestAnimationFrame(fitViewport));
   function controls(){
     const offline=!getRoom()||!isConnected();
     send.disabled=offline||busy||recording||requesting;file.disabled=offline||busy||recording||requesting;
@@ -22,9 +39,9 @@ export function createLobbyChat({getRoom,isConnected,toast}){
     if(recorder){const current=recorder;recorder=null;if(discard)current.onstop=null;if(current.state!=='inactive')current.stop()}
     stream?.getTracks().forEach(track=>track.stop());stream=null;clearTimeout(timer);recording=false;controls();
   }
-  function reset(){stopRecording(true);clearAttachment();items=[];received=false;nodes.clear();list.replaceChildren();unread=0;clearTimeout(alertTimer);$('#chat-alert').hidden=true;text.value='';status.textContent='';panel.hidden=true;toggle.setAttribute('aria-expanded','false')}
-  function close(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');if(recording||requesting){stopRecording(true);status.textContent='Opname geannuleerd.'}}
-  function open(){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;$('#chat-alert').hidden=true;clearTimeout(alertTimer);controls();list.scrollTop=list.scrollHeight}
+  function reset(){stopRecording(true);clearAttachment();items=[];received=false;nodes.clear();list.replaceChildren();unread=0;clearTimeout(alertTimer);$('#chat-alert').hidden=true;text.value='';status.textContent='';panel.hidden=true;toggle.setAttribute('aria-expanded','false');if(panel.contains(document.activeElement))document.activeElement.blur();fitViewport()}
+  function close(){if(panel.contains(document.activeElement))document.activeElement.blur();panel.hidden=true;fitViewport();toggle.setAttribute('aria-expanded','false');if(recording||requesting){stopRecording(true);status.textContent='Opname geannuleerd.'}}
+  function open(){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;$('#chat-alert').hidden=true;clearTimeout(alertTimer);controls();fitViewport();list.scrollTop=list.scrollHeight}
   toggle.onclick=()=>panel.hidden?open():close();
   $('#chat-alert').onclick=open;
   $('#chat-attach').onclick=()=>file.click();

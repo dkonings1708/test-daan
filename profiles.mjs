@@ -15,11 +15,18 @@ export function createProfiles(db,{ApiError,json,body,limitRequest}){
  function publicProfile(p){if(!p)return null;const {id,...value}=p;return value}
  function cookie(req,res,value,age){const secure=req.socket.encrypted||req.headers['x-forwarded-proto']==='https';res.setHeader('Set-Cookie',`dmc_profile=${value}; HttpOnly; SameSite=Lax; Path=/; Max-Age=${age}${secure?'; Secure':''}`)}
  async function handle(req,res,path){
-  if(path!=='/api/profile'&&path!=='/api/profile/forget')return false;
+  if(!['/api/profile','/api/profile/forget','/api/profile/reset'].includes(path))return false;
   if(path==='/api/profile'&&req.method==='GET'){json(res,200,{profile:publicProfile(current(req))});return true}
   if(req.method!=='POST')throw new ApiError(405,'Ongeldige profielactie.');
   limitRequest(req,'profile',30,60000);
   const input=await body(req),existing=current(req);
+  if(path==='/api/profile/reset'){
+   if(!existing)throw new ApiError(401,'Maak eerst een profiel.');
+   if(!['adts','all'].includes(input.scope))throw new ApiError(400,'Kies welke statistieken je wilt resetten.');
+   existing.adtHalfUnits=0;if(input.scope==='all')existing.rounds=0;
+   // Keep the round ledger and lobby accounting: old events must stay credited.
+   save(existing);json(res,200,{profile:publicProfile(existing)});return true;
+  }
   if(path==='/api/profile/forget'){
    if(existing){db.prepare('DELETE FROM profile_rounds WHERE profile=?').run(existing.id);db.prepare('DELETE FROM device_profiles WHERE id=?').run(existing.id)}
    cookie(req,res,'',0);json(res,200,{profile:null});return true;
