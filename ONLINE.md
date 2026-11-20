@@ -157,8 +157,8 @@ een andere locatie worden gekozen. Die map wordt niet via de website gedeeld.
 Na een procesherstart worden geplande worpen en uitslagen alsnog afgerond.
 Een lobby heeft maximaal 30 deelnemers; er worden maximaal 100 lobby's tegelijk
 bewaard. Lobby's zonder verbindingen verlopen na 24 uur zonder spelactiviteit.
-Per partij worden de laatste 100 rondes bewaard. Er is geen permanente account-
-of wedstrijdhistorie buiten deze lobby's.
+Per partij worden de laatste 100 rondes bewaard. Apparaatprofielen bewaren hun eigen totaaltellers buiten de lobbyvervaltijd;
+er is geen volledige wedstrijdhistorie buiten de lobby's.
 
 ## Publiek online zetten
 
@@ -262,8 +262,12 @@ gast, ook wanneer dit apparaat een profiel heeft. Naam en foto worden vooraf
 ingevuld. Profielfoto's worden voor een lobby naar de bestaande privé-avataropslag
 gekopieerd, zodat verwijderen/verlopen van een lobby het profiel niet verwijdert.
 
-De tabellen `device_profiles` en `profile_rounds` staan in dezelfde persistente
-SQLite-database. Bewaar daarom de bestaande Render-disk of `DMC_DATA_DIR`.
+Zonder externe opslag staan `device_profiles` en `profile_rounds` in SQLite;
+daarvoor moet `DMC_DATA_DIR` op een permanente schijf staan. Voor gratis Render
+is [Supabase-opslag](SUPABASE.md) beschikbaar. Stel de twee servervariabelen in
+en voer [het SQL-script](supabase/profiles.sql) uit. Cloudprofielen en hun
+profielfoto’s en statistieken blijven dan na vervanging van de Render-container
+beschikbaar. Lobbies en chat blijven lokaal.
 Afgeronde rondes worden per profiel, spel en ronde eenmaal geteld; persoonlijke
 straffen worden samen met de spelstand binnen een transactie verwerkt.
 Profiel-ID's en cookies worden niet in lobbysnapshots gedeeld. Alleen online
@@ -282,3 +286,23 @@ geteld, ook na opnieuw verbinden of een serverherstart.
 Lobby- en speltellers tonen numerieke adtjes met een Nederlandse decimale komma.
 De bierpullen in uitslag- en incidentpopups blijven beschikbaar. De mobiele chat
 gebruikt 16px invoertekst en volgt `visualViewport` bij typen, scrollen en draaien.
+
+
+## Supabase-opslag voor profielen
+
+Zie [SUPABASE.md](SUPABASE.md) voor de volledige installatie en grenzen. De
+koppeling gebruikt de Supabase Data API met een server-side secret key, zonder
+extra npm-dependencies. De databasefuncties gebruiken `security invoker` en
+expliciete grants aan `service_role`; alle profieltabellen hebben RLS en geen
+rechten voor `anon`/`authenticated`. Er zijn geen publieke profielendpoints met
+Supabase-sleutels in de browser.
+
+De bestaande `dmc_profile`-cookie en gehashte identiteit blijven behouden.
+Profiel-API’s en profieldeelname lezen uit Supabase. Spelgebeurtenissen worden
+binnen de lokale speltransactie aan een wachtrij toegevoegd, daarna via een
+idempotente databasefunctie verwerkt. De cloud gebruikt een vergrendeling per
+profiel voor optellen en resetten; een unieke profiel/spel/ronde-combinatie
+voorkomt dubbele rondes. Bij netwerkfouten wordt opnieuw geprobeerd. Een
+profile-GET geeft bij een cloudstoring 503, zodat een storing niet als een
+verdwenen profiel wordt behandeld. De migratie naar Supabase bewaart een vaste
+importbasis om nieuwe, nog niet verstuurde gebeurtenissen niet dubbel te tellen.

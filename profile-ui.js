@@ -25,7 +25,7 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
   try{const result=await api('/api/profile/reset',{scope});profile=result.profile;drawStats();$('#device-profile-error').textContent='';toast('Statistieken gereset ✓')}catch(error){$('#device-profile-error').textContent=error.message}finally{buttons.forEach(b=>b.disabled=false)}
  };
  async function refresh(){const result=await api('/api/profile');profile=result.profile;renderChoice();return profile}
- const ready=refresh().then(()=>{let preferred=true;try{preferred=sessionStorage.getItem('dmc-profile-mode')!=='guest'}catch{}if(profile)selected(preferred)}).catch(()=>{renderChoice()});
+ const ready=refresh().then(()=>{let preferred=true;try{preferred=sessionStorage.getItem('dmc-profile-mode')!=='guest'}catch{}if(profile)selected(preferred)}).catch(error=>{renderChoice();$('#entry-error').textContent=error.message});
  $('#device-profile-button').onclick=async()=>{
   try{await ready;await refresh();$('#device-profile-name').value=profile?.name||$('#host-name').value||$('#join-name').value;avatar=profile?.avatar||null;picker.select(avatar);$('#device-profile-picker details').open=false;drawStats();$('#device-profile-error').textContent='';dialog.showModal()}catch(error){toast(error.message)}
  };

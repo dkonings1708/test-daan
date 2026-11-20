@@ -18,7 +18,7 @@ const id=()=>randomBytes(12).toString('hex');
 function validatedRules(value){try{return engine.rulesFrom(value)}catch(error){throw new ApiError(400,error.message)}}
 function validatedAvatar(value){try{return avatarFrom(value)}catch(error){throw new ApiError(400,error.message)}}
 const name=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').slice(0,40):'';
-export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(root,'.dmc-data'),rng=randomInt,timingScale=1}={}) {
+export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(root,'.dmc-data'),rng=randomInt,timingScale=1,supabase}={}) {
   mkdirSync(dataDir,{recursive:true});
   const db=new DatabaseSync(resolve(dataDir,'rooms.sqlite'));
   db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS rooms (pin TEXT PRIMARY KEY, body TEXT NOT NULL)');
@@ -49,7 +49,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.accountedHalfUnits={...totals};
     if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round)}
   }
-  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar});
+  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase});
   // Upgrade saved lobbies, including penalties from games started before counters existed.
   for(const room of rooms.values()){syncAdts(room);saveStatement.run(room.pin,JSON.stringify(room))}
   function changed(room){db.exec("BEGIN IMMEDIATE");try{syncAdts(room);room.revision++;persist(room);db.exec("COMMIT")}catch(error){db.exec("ROLLBACK");throw error}broadcast(room);schedulePending(room)}
@@ -74,7 +74,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       try{
         if(pending.type==='outcome')room.game.outcomePending=false;
         else room.pending=engine.settleRoll(room.config,room.game,pending);
-        changed(room);
+        changed(room);profiles.flush().catch(()=>console.error('Profielstatistieken wachten op Supabase; worden opnieuw geprobeerd.'));
       }catch(error){room.game.rolling=false;room.game.animation=null;room.pending=null;changed(room);console.error('Spelactie kon niet worden afgerond:',error.message)}
     },delay));
   }
@@ -171,7 +171,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(await profiles.handle(req,res,path))return;
       if(avatarStore.handle(req,res,path))return;
       if(await chat.handle(req,res,path))return;
-      if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true});return}
+      if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true,profileStorage:profiles.storage});return}
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
@@ -188,7 +188,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       }
       if(req.method==='POST'&&path==='/api/rooms'){
         limitRequest(req,'create',20,3600000);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');
-        const input=await body(req),profile=profiles.forEntry(req,input),hostName=name(input.name||profile?.name);if(!hostName)throw new ApiError(400,'Vul je naam in.');
+        const input=await body(req),profile=await profiles.forEntry(req,input),hostName=name(input.name||profile?.name);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');if(!hostName)throw new ApiError(400,'Vul je naam in.');
         let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
         const memberId=id(),token=randomBytes(32).toString('hex');
         const room={pin,adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar===undefined?profile?.avatar:input.avatar),...(profile?{profileId:profile.id}:{}),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
@@ -201,7 +201,12 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         try{const prior=authorize(req,room.pin);json(res,200,snapshot(room,prior.memberId));return}catch{}
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
         if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
-        const profile=profiles.forEntry(req,input),display=name(input.name||profile?.name);if(!display)throw new ApiError(400,'Vul je naam in.');
+        const profile=await profiles.forEntry(req,input),display=name(input.name||profile?.name);
+        // The host may start or close this lobby while the cloud lookup awaits.
+        if(rooms.get(room.pin)!==room)throw new ApiError(404,'Deze lobbycode bestaat niet of is verlopen.');
+        if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
+        if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
+        if(!display)throw new ApiError(400,'Vul je naam in.');
         if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
         const memberId=id(),token=randomBytes(32).toString('hex');
         const avatar=avatarStore.set(room,memberId,input.avatar===undefined?profile?.avatar:input.avatar);room.members.push({id:memberId,name:display,avatar,...(profile?{profileId:profile.id}:{}),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);changed(room);json(res,200,snapshot(room,memberId));return;
@@ -220,7 +225,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='POST'&&command){
         const {room,memberId}=authorize(req,command[1]);limitRequest(req,'actions',180,60000,room.pin+':'+memberId);const input=await body(req);
         try{applyCommand(room,memberId,input)}catch(error){if(error instanceof ApiError)throw error;throw new ApiError(409,error.message)}
-        json(res,200,snapshot(room,memberId));return;
+        if(room.members.some(member=>member.profileId))await profiles.flush();json(res,200,snapshot(room,memberId));return;
       }
       throw new ApiError(404,'Pagina niet gevonden.');
     }catch(error){
@@ -229,10 +234,11 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       json(res,error.status||500,{error:error.status?error.message:'Er ging iets mis op de server. Probeer opnieuw.'});
     }
   });
+  const profileRetry=setInterval(()=>profiles.flush().catch(()=>console.error('Profielstatistieken wachten op Supabase; worden opnieuw geprobeerd.')),15000);profileRetry.unref();
   const cleanup=setInterval(()=>{
     for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin);chat.remove(pin);avatarStore.removeRoom(pin)}
   },60000);cleanup.unref();
-  return {server,close:async()=>{closed=true;clearInterval(cleanup);for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));db.close()}};
+  return {server,close:async()=>{closed=true;clearInterval(cleanup);clearInterval(profileRetry);for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));try{await profiles.flush()}catch{console.error('Profielupdates blijven in de lokale wachtrij voor een volgende poging.')}db.close()}};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const app=createApplication();const port=Number(process.env.PORT)||3000;app.server.listen(port,'0.0.0.0',()=>console.log(`DMC mexx luistert op poort ${port}`));

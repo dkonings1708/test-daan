@@ -197,6 +197,10 @@ Cloudtaken gebruiken de bestaande checkout; een extra Git-worktree is niet nodig
 
 ## Profiel op dit apparaat
 
+**Gratis Render:** stel [Supabase-opslag](SUPABASE.md) in om profielen, foto’s
+en statistieken bij een deployment te behouden. Alleen omgevingsvariabelen
+invullen is niet genoeg: voer ook het meegeleverde SQL-script uit.
+
 Je kunt op de online homepage een profiel maken met een naam en een avatar of
 eigen foto. Op hetzelfde apparaat worden die gegevens voortaan ingevuld. Met
 **Als gast** speel je zonder statistieken aan het profiel toe te voegen.
@@ -205,8 +209,8 @@ halve adtjes en tussentijdse straffen) en de datum waarop je het profiel maakte.
 Deze statistieken starten bij het aanmaken; eerdere gastpartijen tellen niet mee.
 
 Een willekeurige HttpOnly-cookie herkent dit apparaat maximaal een jaar. De
-profielgegevens en statistieken staan in dezelfde SQLite-database als de lobbies,
-buiten de lobbyvervaltijd. Alleen het apparaat met de cookie kan ze bekijken of
+profielgegevens en statistieken staan in Supabase wanneer die koppeling is
+ingesteld, anders in de lokale SQLite-database, buiten de lobbyvervaltijd. Alleen het apparaat met de cookie kan ze bekijken of
 aanpassen. Andere spelers zien alleen je lobbynaam, avatar en de lobbyteller.
 Statistieken worden samen met de spelstand opgeslagen en tellen niet opnieuw bij
 herladen, opnieuw verbinden of een serverherstart. Via **Profiel verwijderen**
