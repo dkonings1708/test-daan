@@ -103,3 +103,22 @@ test('only the admin can reorder the exact current lobby roster, and stale drag 
   assert.equal((await host.act(pin,'reorder',{order:previousOrder,previousOrder:order})).status,409);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });
+
+test('ten fixed avatars are validated, shared and persisted; participants can only change their own avatar in the lobby',async()=>{
+ const {AVATARS}=await import('../avatars.mjs');assert.equal(AVATARS.length,10);assert.equal(new Set(AVATARS.map(avatar=>avatar.id)).size,10);
+ const dir=await mkdtemp(join(tmpdir(),'dmc-avatars-'));let app=await boot(dir),host=client(app),guest=client(app);
+ try{
+  assert.equal((await host.call('/api/rooms',{name:'Bad',avatar:'<svg onload=alert(1)>'})).status,400);
+  const created=await host.call('/api/rooms',{name:'Ada',avatar:'beer-boss'}),pin=created.data.pin,hostId=created.data.viewer.id;
+  assert.equal(created.data.members[0].avatar,'beer-boss');
+  assert.equal((await guest.call(`/api/rooms/${pin}/join`,{name:'Bo',avatar:{url:'https://other.example'}})).status,400);
+  const joined=await guest.call(`/api/rooms/${pin}/join`,{name:'Bo',avatar:'party-frog'}),guestId=joined.data.viewer.id;
+  assert.equal(joined.data.members.find(member=>member.id===guestId).avatar,'party-frog');
+  assert.equal((await guest.act(pin,'avatar',{avatar:'missing'})).status,400);
+  const updated=await guest.act(pin,'avatar',{avatar:'night-owl',memberId:hostId});assert.equal(updated.status,200);
+  assert.equal(updated.data.members.find(member=>member.id===hostId).avatar,'beer-boss');assert.equal(updated.data.members.find(member=>member.id===guestId).avatar,'night-owl');
+  const cookie=guest.cookie;await app.close();app=await boot(dir);guest=client(app);guest.cookie=cookie;const restored=(await guest.call('/api/me')).data;assert.equal(restored.members.find(member=>member.id===guestId).avatar,'night-owl');
+  assert.equal((await guest.act(pin,'avatar',{avatar:null})).data.members.find(member=>member.id===guestId).avatar,null);
+  const owner=client(app);owner.cookie=host.cookie;await owner.act(pin,'start');assert.equal((await guest.act(pin,'avatar',{avatar:'dice-cat'})).status,409);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});

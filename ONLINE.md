@@ -30,17 +30,19 @@ een worp na een serverherstart.
 De lobby heeft twee tabs: **Spelers** en **Spelregels**. De beheerder sorteert
 spelers met de sleepgreep, op desktop of via aanraking. De pijltjestoetsen op
 een gefocuste greep bieden dezelfde bediening. Spelregels gebruiken toggles;
-extra scores staan onder een uitklapbare optie. Starten neemt ook nog niet
-opgeslagen wijzigingen in de spelregels mee.
+extra scores staan onder een uitklapbare optie. Bij niet-opgeslagen wijzigingen krijg je vóór het verlaten van de tab of starten
+keuze uit verder bewerken, wegdoen of opslaan. Foutieve instellingen blijven
+staan zodat je ze kunt herstellen.
 
-Tijdens het spel staan soundboard en beheeracties in het menu **•••**.
+Tijdens het spel staan de beheeracties in het menu **•••**.
 **Ronde stoppen** bepaalt de huidige verliezer; **Terug naar lobby** beëindigt
 de partij. Een nieuwe ronde start via de uitslag of de knop op de dobbeltafel.
 Er staan geen dubbele reset- of nieuwe-rondeknoppen meer boven de tafel.
 
 De chat zweeft rechtsonder. Bij een nieuw bericht van iemand anders verschijnen
 een rode teller en kort de naam en berichtpreview. Je eigen berichten hebben
-een verzendbevestiging. Foto’s, video’s en spraakmemo’s blijven beschikbaar.
+een verzendbevestiging. Het openen van de chat focust het invoerveld niet, zodat
+je op je telefoon eerst de berichten kunt lezen. Foto’s, video’s en spraakmemo’s blijven beschikbaar.
 
 ## Wie doet wat?
 
@@ -60,12 +62,11 @@ Namen en teams worden ingesteld vóór het starten van een partij. Sluit de
 beheerder de lobby opnieuw open, dan kunnen de samenstelling en regels worden
 gewijzigd. Late deelnemers komen dus in de lobby voordat een partij start.
 
-Geluiden en zelf ingesproken kreten blijven persoonlijk per browser. Spraakmemo’s in de lobbychat worden pas gedeeld nadat je op Verzenden klikt;
-er is geen live audiogesprek tussen deelnemers. De bestaande soundboardknop,
-voice recorder en lokale spelmodus blijven beschikbaar. Het gedeelde logo kan
-via Mijn lokale instellingen door de beheerder uit lokale instellingen worden
-overgenomen. Stel het logo eerst in de lokale modus op dezelfde website in en
-sla het daar op; laad die instellingen daarna in de online lobby. Het logo moet kleiner zijn dan ongeveer 250 kB aan beeldgegevens.
+Bij het maken van of meedoen aan een lobby kun je naast je naam een avatar
+kiezen: tien ingebouwde illustraties met dobbel-, bier- en dierenthema’s. Initialen
+blijven ook mogelijk. In de lobby kun je je eigen avatar opnieuw kiezen. Andere
+leden zien de wijziging direct; de keuze wordt met je lobbysessie opgeslagen.
+Alleen je eigen avatar kan worden gewijzigd. Afbeeldingsuploads zijn niet nodig.
 
 ## Adt-teller en kavelen
 
@@ -186,9 +187,16 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 ## Uitgevoerde controles
 
+- Lokale en online waarschuwing voor niet-opgeslagen wijzigingen: verder
+  bewerken, wegdoen, opslaan, ongeldige invoer en behoud van concepten bij live updates.
+- Avatars kiezen bij maken/meedoen, eigen avatar wijzigen, gedeelde weergave,
+  hervatten na vernieuwen en serverherstart, en validatie van vaste avatar-ID’s.
+- Geen automatische chatfocus, een kopieericoon bij de lobbycode, standaardlid
+  Daan en de vereenvoudigde instellingen gecontroleerd op desktop en mobiel.
+
 - Nieuwe vormgeving op desktop en iPhone X-formaat: lokale en online
   sleepvolgorde, aanraking, toetsenbord, team- en ledenvolgorde, toggles,
-  gescheiden tabs, spelmenu, soundboard, subtiel vastzetten en chatmeldingen.
+  gescheiden tabs, spelmenu, subtiel vastzetten en chatmeldingen.
 - Foto, video, audio en microfoonopname opnieuw in twee browsersessies getest;
   ook verbindingsherstel, foutmeldingen, conceptbehoud en HTML-export gecontroleerd.
 - Server controleert beheerrechten, lobbyfase en de volledige actuele spelerslijst
@@ -210,7 +218,7 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 - Geweigerde microfoontoegang en een mislukte verzending: chat blijft bruikbaar
   en het concept blijft behouden. De lokale spelmodus start en kan nog gooien.
 
-- 21 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
+- 22 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
   het overdragen van beheer en hervatten na een serverherstart.
 - Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
   gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel

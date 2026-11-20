@@ -7,50 +7,16 @@ Node.js-server en een lobbycode. De lobbychat deelt tekst, foto’s, video’s e
 spraakmemo’s met de deelnemers, ook tijdens het spel. Zie `ONLINE.md` voor starten en publiceren. Open het bestand in een browser met JavaScript ingeschakeld;
 een bestandsvoorbeeld in een berichtenapp voert het spel mogelijk niet uit.
 
-## Soundboard
-
-Het Soundboard staat in het menu **•••**, op het startdashboard en tijdens
-het spel. Online staat dit in het spelmenu naast de beurtmelding. De knop SCHEIKUNDEEEE speelt eerst een Nederlandse gesproken kreet en
-daarná een laag, onregelmatig borrelend potion-geluid. Er zijn geen hoge muzikale
-noten of belletjes. Een Nederlandse browserstem wordt gebruikt wanneer die
-beschikbaar is; een ingebouwde synthetische Nederlandse stem werkt als reserve,
-ook zonder internet. Er is geen microfoon of los audiobestand nodig.
-
-Volume en Stop staan in hetzelfde paneel. Opnieuw klikken begint weer bij de
-kreet. Stop annuleert zowel de stem als het borrelen, ook als de stem nog niet is
-begonnen. Het paneel sluit via de sluitknop, Escape of een klik erbuiten.
-Afspelen en het paneel bedienen veranderen geen worpen, scores of speelvolgorde.
-
-### Zelf inspreken
-
-Het voorbeeldvenster van de chat kan microfoontoegang blokkeren. Open het
-HTML-bestand rechtstreeks in Chrome buiten de chat, of gebruik je HTTPS-website.
-De app controleert deze beperking vóór het aanvragen van de microfoon en geeft
-een gerichte melding in plaats van tijdelijk een opnamestatus te tonen.
-
-Open ••• > Soundboard > Eigen tekst inspreken. Opnemen vraagt microfoontoestemming;
-Stop opname rondt de opname af, of de opname stopt na acht seconden vanzelf.
-Via Terugluisteren hoor je alleen je eigen opname. Gebruik mijn opname laat de
-soundboardknop jouw stem spelen in plaats van de standaardkreet, gevolgd door
-het borrelen. Je kunt de opname uitzetten, vervangen of verwijderen.
-
-De opname wordt lokaal als mono-WAV bewaard. Download spel met instellingen
-neemt de opname mee in het zelfstandige spelbestand. Opnemen gebruikt geen
-spraakherkenning en stuurt de opname niet naar een server. Stoppen, annuleren,
-het soundboard sluiten of de pagina verlaten maakt de microfoon vrij. Opnemen
-werkt in ondersteunde browsers via HTTPS (zoals Netlify) of een ondersteund
-lokaal bestand. Zonder microfoontoestemming blijft de rest van het spel werken.
-
 ## Instellingen
 
 Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**.
-Het clublogo gebruikt standaard de gedeelde DMC-afbeelding. Onder Spelregels
-kun je een eigen PNG-, JPG- of WebP-bestand kiezen. De standaardafbeelding wordt
-via de gedeelde Google Drive-link geladen; bij onbeschikbaarheid verschijnt een
-compact DMC-embleem. Een zelf gekozen logo wordt in de gedownloade spelkopie ingesloten.
+Het clublogo is geen instelling meer; het blijft onderdeel van de kop van de app.
+Bij niet-opgeslagen wijzigingen krijg je bij het verlaten van de instellingentab
+keuze uit verder bewerken, wegdoen of opslaan. Dit werkt lokaal en online, ook
+als je met het toetsenbord van tab wisselt. Een mislukte opslag houdt je wijzigingen vast.
 
 De DMC-ledenlijst bevat standaard Q, Jordan, Lon, Siem, Sef, Robin, Dennis, Ties,
-Gijs, Kay en Sem. Onder Instellingen kun je namen aanpassen, toevoegen en
+Gijs, Kay, Sem en Daan. Onder Instellingen kun je namen aanpassen, toevoegen en
 verwijderen. De schakelaar DMC-leden inladen vult de individuele spelerslijst.
 In teammodus worden de leden om en om over de bestaande teams verdeeld; daarna
 kun je namen en volgorde aanpassen. Uitschakelen herstelt de handmatige lijsten.
@@ -63,10 +29,10 @@ voordat de uitslag verschijnt. Gebruik mogelijke getoonde scores, bijvoorbeeld
 kan niet direct af zijn. Een score mag niet in beide extra lijsten staan. Nouri-43
 gaat vóór een extra Mexx-regel voor 43 wanneer Nouri is ingeschakeld.
 
-Klik op Instellingen opslaan om de ledenlijst, regels en het logo lokaal in je
+Klik op Instellingen opslaan om de ledenlijst en regels lokaal in je
 browser te bewaren. Als de browser opslag blokkeert blijven de instellingen
-actief voor de sessie. Download spel met instellingen maakt een zelfstandige
-HTML-kopie met alle instellingen en het originele logo erin. Zo kun je ze ook
+actief voor de sessie. Download spel maakt een zelfstandige
+HTML-kopie met de opgeslagen instellingen erin. Zo kun je ze ook
 naar een andere browser of computer meenemen, zonder externe bestanden.
 
 ## Extra tafelregels
@@ -170,8 +136,20 @@ terugzien. Sterren gelden uitsluitend voor de geselecteerde ronde. Een voortijdi
 vraagt bevestiging en toont daarna eerst de uitslag op basis van de tot dan
 gespeelde eindworpen. Als niemand heeft gegooid wordt geen straf toegekend. Reset wist scores, rondes en sterren en opent het dashboard;
 ingevulde namen blijven staan. Scores en de lopende partij worden niet na sluiten
-of vernieuwen bewaard. Opgeslagen leden, regels en logo blijven wel beschikbaar
+of vernieuwen bewaard. Opgeslagen leden en regels blijven wel beschikbaar
 via browseropslag of de gedownloade kopie met instellingen.
+
+## Online avatars
+
+Bij het maken van of meedoen aan een lobby kies je optioneel één van tien avatars:
+Dobbelduivel, Bierbaas, Feestkikker, Dobbelkat, Gelukseend, Pintpinguïn, Sluwe vos,
+Dorstige draak, Nachtuil en Bierhaai. Je kunt ook je initialen houden. Klik in de
+lobby op je eigen avatar om hem te veranderen. De keuze blijft na verversen of
+een serverherstart behouden. De illustraties zijn ingebouwd en gebruiken geen
+externe afbeeldingen of uploads.
+
+De chat opent zonder het berichtveld te focussen, zodat je op mobiel eerst kunt
+lezen. Foto’s, video’s en spraakmemo’s blijven via de lobbychat beschikbaar.
 
 ## Bediening en scherm
 

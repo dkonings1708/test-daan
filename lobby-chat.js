@@ -24,7 +24,7 @@ export function createLobbyChat({getRoom,isConnected,toast}){
   }
   function reset(){stopRecording(true);clearAttachment();items=[];received=false;nodes.clear();list.replaceChildren();unread=0;clearTimeout(alertTimer);$('#chat-alert').hidden=true;text.value='';status.textContent='';panel.hidden=true;toggle.setAttribute('aria-expanded','false')}
   function close(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');if(recording||requesting){stopRecording(true);status.textContent='Opname geannuleerd.'}}
-  function open(){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;$('#chat-alert').hidden=true;clearTimeout(alertTimer);controls();list.scrollTop=list.scrollHeight;text.focus()}
+  function open(){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;$('#chat-alert').hidden=true;clearTimeout(alertTimer);controls();list.scrollTop=list.scrollHeight}
   toggle.onclick=()=>panel.hidden?open():close();
   $('#chat-alert').onclick=open;
   $('#chat-attach').onclick=()=>file.click();
