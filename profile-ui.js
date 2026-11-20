@@ -1,0 +1,37 @@
+import {createAvatarPicker} from './avatars.mjs';
+import {renderMugs} from './beer-mugs.js';
+
+export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
+ const $=s=>document.querySelector(s);let profile=null,useProfile=false,avatar=null;
+ const dialog=document.createElement('dialog');dialog.id='device-profile-dialog';dialog.className='device-profile-dialog';dialog.setAttribute('aria-labelledby','device-profile-title');
+ dialog.innerHTML='<form id="device-profile-form"><div class="profile-dialog-heading"><h2 id="device-profile-title">Jouw profiel</h2><button type="button" id="device-profile-close" aria-label="Profiel sluiten">×</button></div><p class="hint">Bewaard op dit apparaat. Online rondes en adtjes tellen automatisch mee.</p><div id="device-profile-stats" hidden><div class="profile-stats"><div><strong id="profile-rounds">0</strong><span>rondes</span></div><div><strong id="profile-adts"></strong><span>adtjes</span></div></div><p id="profile-since" class="hint"></p></div><label for="device-profile-name">Naam</label><input id="device-profile-name" type="text" maxlength="40" placeholder="Hoe noemen je vrienden je?" required><div id="device-profile-picker"></div><p class="error" id="device-profile-error" role="alert"></p><div class="profile-dialog-actions"><button type="button" id="device-profile-forget" hidden>Profiel verwijderen</button><button type="submit" class="green" id="device-profile-save">Profiel opslaan</button></div></form>';
+ document.body.append(dialog);
+ const picker=createAvatarPicker($('#device-profile-picker'),{getName:()=>$('#device-profile-name').value,onChange:value=>avatar=value,onBusy:busy=>$('#device-profile-save').disabled=busy});
+ $('#device-profile-name').addEventListener('input',picker.update);
+ function selected(value){useProfile=!!profile&&value;try{sessionStorage.setItem('dmc-profile-mode',useProfile?'profile':'guest')}catch{}renderChoice();for(const [input,control]of [['#host-name',hostPicker],['#join-name',joinPicker]]){$(input).value=useProfile?profile.name:'';control.select(useProfile?profile.avatar:null,true);control.update()}}
+ function renderChoice(){
+  $('#device-profile-button').textContent=profile?'Mijn profiel':'Profiel maken';$('#profile-choice').hidden=!profile;
+  $('#profile-welcome').textContent=profile?'Hey '+profile.name+' 👋':'';
+  for(const button of document.querySelectorAll('[data-profile-mode]'))button.setAttribute('aria-pressed',String((button.dataset.profileMode==='profile')===useProfile));
+ }
+ function drawStats(){
+  $('#device-profile-stats').hidden=!profile;$('#device-profile-forget').hidden=!profile;
+  if(profile){$('#profile-rounds').textContent=profile.rounds;renderMugs($('#profile-adts'),profile.adtHalfUnits,{compact:true});$('#profile-since').textContent='Lid sinds '+new Intl.DateTimeFormat('nl-NL',{day:'numeric',month:'long',year:'numeric'}).format(profile.joinedAt)}
+ }
+ async function refresh(){const result=await api('/api/profile');profile=result.profile;renderChoice();return profile}
+ const ready=refresh().then(()=>{let preferred=true;try{preferred=sessionStorage.getItem('dmc-profile-mode')!=='guest'}catch{}if(profile)selected(preferred)}).catch(()=>{renderChoice()});
+ $('#device-profile-button').onclick=async()=>{
+  try{await ready;await refresh();$('#device-profile-name').value=profile?.name||$('#host-name').value||$('#join-name').value;avatar=profile?.avatar||null;picker.select(avatar);$('#device-profile-picker details').open=false;drawStats();$('#device-profile-error').textContent='';dialog.showModal()}catch(error){toast(error.message)}
+ };
+ $('#device-profile-close').onclick=()=>dialog.close();
+ for(const button of document.querySelectorAll('[data-profile-mode]'))button.onclick=()=>selected(button.dataset.profileMode==='profile');
+ $('#device-profile-form').onsubmit=async event=>{
+  event.preventDefault();if(picker.isBusy())return;const button=$('#device-profile-save');button.disabled=true;
+  try{const result=await api('/api/profile',{name:$('#device-profile-name').value,avatar});profile=result.profile;selected(true);dialog.close();toast('Profiel opgeslagen ✓')}catch(error){$('#device-profile-error').textContent=error.message}finally{button.disabled=false}
+ };
+ $('#device-profile-forget').onclick=async()=>{
+  if(!confirm('Profiel en statistieken definitief verwijderen?'))return;
+  try{await api('/api/profile/forget',{});profile=null;selected(false);dialog.close();toast('Profiel verwijderd. Je kunt als gast spelen.')}catch(error){$('#device-profile-error').textContent=error.message}
+ };
+ return {ready,isActive:()=>useProfile};
+}

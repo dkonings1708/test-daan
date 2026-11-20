@@ -95,3 +95,11 @@ test('off-table percentage accepts whole values 0–5 and uses the exact configu
  const legacy=config({offTable:true});delete legacy.offTablePercent;
  assert.equal(game.beginRoll(legacy,game.startGame(legacy),'a',(min,max)=>max===10000?199:max===7?6:123).type,'fly');
 });
+
+test('new games default to 1 percent while legacy boolean rules retain their original choice',()=>{
+ const c=config();assert.equal(c.offTable,true);assert.equal(c.offTablePercent,1);
+ for(const [sample,type]of [[99,'fly'],[100,'roll']])assert.equal(game.beginRoll(c,game.startGame(c),'a',(min,max)=>max===10000?sample:max===7?6:123).type,type);
+ assert.equal(game.rulesFrom({offTable:true}).offTablePercent,2);
+ assert.equal(game.rulesFrom({offTable:false}).offTable,false);
+ assert.equal(game.rulesFrom({offTable:true,offTablePercent:0}).offTable,false);
+});

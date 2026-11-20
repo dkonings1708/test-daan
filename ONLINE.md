@@ -12,8 +12,9 @@ Benodigd: Node.js 24 of nieuwer. Er zijn geen externe npm-pakketten nodig.
 npm start
 ```
 
-Open op de computer waarop de server draait de website op poort 3000 en kies
-Online multiplayer, of open het pad `/online`. Maak een lobby en deel de code.
+Open op de computer waarop de server draait de website op poort 3000.
+De homepage opent online spelen; `/online` blijft beschikbaar.
+Via **Lokaal spelen** open je `/local`. Maak een lobby en deel de code.
 Andere apparaten gebruiken de publiek gehoste HTTPS-website; localhost op een
 telefoon verwijst naar die telefoon en niet naar de spelserver.
 
@@ -90,7 +91,9 @@ verhogen de rondestraf; Nouri en extra direct-af-scores beëindigen ook tijdens
 kavelen direct de ronde. Vastzetten en een vierde worp zijn dan uitgeschakeld.
 De oorspronkelijke en kavelworpen blijven samen in het scoreoverzicht staan.
 
-Van tafel gooien heeft bij inschakelen **2% kans per beurt**, gecontroleerd bij
+Van tafel gooien staat voor nieuwe instellingen standaard op **1% per beurt**.
+De gebruiker kiest met een slider 0–5% in hele stappen; 0% zet de regel uit.
+Eerdere opgeslagen instellingen blijven behouden. De kans wordt gecontroleerd bij
 de eerste normale worp. Extra worpen en opnieuw gooien na van tafel verhogen
 die kans niet. Dezelfde regels werken in de lokale spelmodus.
 
@@ -242,3 +245,22 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 Er staat hiermee nog geen publieke website online. Daarvoor is de hostingstap
 met een eigen hostingaccount en permanente opslag nodig.
+
+
+## Apparaatprofielen
+
+Optionele apparaatprofielen gebruiken `/api/profile` (GET/POST) en
+`/api/profile/forget` (POST). Een aparte HttpOnly-cookie `dmc_profile` identificeert
+het profiel; de lobbycookie blijft onafhankelijk. `useProfile: true` bij maken of
+joinen koppelt de deelnemer aan het eigen profiel. Zonder die keuze speel je als
+gast, ook wanneer dit apparaat een profiel heeft. Naam en foto worden vooraf
+ingevuld. Profielfoto's worden voor een lobby naar de bestaande privé-avataropslag
+gekopieerd, zodat verwijderen/verlopen van een lobby het profiel niet verwijdert.
+
+De tabellen `device_profiles` en `profile_rounds` staan in dezelfde persistente
+SQLite-database. Bewaar daarom de bestaande Render-disk of `DMC_DATA_DIR`.
+Afgeronde rondes worden per profiel, spel en ronde eenmaal geteld; persoonlijke
+straffen worden samen met de spelstand binnen een transactie verwerkt.
+Profiel-ID's en cookies worden niet in lobbysnapshots gedeeld. Alleen online
+spel telt mee. Er zijn geen OAuth-sleutels of extra diensten nodig. Een profiel
+werkt uitsluitend zolang de cookie op dit apparaat beschikbaar is.

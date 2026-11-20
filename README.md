@@ -1,7 +1,8 @@
 # DMC mexx
 
 Nederlandstalig dobbelspel in DMC-rood, groen, wit en zwart, met lokale en online
-multiplayer-modus. De lokale versie staat volledig in `index.html` en heeft geen
+multiplayer-modus. De homepage opent online spelen; **Lokaal spelen** opent `/local`.
+De lokale versie staat volledig in `index.html` en heeft geen
 installatie of accounts nodig. Online multiplayer gebruikt de meegeleverde
 Node.js-server en een lobbycode. De lobbychat deelt tekst, foto’s, video’s en
 spraakmemo’s met de deelnemers, ook tijdens het spel. Zie `ONLINE.md` voor starten en publiceren. Open het bestand in een browser met JavaScript ingeschakeld;
@@ -32,16 +33,15 @@ gaat vóór een extra Mexx-regel voor 43 wanneer Nouri is ingeschakeld.
 
 Klik op Instellingen opslaan om de ledenlijst en regels lokaal in je
 browser te bewaren. Als de browser opslag blokkeert blijven de instellingen
-actief voor de sessie. Download spel maakt een zelfstandige
-HTML-kopie met de opgeslagen instellingen erin. Zo kun je ze ook
-naar een andere browser of computer meenemen, zonder externe bestanden.
+actief voor de sessie.
 
 ## Extra tafelregels
 
-Drie nieuwe schakelaars in Instellingen staan standaard uit en worden met de
-andere instellingen opgeslagen en geëxporteerd:
+De aanvullende regels worden met de andere instellingen opgeslagen:
 
-- Van tafel gooien: elke beurt heeft 2% kans bij de eerste normale worp. Alleen de losse stenen
+- Van tafel gooien: standaard 1% kans per beurt bij de eerste normale worp.
+  De schuifregelaar gaat van 0 tot 5% in hele stappen; 0% schakelt de regel uit.
+  Bestaande opgeslagen keuzes blijven behouden. Alleen de losse stenen
   vliegen met een animatie uit het speelveld. De worp verandert geen score,
   sterren of worplimiet; de werper krijgt een half adtje en mag opnieuw gooien.
 - Een vierde worp toestaan: bij een limiet van drie blijft na de derde geldige
@@ -165,7 +165,7 @@ De bedragen blijven ook voor schermlezers beschikbaar.
 De uitslag toont alleen de verliezer, de bierpullen en de knoppen om verder te
 gaan. Rondenummer, optelsom en volgende starter staan niet meer in de popup.
 De spelregels, strafberekening en startvolgorde blijven gelijk. Een vastgezette
-steen heeft een rode rand, een stip en het label Vast.
+steen heeft een subtiele transparante rode rand, zonder stip of tekst.
 
 ## Bediening en scherm
 
@@ -185,3 +185,26 @@ als online. Dit is geen controle op een fysieke iPhone of in Safari.
 
 Voor ontwikkeling: `python3 -m http.server 8000` vanuit deze map.
 Cloudtaken gebruiken de bestaande checkout; een extra Git-worktree is niet nodig.
+
+
+## Profiel op dit apparaat
+
+Je kunt op de online homepage een profiel maken met een naam en een avatar of
+eigen foto. Op hetzelfde apparaat worden die gegevens voortaan ingevuld. Met
+**Als gast** speel je zonder statistieken aan het profiel toe te voegen.
+**Mijn profiel** toont je afgeronde online rondes, persoonlijke adtjes (inclusief
+halve adtjes en tussentijdse straffen) en de datum waarop je het profiel maakte.
+Deze statistieken starten bij het aanmaken; eerdere gastpartijen tellen niet mee.
+
+Een willekeurige HttpOnly-cookie herkent dit apparaat maximaal een jaar. De
+profielgegevens en statistieken staan in dezelfde SQLite-database als de lobbies,
+buiten de lobbyvervaltijd. Alleen het apparaat met de cookie kan ze bekijken of
+aanpassen. Andere spelers zien alleen je lobbynaam, avatar en de lobbyteller.
+Statistieken worden samen met de spelstand opgeslagen en tellen niet opnieuw bij
+herladen, opnieuw verbinden of een serverherstart. Via **Profiel verwijderen**
+verwijder je het profiel en de statistieken; lopende lobbygegevens blijven bestaan.
+
+Dit is geen account voor meerdere apparaten. Bij het wissen van cookies of een
+andere browser wordt het profiel niet herkend. Google/Apple-login is nog niet
+ingebouwd en vereist OAuth-configuratie bij die diensten. Lokale spellen tellen
+niet mee voor profielstatistieken.

@@ -1,14 +1,15 @@
 import { randomInt } from 'node:crypto';
 
 export const validScores = new Set([21,31,32,41,42,43,51,52,53,54,61,62,63,64,65,100,200,300,400,500,600]);
-export const defaultRules = { mode:'single', wholeTeam:false, nouri:false, offTable:false, offTablePercent:2, fourthRoll:false, heldTrap:false, extraMexx:[], extraOut:[] };
+export const defaultRules = { mode:'single', wholeTeam:false, nouri:false, offTable:true, offTablePercent:1, fourthRoll:false, heldTrap:false, extraMexx:[], extraOut:[] };
 export function rulesFrom(input={}) {
   if(!input||typeof input!=='object'||Array.isArray(input))throw new Error('Ongeldige spelinstellingen.');
   const rules={...defaultRules};
   if (input.mode!==undefined&&!['single','team'].includes(input.mode)) throw new Error('Kies individueel of teams.');
   rules.mode=input.mode||'single';
-  for(const name of ['wholeTeam','nouri','offTable','fourthRoll','heldTrap']) rules[name]=input[name]===true;
-  rules.offTablePercent=input.offTablePercent===undefined?2:input.offTablePercent;
+  for(const name of ['wholeTeam','nouri','offTable','fourthRoll','heldTrap']) rules[name]=input[name]===undefined?defaultRules[name]:input[name]===true;
+  // Older saved rules used a boolean and always meant 2%; new games start at 1%.
+  rules.offTablePercent=input.offTablePercent===undefined?(input.offTable===undefined?1:2):input.offTablePercent;
   if(!Number.isInteger(rules.offTablePercent)||rules.offTablePercent<0||rules.offTablePercent>5)throw new Error('Kies een heel percentage van 0 tot en met 5.');
   rules.offTable=rules.offTable&&rules.offTablePercent>0;
   for(const name of ['extraMexx','extraOut']) {

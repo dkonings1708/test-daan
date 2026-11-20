@@ -192,7 +192,7 @@ function cleanSettings(value){
 let embeddedSettings=null,storedSettings=null;
 try{embeddedSettings=cleanSettings(JSON.parse($('#saved-settings').textContent))}catch{}
 try{storedSettings=cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY)))}catch{}
-let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTablePercent:2,offTable:false,fourthRoll:false,heldTrap:false};
+let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTablePercent:1,offTable:true,fourthRoll:false,heldTrap:false};
 if(JSON.stringify(settings.members)===JSON.stringify(DEFAULT_MEMBERS.filter(name=>name!=='Daan')))settings.members.push('Daan');
 let settingsDraft=structuredClone(settings),memberBackup=null,localSettingsBaseline='';
 function renderMembers(){
@@ -665,7 +665,7 @@ $('#open-online').addEventListener('click',async()=>{
  if(!await localSettingsGuard.request())return;
  if(location.protocol!=='http:'&&location.protocol!=='https:'){$('#setup-error').textContent='Online spelen werkt via de multiplayer-website. Dit gedownloade bestand speelt lokaal.';return}
  const button=$('#open-online');button.disabled=true;
- try{const response=await fetch('/healthz');const health=await response.json();if(!response.ok||health.ok!==true)throw new Error();location.assign('/online')}
+ try{const response=await fetch('/healthz');const health=await response.json();if(!response.ok||health.ok!==true)throw new Error();location.assign('/')}
  catch{$('#setup-error').textContent='De multiplayer-server is op deze website nog niet geactiveerd. De lokale spelmodus blijft beschikbaar.';button.disabled=false}
 });
 if(ONLINE_MODE){$('#setup').hidden=true;$('#setup-tag').hidden=true;window.parent.postMessage({type:'dmc-online-ready'},location.origin)}
