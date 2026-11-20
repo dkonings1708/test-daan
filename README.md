@@ -9,8 +9,8 @@ een bestandsvoorbeeld in een berichtenapp voert het spel mogelijk niet uit.
 
 ## Soundboard
 
-Rechtsboven staat een uitklapbaar Soundboard, op het startdashboard en tijdens
-het spel. De knop SCHEIKUNDEEEE speelt eerst een Nederlandse gesproken kreet en
+Het Soundboard staat in het menu **•••**, op het startdashboard en tijdens
+het spel. Online staat dit in het spelmenu naast de beurtmelding. De knop SCHEIKUNDEEEE speelt eerst een Nederlandse gesproken kreet en
 daarná een laag, onregelmatig borrelend potion-geluid. Er zijn geen hoge muzikale
 noten of belletjes. Een Nederlandse browserstem wordt gebruikt wanneer die
 beschikbaar is; een ingebouwde synthetische Nederlandse stem werkt als reserve,
@@ -28,7 +28,7 @@ HTML-bestand rechtstreeks in Chrome buiten de chat, of gebruik je HTTPS-website.
 De app controleert deze beperking vóór het aanvragen van de microfoon en geeft
 een gerichte melding in plaats van tijdelijk een opnamestatus te tonen.
 
-Open Soundboard > Eigen tekst inspreken. Opnemen vraagt microfoontoestemming;
+Open ••• > Soundboard > Eigen tekst inspreken. Opnemen vraagt microfoontoestemming;
 Stop opname rondt de opname af, of de opname stopt na acht seconden vanzelf.
 Via Terugluisteren hoor je alleen je eigen opname. Gebruik mijn opname laat de
 soundboardknop jouw stem spelen in plaats van de standaardkreet, gevolgd door
@@ -43,8 +43,11 @@ lokaal bestand. Zonder microfoontoestemming blijft de rest van het spel werken.
 
 ## Instellingen
 
-Het startdashboard heeft de tabbladen Spel instellen en Instellingen.
-Het logo staat alleen onder Instellingen. Kies daar een PNG-, JPG- of WebP-bestand.
+Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**.
+Het clublogo gebruikt standaard de gedeelde DMC-afbeelding. Onder Spelregels
+kun je een eigen PNG-, JPG- of WebP-bestand kiezen. De standaardafbeelding wordt
+via de gedeelde Google Drive-link geladen; bij onbeschikbaarheid verschijnt een
+compact DMC-embleem. Een zelf gekozen logo wordt in de gedownloade spelkopie ingesloten.
 
 De DMC-ledenlijst bevat standaard Q, Jordan, Lon, Siem, Sef, Robin, Dennis, Ties,
 Gijs, Kay en Sem. Onder Instellingen kun je namen aanpassen, toevoegen en
@@ -91,7 +94,8 @@ Het overzicht toont de extra halve adtjes en bewaart ze bij de vorige rondes.
 
 - Single player: geef de namen op; iedereen speelt individueel.
 - Team mode: maak teams en voeg teamleden toe. De teams gooien na elkaar.
-- Gebruik de pijltjes om spelers, teams en teamleden te verplaatsen.
+- Sleep de greep naast een speler, team of teamlid om de volgorde te wijzigen.
+  Dit werkt ook met aanraking. Met de greep gefocust werken de pijltjestoetsen.
 - Namen zijn optioneel: lege velden krijgen automatisch Speler 1, Speler 2, enz.
   Lege teamnamen krijgen Team 1, Team 2, enz. Je kunt meteen starten.
 - Start het spel gebruikt een directe knopactie, zonder formulierverzending.

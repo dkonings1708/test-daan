@@ -3,14 +3,16 @@ const ACCEPT='image/jpeg,image/png,image/gif,image/webp,video/mp4,video/webm,vid
 export function createLobbyChat({getRoom,isConnected,toast}){
   const $=s=>document.querySelector(s),panel=$('#chat-panel'),list=$('#chat-messages'),toggle=$('#chat-toggle'),form=$('#chat-form');
   const text=$('#chat-text'),file=$('#chat-file'),record=$('#chat-record'),send=$('#chat-send'),status=$('#chat-status');
-  let received=false,pin=null,items=[],unread=0,busy=false,attachment=null,previewUrl=null,recorder=null,stream=null,timer=null,recording=false,requesting=false,generation=0;
+  let received=false,pin=null,items=[],unread=0,busy=false,attachment=null,previewUrl=null,recorder=null,stream=null,timer=null,recording=false,requesting=false,generation=0,alertTimer;
   const nodes=new Map();
   function controls(){
     const offline=!getRoom()||!isConnected();
     send.disabled=offline||busy||recording||requesting;file.disabled=offline||busy||recording||requesting;
-    text.disabled=busy;record.disabled=offline||busy||requesting;record.textContent=recording?'Stop opname':'Spraakmemo opnemen';
+    text.disabled=busy;record.disabled=offline||busy||requesting;record.textContent=recording?'Stop opname':'Spraakmemo';
     $('#chat-cancel').hidden=!attachment&&!recording&&!requesting;$('#chat-cancel').disabled=busy;
-    toggle.textContent='Chat'+(unread?` (${unread})`:'');
+    $('#chat-unread').textContent=String(unread);$('#chat-unread').hidden=!unread;
+    toggle.classList.toggle('has-unread',unread>0);toggle.setAttribute('aria-label',unread?`Chat, ${unread} ongelezen berichten`:'Chat openen');
+    $('#chat-attach').disabled=file.disabled;
     if(offline)status.textContent='Verbinding herstellen…';
     else if(status.textContent==='Verbinding herstellen…')status.textContent='';
   }
@@ -20,9 +22,12 @@ export function createLobbyChat({getRoom,isConnected,toast}){
     if(recorder){const current=recorder;recorder=null;if(discard)current.onstop=null;if(current.state!=='inactive')current.stop()}
     stream?.getTracks().forEach(track=>track.stop());stream=null;clearTimeout(timer);recording=false;controls();
   }
-  function reset(){stopRecording(true);clearAttachment();items=[];received=false;nodes.clear();list.replaceChildren();unread=0;text.value='';status.textContent='';panel.hidden=true;toggle.setAttribute('aria-expanded','false')}
+  function reset(){stopRecording(true);clearAttachment();items=[];received=false;nodes.clear();list.replaceChildren();unread=0;clearTimeout(alertTimer);$('#chat-alert').hidden=true;text.value='';status.textContent='';panel.hidden=true;toggle.setAttribute('aria-expanded','false')}
   function close(){panel.hidden=true;toggle.setAttribute('aria-expanded','false');if(recording||requesting){stopRecording(true);status.textContent='Opname geannuleerd.'}}
-  toggle.onclick=()=>{if(panel.hidden){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;controls();list.scrollTop=list.scrollHeight;text.focus()}else close()};
+  function open(){panel.hidden=false;toggle.setAttribute('aria-expanded','true');unread=0;$('#chat-alert').hidden=true;clearTimeout(alertTimer);controls();list.scrollTop=list.scrollHeight;text.focus()}
+  toggle.onclick=()=>panel.hidden?open():close();
+  $('#chat-alert').onclick=open;
+  $('#chat-attach').onclick=()=>file.click();
   $('#chat-close').onclick=close;
   panel.addEventListener('keydown',event=>{if(event.key==='Escape'){close();toggle.focus()}});
   function mediaElement(kind,url){const el=document.createElement(kind==='image'?'img':kind==='video'?'video':'audio');el.src=url;if(kind==='image'){el.alt='Gedeelde foto';el.loading='lazy'}else{el.controls=true;el.preload='metadata';if(kind==='video')el.playsInline=true}return el}
@@ -30,14 +35,19 @@ export function createLobbyChat({getRoom,isConnected,toast}){
     if(data.pin!==pin||!Array.isArray(data.messages))return;
     const nearBottom=list.scrollHeight-list.scrollTop-list.clientHeight<80;
     const oldIds=new Set(items.map(m=>m.id));
-    if(received&&panel.hidden)unread+=data.messages.filter(m=>!oldIds.has(m.id)).length;
+    const fresh=data.messages.filter(m=>!oldIds.has(m.id)&&m.sender!==getRoom()?.viewer.id);
+    if(received&&panel.hidden&&fresh.length){
+      unread+=fresh.length;const last=fresh.at(-1);$('#chat-alert-name').textContent=last.name;$('#chat-alert-text').textContent=last.text||({image:'Foto ontvangen',video:'Video ontvangen',audio:'Spraakmemo ontvangen'}[last.kind]||'Nieuw bericht');$('#chat-alert').hidden=false;
+      clearTimeout(alertTimer);alertTimer=setTimeout(()=>$('#chat-alert').hidden=true,6500);
+    }
     const incoming=new Set(data.messages.map(m=>m.id));for(const [id,node]of nodes)if(!incoming.has(id)){node.remove();nodes.delete(id)}
     for(const message of data.messages){
       if(nodes.has(message.id))continue;
-      const row=document.createElement('article');row.className='chat-message';const meta=document.createElement('p');meta.className='chat-meta';
+      const row=document.createElement('article');const mine=message.sender===getRoom()?.viewer.id;row.className='chat-message'+(mine?' is-own':'');const meta=document.createElement('p');meta.className='chat-meta';
       meta.textContent=message.name+' · '+new Date(message.sent).toLocaleTimeString('nl-NL',{hour:'2-digit',minute:'2-digit'});row.append(meta);
       if(message.text){const content=document.createElement('p');content.textContent=message.text;content.className='chat-text';row.append(content)}
       if(message.url){const media=mediaElement(message.kind,message.url);media.addEventListener('error',()=>{if(!row.querySelector('.chat-media-error')){const hint=document.createElement('p');hint.className='chat-media-error hint';hint.textContent='Dit bestand kan niet worden afgespeeld in deze browser of is verlopen.';row.append(hint)}});row.append(media)}
+      if(mine){const delivered=document.createElement('p');delivered.className='chat-delivery';delivered.textContent='Verzonden ✓';row.append(delivered)}
       list.append(row);nodes.set(message.id,row);
     }
     items=data.messages;received=true;$('#chat-empty').hidden=items.length>0;
@@ -78,7 +88,7 @@ export function createLobbyChat({getRoom,isConnected,toast}){
     try{
       if(draft){await post('',JSON.stringify({text:draft}),'application/json');if(pin===currentPin)text.value=''}
       if(blob){await post('/media',blob,blob.type);if(pin===currentPin)clearAttachment()}
-      if(pin===currentPin)status.textContent='Verzonden.';
+      if(pin===currentPin)status.textContent='Verzonden ✓';
     }catch(error){if(pin===currentPin)status.textContent=error.message}
     finally{busy=false;controls()}
   };

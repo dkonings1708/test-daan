@@ -87,3 +87,19 @@ test('saved games from before the adt counter are upgraded once, including histo
   await host.act(pin,'endRound');assert.equal((await host.call('/api/me')).data.members[0].id,id);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });
+
+test('only the admin can reorder the exact current lobby roster, and stale drag operations are rejected',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'dmc-order-')),app=await boot(dir),host=client(app),guest=client(app);
+ try{
+  const created=await host.call('/api/rooms',{name:'Ada'}),pin=created.data.pin,hostId=created.data.viewer.id;
+  const joined=await guest.call(`/api/rooms/${pin}/join`,{name:'Bo'}),guestId=joined.data.viewer.id,previousOrder=[hostId,guestId],order=[guestId,hostId];
+  assert.equal((await guest.act(pin,'reorder',{order,previousOrder})).status,403);
+  assert.equal((await host.act(pin,'reorder',{order:[hostId,hostId],previousOrder})).status,409);
+  assert.equal((await host.act(pin,'reorder',{order:[hostId,'missing'],previousOrder})).status,409);
+  assert.equal((await host.act(pin,'reorder',{order})).status,409);
+  const moved=await host.act(pin,'reorder',{order,previousOrder});assert.equal(moved.status,200);assert.deepEqual(moved.data.members.map(m=>m.id),order);
+  assert.equal((await host.act(pin,'reorder',{order,previousOrder})).status,409);
+  await host.act(pin,'start');assert.equal((await guest.call('/api/me')).data.state.schedule[0],guestId);
+  assert.equal((await host.act(pin,'reorder',{order:previousOrder,previousOrder:order})).status,409);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});

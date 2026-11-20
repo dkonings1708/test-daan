@@ -25,6 +25,23 @@ De tests controleren spelregels, rechten, realtime updates, dubbele verzoeken,
 het herstellen van sessies, chat en media, opslaglimieten en het afronden van
 een worp na een serverherstart.
 
+## Schermen en bediening
+
+De lobby heeft twee tabs: **Spelers** en **Spelregels**. De beheerder sorteert
+spelers met de sleepgreep, op desktop of via aanraking. De pijltjestoetsen op
+een gefocuste greep bieden dezelfde bediening. Spelregels gebruiken toggles;
+extra scores staan onder een uitklapbare optie. Starten neemt ook nog niet
+opgeslagen wijzigingen in de spelregels mee.
+
+Tijdens het spel staan soundboard en beheeracties in het menu **•••**.
+**Ronde stoppen** bepaalt de huidige verliezer; **Terug naar lobby** beëindigt
+de partij. Een nieuwe ronde start via de uitslag of de knop op de dobbeltafel.
+Er staan geen dubbele reset- of nieuwe-rondeknoppen meer boven de tafel.
+
+De chat zweeft rechtsonder. Bij een nieuw bericht van iemand anders verschijnen
+een rode teller en kort de naam en berichtpreview. Je eigen berichten hebben
+een verzendbevestiging. Foto’s, video’s en spraakmemo’s blijven beschikbaar.
+
 ## Wie doet wat?
 
 - De beheerder stelt regels, teams en speelvolgorde in en start het spel.
@@ -74,7 +91,7 @@ die kans niet. Dezelfde regels werken in de lokale spelmodus.
 
 ## Lobbychat
 
-Via **Chat** rechtsboven kunnen alle lobbyleden tekst, foto’s, video’s en
+Via **Chat** rechtsonder kunnen alle lobbyleden tekst, foto’s, video’s en
 spraakmemo’s delen, ook tijdens het spel en als ze alleen meekijken. Nieuwe
 berichten verschijnen direct; bij een gesloten paneel toont de knop het aantal
 nieuwe berichten. Chatten verandert geen worpen, scores, regels of speelvolgorde.
@@ -169,6 +186,14 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 
 ## Uitgevoerde controles
 
+- Nieuwe vormgeving op desktop en iPhone X-formaat: lokale en online
+  sleepvolgorde, aanraking, toetsenbord, team- en ledenvolgorde, toggles,
+  gescheiden tabs, spelmenu, soundboard, subtiel vastzetten en chatmeldingen.
+- Foto, video, audio en microfoonopname opnieuw in twee browsersessies getest;
+  ook verbindingsherstel, foutmeldingen, conceptbehoud en HTML-export gecontroleerd.
+- Server controleert beheerrechten, lobbyfase en de volledige actuele spelerslijst
+  bij sorteren; verouderde of ongeldige sleepacties worden afgewezen.
+
 - Kavelen online en lokaal via de echte spelknoppen, uitslag met Mexx-straf,
   chat tijdens kavelen, adt-teller in lobby en spel, mobiele weergave en verversen.
 - Automatische controles voor herhaald kavelen, extra Mexx/direct-af/Nouri,
@@ -185,7 +210,7 @@ deze eerste versie. Back-ups van het SQLite-volume blijven de taak van de host.
 - Geweigerde microfoontoegang en een mislukte verzending: chat blijft bruikbaar
   en het concept blijft behouden. De lokale spelmodus start en kan nog gooien.
 
-- 20 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
+- 21 Node-tests voor spelregels, chat/media, opslaglimieten, HTTP-rechten, live updates en meerdere tabbladen,
   het overdragen van beheer en hervatten na een serverherstart.
 - Vier aparte browsersessies: beheerder die alleen meekijkt en drie spelers;
   gelijke worpen, eigen bediening, volgorde, teams, Nouri, straffen en herstel

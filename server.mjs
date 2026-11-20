@@ -93,13 +93,19 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     if(!/^[A-Za-z0-9_-]{8,80}$/.test(input.requestId||''))throw new ApiError(400,'Ongeldig verzoeknummer.');
     const key=memberId+':'+input.requestId;
     if(room.receipts.includes(key))return;
-    if(['rules','move','team','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
+    if(['rules','move','reorder','team','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
     switch(action){
       case 'rules':requireLobby(room);room.rules=validatedRules(input.rules);break;
       case 'move':{
         requireLobby(room);const index=room.members.findIndex(m=>m.id===input.memberId),step=input.step;
         if(index<0||![1,-1].includes(step)||index+step<0||index+step>=room.members.length)throw new ApiError(400,'Ongeldige volgorde.');
         [room.members[index],room.members[index+step]]=[room.members[index+step],room.members[index]];break;
+      }
+      case 'reorder':{
+        requireLobby(room);
+        const current=room.members.map(member=>member.id),order=input.order;
+        if(!Array.isArray(order)||order.length!==current.length||new Set(order).size!==current.length||order.some(id=>!current.includes(id))||JSON.stringify(input.previousOrder)!==JSON.stringify(current))throw new ApiError(409,'De spelerslijst is veranderd. Probeer opnieuw.');
+        room.members=order.map(id=>room.members.find(member=>member.id===id));break;
       }
       case 'team':requireLobby(room);{const member=room.members.find(m=>m.id===input.memberId);if(!member)throw new ApiError(404,'Speler niet gevonden.');member.team=name(input.team)||'Team 1'}break;
       case 'playing':requireLobby(room);{const member=room.members.find(m=>m.id===input.memberId);if(!member)throw new ApiError(404,'Speler niet gevonden.');member.playing=input.playing===true}break;
@@ -143,7 +149,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&path==='/lobby-chat.js'){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,'lobby-chat.js')));return}
+      if(req.method==='GET'&&['/lobby-chat.js','/sortable.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }
