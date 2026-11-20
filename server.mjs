@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {randomTeams} from './teams.mjs';
 import * as engine from './game-engine.mjs';
 import { createChat } from './chat.mjs';
 import { avatarFrom } from './avatars.mjs';
@@ -110,7 +111,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     if(!/^[A-Za-z0-9_-]{8,80}$/.test(input.requestId||''))throw new ApiError(400,'Ongeldig verzoeknummer.');
     const key=memberId+':'+input.requestId;
     if(room.receipts.includes(key))return;
-    if(['rules','move','reorder','team','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
+    if(['rules','move','reorder','team','randomTeams','playing','kick','admin','start','newRound','endRound','lobby'].includes(action))requireAdmin(room,memberId);
     switch(action){
       case 'avatar':{
         const member=room.members.find(member=>member.id===memberId);
@@ -129,6 +130,15 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         const current=room.members.map(member=>member.id),order=input.order;
         if(!Array.isArray(order)||order.length!==current.length||new Set(order).size!==current.length||order.some(id=>!current.includes(id))||JSON.stringify(input.previousOrder)!==JSON.stringify(current))throw new ApiError(409,'De spelerslijst is veranderd. Probeer opnieuw.');
         room.members=order.map(id=>room.members.find(member=>member.id===id));break;
+      }
+      case 'randomTeams':{
+        requireLobby(room);
+        const players=room.members.filter(member=>member.playing),size=room.rules.teamSize??2;
+        if(room.rules.mode!=='team')throw new ApiError(409,'Kies eerst de teammodus in Spelregels.');
+        if(input.teamSize!==size||JSON.stringify(input.previousOrder)!==JSON.stringify(room.members.map(member=>member.id))||JSON.stringify(input.previousPlayers)!==JSON.stringify(players.map(member=>member.id)))throw new ApiError(409,'De lobby of teaminstellingen zijn veranderd. Probeer opnieuw.');
+        const groups=randomTeams(players,size,max=>randomInt(max));
+        groups.forEach((members,index)=>members.forEach(member=>member.team='Team '+(index+1)));
+        room.members=[...groups.flat(),...room.members.filter(member=>!member.playing)];break;
       }
       case 'team':requireLobby(room);{const member=room.members.find(m=>m.id===input.memberId);if(!member)throw new ApiError(404,'Speler niet gevonden.');member.team=name(input.team)||'Team 1'}break;
       case 'playing':requireLobby(room);{const member=room.members.find(m=>m.id===input.memberId);if(!member)throw new ApiError(404,'Speler niet gevonden.');member.playing=input.playing===true}break;
@@ -175,7 +185,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }

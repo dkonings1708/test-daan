@@ -114,6 +114,8 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 .off-table-control{display:grid;gap:12px;padding:16px 0}.off-table-heading{display:flex;justify-content:space-between;align-items:center;gap:12px}.off-table-heading output{color:#ed919a;font-variant-numeric:tabular-nums}.off-table-control input[type=range]{width:100%;height:24px;padding:0;accent-color:#dc6570;cursor:pointer}
 .score-adts,.penalty-extra{font-size:10px;font-weight:500;color:#c3d1c5;font-variant-numeric:tabular-nums;white-space:nowrap}
 .score-row{grid-template-columns:30px minmax(0,1fr) auto;column-gap:10px}.score-avatar{grid-column:1;grid-row:1 / span 2;align-self:center;width:30px;height:30px;border-radius:9px;overflow:hidden;background:#25372b;color:#c4efbc;display:grid;place-items:center;font-size:10px;font-weight:750}.score-avatar svg,.score-avatar img{display:block;width:100%;height:100%;object-fit:cover}.score-name{grid-column:2;grid-row:1;min-width:0}.score-number{grid-column:3;grid-row:1 / span 2}.score-detail{grid-column:2;grid-row:2}@media(max-width:700px){.score-row{grid-template-columns:26px minmax(0,1fr) auto;column-gap:8px}.score-avatar{width:26px;height:26px;border-radius:8px}}
+.team-generator{display:grid;grid-template-columns:minmax(0,1fr) 65px auto;gap:10px;align-items:center;margin:14px 0 18px;padding:14px;border:1px solid var(--line);border-radius:12px}.team-generator label{font-size:11px}.team-generator input{width:100%;padding:9px}.team-generator button{font-size:11px;padding:10px}.team-generator p{grid-column:1/-1;margin:0;font-size:10px}
+#local-team-size{font-size:16px;color:#f4f6f1;background:#0f1512;border:1px solid #ffffff21;border-radius:9px}
 </style>
 </head>
 <body>
@@ -128,7 +130,7 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 <div class="mode-options"><label class="choice"><input type="radio" name="mode" value="single" checked><span><strong>Individueel</strong><span>Iedere speler voor zichzelf</span></span></label><label class="choice"><input type="radio" name="mode" value="team"><span><strong>Teams</strong><span>Speel samen als team</span></span></label></div>
 <label class="toggle" id="team-option" hidden><span><strong>Hele team achter elkaar</strong></span><input id="whole-team" type="checkbox" role="switch" aria-label="Het hele team gooit"></label>
 <div id="single-setup"><div class="list-heading"><h2>Spelers & volgorde</h2></div><p class="small muted" style="font-size:10px;margin-bottom:7px">Sleep voor de speelvolgorde</p><div id="players-editor"></div><button type="button" id="add-player" class="add-member">+ Speler toevoegen</button></div>
-<div id="team-setup" hidden><div class="list-heading"><h2>Teams & volgorde</h2><button type="button" id="add-team">+ Team</button></div><p class="small muted" id="team-help">Sleep teams en spelers in de juiste volgorde.</p><div id="teams-editor"></div></div>
+<div id="team-setup" hidden><div class="list-heading"><h2>Teams & volgorde</h2><button type="button" id="add-team">+ Team</button></div><p class="small muted" id="team-help">Sleep teams en spelers in de juiste volgorde.</p><div class="team-generator"><label for="local-team-size">Spelers per team</label><input id="local-team-size" type="number" inputmode="numeric" min="2" max="30" step="1" value="2"><button id="random-teams-local" type="button">Random teams</button><p id="local-teams-preview" class="small muted" aria-live="polite"></p></div><div id="teams-editor"></div></div>
 <label class="toggle"><span><strong>DMC-leden inladen</strong></span><input id="load-members" type="checkbox" role="switch" aria-label="DMC-leden inladen"></label>
 </div><div id="settings-panel" class="dashboard-panel" role="tabpanel" aria-labelledby="tab-settings" hidden>
 <section class="settings-card" aria-label="Spelregels"><label class="toggle"><span><strong>Nouri</strong></span><input type="checkbox" role="switch" id="nouri" aria-label="Nouri mode"></label>
@@ -191,12 +193,12 @@ function cleanSettings(value){
  if(!value||!Array.isArray(value.members)||!value.members.length||value.members.some(n=>typeof n!=='string'||!n.trim()))return null;
  const mexx=Array.isArray(value.extraMexx)?value.extraMexx:[],out=Array.isArray(value.extraOut)?value.extraOut:[];
  if([...mexx,...out].some(n=>!VALID_SCORES.has(n))||out.includes(21)||out.some(n=>mexx.includes(n)))return null;
- return {nouri:!!value.nouri,offTable:!!value.offTable,offTablePercent:Number.isInteger(value.offTablePercent)&&value.offTablePercent>=0&&value.offTablePercent<=5?value.offTablePercent:2,fourthRoll:!!value.fourthRoll,heldTrap:!!value.heldTrap,members:[...new Set(value.members.map(n=>n.trim().slice(0,45)))],extraMexx:[...new Set(mexx)].filter(n=>n!==21),extraOut:[...new Set(out)],logo:typeof value.logo==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(value.logo)?value.logo:null};
+ return {teamSize:Number.isInteger(value.teamSize)&&value.teamSize>=2&&value.teamSize<=30?value.teamSize:2,nouri:!!value.nouri,offTable:!!value.offTable,offTablePercent:Number.isInteger(value.offTablePercent)&&value.offTablePercent>=0&&value.offTablePercent<=5?value.offTablePercent:2,fourthRoll:!!value.fourthRoll,heldTrap:!!value.heldTrap,members:[...new Set(value.members.map(n=>n.trim().slice(0,45)))],extraMexx:[...new Set(mexx)].filter(n=>n!==21),extraOut:[...new Set(out)],logo:typeof value.logo==='string'&&/^data:image\/(png|jpeg|webp);base64,/.test(value.logo)?value.logo:null};
 }
 let embeddedSettings=null,storedSettings=null;
 try{embeddedSettings=cleanSettings(JSON.parse($('#saved-settings').textContent))}catch{}
 try{storedSettings=cleanSettings(JSON.parse(localStorage.getItem(SETTINGS_KEY)))}catch{}
-let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,offTablePercent:1,offTable:true,fourthRoll:false,heldTrap:false};
+let settings=storedSettings||embeddedSettings||{members:[...DEFAULT_MEMBERS],extraMexx:[],extraOut:[],logo:null,teamSize:2,offTablePercent:1,offTable:true,fourthRoll:false,heldTrap:false};
 if(JSON.stringify(settings.members)===JSON.stringify(DEFAULT_MEMBERS.filter(name=>name!=='Daan')))settings.members.push('Daan');
 let settingsDraft=structuredClone(settings),memberBackup=null,localSettingsBaseline='';
 function renderMembers(){
@@ -227,8 +229,9 @@ function saveSettings(){
   const extraMexx=parseScores($('#extra-mexx').value).filter(n=>n!==21),extraOut=parseScores($('#extra-out').value);
   if(extraOut.includes(21))throw new Error('21 blijft altijd Mexx en kan niet als direct-af-score worden ingesteld.');
   if(extraOut.some(n=>extraMexx.includes(n)))throw new Error('Een score kan niet tegelijk extra Mexx en direct af zijn.');
+  const requestedSize=Number($('#local-team-size').value),teamSize=$('#local-team-size').disabled&&(!Number.isInteger(requestedSize)||requestedSize<2||requestedSize>30)?(settings.teamSize??2):requestedSize;teamSizes(0,teamSize);$('#local-team-size').value=teamSize;
   const membersChanged=JSON.stringify(members)!==JSON.stringify(settings.members);
-  settings={members,extraMexx,extraOut,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,logo:$('#club-logo').getAttribute('src')?.startsWith('data:image/')?$('#club-logo').getAttribute('src'):null};settingsDraft=structuredClone(settings);
+  settings={members,extraMexx,extraOut,teamSize,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,logo:$('#club-logo').getAttribute('src')?.startsWith('data:image/')?$('#club-logo').getAttribute('src'):null};settingsDraft=structuredClone(settings);
   let persisted=true;try{localStorage.setItem(SETTINGS_KEY,JSON.stringify(settings))}catch{persisted=false}
   $('#extra-mexx').value=extraMexx.join(', ');$('#extra-out').value=extraOut.join(', ');
   $('#settings-status').textContent=persisted?'Instellingen opgeslagen op dit apparaat.':'Instellingen actief voor deze sessie. Bewaren op dit apparaat is niet gelukt.';
@@ -267,12 +270,12 @@ function createUnsavedGuard({dialog,isDirty,save,discard}){
 function updateOffTableValue(){const value=$('#rule-off-table').value;$('#off-table-value').textContent=value+'%';$('#rule-off-table').setAttribute('aria-valuetext',value+' procent')}
 $('#rule-off-table').addEventListener('input',updateOffTableValue);
 function localSettingsSnapshot(){
- return JSON.stringify({members:settingsDraft.members,newMember:$('#new-member-name').value,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,extraMexx:$('#extra-mexx').value,extraOut:$('#extra-out').value});
+ return JSON.stringify({teamSize:$('#local-team-size').value,members:settingsDraft.members,newMember:$('#new-member-name').value,nouri:$('#nouri').checked,offTable:Number($('#rule-off-table').value)>0,offTablePercent:Number($('#rule-off-table').value),fourthRoll:$('#rule-fourth-roll').checked,heldTrap:$('#rule-held-trap').checked,extraMexx:$('#extra-mexx').value,extraOut:$('#extra-out').value});
 }
 function restoreLocalSettings(){
  settingsDraft=structuredClone(settings);$('#new-member-name').value='';
  $('#extra-mexx').value=settings.extraMexx.join(', ');$('#extra-out').value=settings.extraOut.join(', ');
- $('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
+ $('#local-team-size').value=settings.teamSize??2;updateLocalTeamPreview();$('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
  renderMembers();$('#member-message').textContent='';$('#settings-status').textContent='Wijzigingen teruggezet.';$('#settings-status').classList.remove('settings-error');localSettingsBaseline=localSettingsSnapshot();
 }
 async function selectDashboardTab(tab){
@@ -366,9 +369,32 @@ function renderEditors(){
   team.members.forEach((p,i)=>box.append(personRow(p,team.members,i,`Teamlid ${i+1}`)));
   const add=control('+ Teamlid','Teamlid toevoegen',()=>{team.members.push(makePerson());renderEditors()});add.className='add-member';box.append(add);sortPeople(box,team.members);$('#teams-editor').append(box);
  });
- sortPeople($('#players-editor'),draftPlayers);sortPeople($('#teams-editor'),draftTeams);
+ updateLocalTeamPreview();sortPeople($('#players-editor'),draftPlayers);sortPeople($('#teams-editor'),draftTeams);
 }
-function updateSetupMode(){const teams=$('input[name=mode]:checked').value==='team';$('#single-setup').hidden=teams;$('#team-setup').hidden=!teams;$('#team-option').hidden=!teams;$('#setup-error').textContent=''}
+// Standalone copies: keep in sync with teams.mjs.
+function teamSizes(count,size){
+ if(!Number.isInteger(size)||size<2||size>30)throw new Error('Kies een heel aantal van 2 tot en met 30 spelers per team.');
+ if(!Number.isInteger(count)||count<0)throw new Error('Ongeldig aantal spelers.');
+ const sizes=Array(Math.floor(count/size)).fill(size),left=count%size;
+ if(left===1&&sizes.length)sizes[sizes.length-1]++;
+ else if(left)sizes.push(left);
+ return sizes;
+}
+function randomTeams(players,size,randomIndex=max=>Math.floor(Math.random()*max)){
+ if(!Array.isArray(players)||!players.length)throw new Error('Er moet minimaal één speler meedoen.');
+ const sizes=teamSizes(players.length,size),shuffled=[...players];
+ // Fisher–Yates: every player is used exactly once; the input roster stays intact.
+ for(let i=shuffled.length-1;i>0;i--){const j=randomIndex(i+1);if(!Number.isInteger(j)||j<0||j>i)throw new Error('Ongeldige loting.');[shuffled[i],shuffled[j]]=[shuffled[j],shuffled[i]]}
+ let offset=0;return sizes.map(count=>{const team=shuffled.slice(offset,offset+count);offset+=count;return team});
+}
+function updateLocalTeamPreview(){
+ try{const sizes=teamSizes(draftTeams.flatMap(team=>team.members).length,Number($('#local-team-size').value));$('#local-teams-preview').textContent=`${sizes.length} ${sizes.length===1?'team':'teams'} · ${sizes.join('–')} spelers`;$('#random-teams-local').disabled=sizes.reduce((a,b)=>a+b,0)<2}catch(error){$('#local-teams-preview').textContent=error.message;$('#random-teams-local').disabled=true}
+}
+$('#local-team-size').addEventListener('input',updateLocalTeamPreview);
+$('#random-teams-local').onclick=()=>{
+ try{const groups=randomTeams(draftTeams.flatMap(team=>team.members),Number($('#local-team-size').value));draftTeams=groups.map((members,index)=>({id:nextId++,name:'Team '+(index+1),members}));renderEditors();$('#setup-error').textContent='';$('#sort-status').textContent='Teams willekeurig ingedeeld.'}catch(error){$('#setup-error').textContent=error.message}
+};
+function updateSetupMode(){const teams=$('input[name=mode]:checked').value==='team';$('#single-setup').hidden=teams;$('#team-setup').hidden=!teams;$('#team-option').hidden=!teams;$('#local-team-size').disabled=!teams;$('#setup-error').textContent=''}
 function startGame(event){
  event.preventDefault();if(!saveSettings()){selectDashboardTab('settings');return}const mode=$('input[name=mode]:checked').value;const people=mode==='single'?draftPlayers:draftTeams.flatMap(t=>t.members);
  $('#setup-error').textContent='';
@@ -604,7 +630,7 @@ $('#add-dmc-member').addEventListener('click',addMember);
 $('#save-settings').addEventListener('click',saveSettings);
 $('#settings-panel').addEventListener('keydown',event=>{if(event.key==='Enter'&&event.target.matches('input[type=text]')){event.preventDefault();if(event.target.id==='new-member-name')addMember();else saveSettings()}});
 $('#extra-mexx').value=settings.extraMexx.join(', ');$('#extra-out').value=settings.extraOut.join(', ');
-$('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
+$('#local-team-size').value=settings.teamSize??2;updateLocalTeamPreview();$('#nouri').checked=!!settings.nouri;$('#rule-off-table').value=settings.offTable?(settings.offTablePercent??2):0;updateOffTableValue();$('#rule-fourth-roll').checked=!!settings.fourthRoll;$('#rule-held-trap').checked=!!settings.heldTrap;
 if(settings.logo){$('#club-logo').src=settings.logo;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true}
 renderMembers();renderEditors();updateSetupMode();
 

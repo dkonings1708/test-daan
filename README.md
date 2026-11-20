@@ -237,3 +237,25 @@ bijgeteld; nieuwe rondes en straffen tellen weer vanaf de reset.
 
 Op het startscherm staan **Lobby maken** en **Meedoen** voorop. De keuze tussen
 profiel en gast staat als kleinere bediening eronder; de slogans zijn verwijderd.
+
+
+## Random teams
+
+In teammodus is **Random teams** beschikbaar. Online stelt de beheerder onder
+**Spelregels → Spelers per team** een heel aantal van 2–30 in en slaat dit op.
+Onder **Spelers** maakt de knop de willekeurige indeling; een voorbeeld toont
+de verwachte teamgroottes. Iedere meespelende deelnemer komt precies eenmaal
+in een team. Toeschouwers worden niet ingedeeld. Alleen de beheerder kan loten,
+uitsluitend voordat het spel begint. Achter iedere speler staat het team.
+
+Negen spelers bij grootte 2 worden verdeeld als **2–2–2–3**. Een overgebleven
+speler sluit aan bij het laatste team; twee of meer restspelers vormen samen
+een laatste kleiner team. Bijvoorbeeld: acht spelers bij grootte 3 worden
+**3–3–2**. Opnieuw loten is mogelijk; de indeling wordt niet automatisch
+veranderd bij starten of door een nieuwe deelnemer.
+
+Lokaal staan de grootte en de knop bij **Teams & volgorde**. Alle ingevoerde
+teamleden worden opnieuw ingedeeld, met behoud van hun namen en identiteit.
+De grootte wordt met de lokale spelinstellingen opgeslagen. De bestaande
+handmatige teamindeling, sleepvolgorde en optie ‘Hele team achter elkaar’ blijven
+beschikbaar. De lokale HTML werkt nog steeds zonder externe bestanden.

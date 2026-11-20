@@ -122,3 +122,23 @@ test('ten fixed avatars are validated, shared and persisted; participants can on
   const owner=client(app);owner.cookie=host.cookie;await owner.act(pin,'start');assert.equal((await guest.act(pin,'avatar',{avatar:'dice-cat'})).status,200);
  }finally{await app.close();await rm(dir,{recursive:true,force:true})}
 });
+
+test('random teams are admin-only, preserve every playing member and spectator, reject stale draws and persist into the game',async()=>{
+ const dir=await mkdtemp(join(tmpdir(),'dmc-random-teams-'));let app=await boot(dir),host=client(app);const others=[];
+ try{
+  const created=await host.call('/api/rooms',{name:'Host',playing:false}),pin=created.data.pin,hostId=created.data.viewer.id;
+  for(let i=0;i<9;i++){const person=client(app);const joined=await person.call(`/api/rooms/${pin}/join`,{name:'Player '+i,avatar:i%2?'beer-boss':'party-frog'});assert.equal(joined.status,200);others.push(person)}
+  const params=snapshot=>({teamSize:snapshot.rules.teamSize??2,previousOrder:snapshot.members.map(m=>m.id),previousPlayers:snapshot.members.filter(m=>m.playing).map(m=>m.id)});
+  let before=(await host.call('/api/me')).data;
+  assert.equal((await host.act(pin,'randomTeams',params(before))).status,409);
+  assert.equal((await others[0].act(pin,'randomTeams',params(before))).status,403);
+  assert.equal((await host.act(pin,'rules',{rules:{...before.rules,mode:'team',teamSize:2}})).status,200);before=(await host.call('/api/me')).data;
+  const fixed={action:'randomTeams',requestId:randomUUID(),...params(before)},draw=await host.call(`/api/rooms/${pin}/command`,fixed);assert.equal(draw.status,200);
+  const sizes=Object.values(Object.groupBy(draw.data.members.filter(m=>m.playing),m=>m.team)).map(team=>team.length);assert.deepEqual(sizes,[2,2,2,3]);assert.deepEqual(draw.data.members.map(m=>m.id).sort(),before.members.map(m=>m.id).sort());
+  for(const member of draw.data.members){const old=before.members.find(m=>m.id===member.id);assert.deepEqual({...member,team:old.team,connected:old.connected},old)}
+  assert.equal(draw.data.members.find(m=>m.id===hostId).playing,false);assert.equal((await host.call(`/api/rooms/${pin}/command`,fixed)).data.revision,draw.data.revision);
+  assert.equal((await host.act(pin,'randomTeams',{...params(draw.data),previousOrder:[]})).status,409);assert.equal((await host.act(pin,'randomTeams',{...params(draw.data),teamSize:3})).status,409);assert.equal((await host.act(pin,'randomTeams',{...params(draw.data),previousPlayers:[]})).status,409);
+  const cookie=host.cookie;await app.close();app=await boot(dir);host=client(app);host.cookie=cookie;const restored=(await host.call('/api/me')).data;assert.equal(restored.rules.teamSize,2);assert.deepEqual(restored.members.map(m=>[m.id,m.team,m.playing]),draw.data.members.map(m=>[m.id,m.team,m.playing]));
+  const started=await host.act(pin,'start');assert.equal(started.status,200);assert.deepEqual(started.data.config.teams.map(t=>t.members.length),[2,2,2,3]);assert.equal(started.data.config.players.length,9);assert.equal(started.data.state.schedule.length,4);assert.equal((await host.act(pin,'randomTeams',params(restored))).status,409);
+ }finally{await app.close();await rm(dir,{recursive:true,force:true})}
+});
