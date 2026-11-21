@@ -16,7 +16,7 @@ export function createSocialUI({api,toast,getRoom,connect,onBeforePlay=()=>true}
  const socialButton=button('Vrienden & groepen',()=>open());socialButton.id='social-open';document.querySelector('#header-menu-items').append(socialButton);
  const addButton=button('＋ Speler toevoegen',()=>{if(getRoom()?.phase!=='lobby')return;$('#extra-form').reset();$('#extra-kind').onchange();extraAvatar=null;picker.select(null);$('#extra-error').textContent='';extra.showModal()});addButton.id='extra-open';$('#players-panel').append(addButton);
  function avatar(profile,crown=false){const a=node('span',undefined,'avatar'+(crown?' crowned':''));renderAvatar(a,profile.avatar,profile.name,getRoom()?.pin||'');if(crown)a.setAttribute('aria-label','Leider van het groepsklassement');return a}
- function tags(profile){const wrap=node('div',undefined,'clan-tags');for(const tag of profile.tags||[])wrap.append(node('span','['+tag.tag+']','clan-tag'));return wrap}
+ function tags(profile){const wrap=node('div',undefined,'clan-tags');for(const tag of profile.tags||[])wrap.append(node('span',tag.tag,'clan-tag'));return wrap}
  async function showProfile(result){
   const p=result.profile;peer.replaceChildren();const hero=node('div',undefined,'peer-hero');hero.append(avatar(p),node('h3',p.name));peer.append(hero,tags(p));
   const stats=node('p',(p.rounds===null?'Gast · ':`${p.rounds} rondes · `)+(p.adtHalfUnits/2).toLocaleString('nl-NL')+' adtjes','hint');peer.append(stats);
