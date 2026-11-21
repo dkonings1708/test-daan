@@ -1,15 +1,16 @@
+import {isInstalled,isIOS} from './install-ui.js';
 import {renderAvatar} from './avatars.mjs';
 export async function releaseLocalPush(){try{const registration=await navigator.serviceWorker?.getRegistration('/');const subscription=await registration?.pushManager?.getSubscription();if(subscription)await subscription.unsubscribe()}catch{}}
 export function createNotificationsUI({api,toast,getRoom,connect,onBeforeJoin=()=>true,onEntryReady=()=>Promise.resolve(),onEntryBusy=()=>{}}){
  const $=s=>document.querySelector(s),node=(tag,text,cls)=>{const el=document.createElement(tag);if(text!==undefined)el.textContent=text;if(cls)el.className=cls;return el};let loggedIn=false,items=[],busy=false,refreshing=null,known=new Set(),loaded=false,settings=null;
- const bell=node('button','🔔','notifications-toggle');bell.id='notifications-open';bell.type='button';bell.hidden=true;bell.setAttribute('aria-label','Uitnodigingen');const count=node('span',undefined,'notification-count');count.hidden=true;bell.append(count);$('.connection').insertBefore(bell,$('#header-menu'));
+ const bell=node('button','🔔','notifications-toggle');bell.id='notifications-open';bell.type='button';bell.hidden=true;bell.setAttribute('aria-label','Notificaties');const count=node('span',undefined,'notification-count');count.hidden=true;bell.append(count);$('.connection').insertBefore(bell,$('#header-menu'));
  function dialog(id,title){const d=node('dialog',undefined,'device-profile-dialog notifications-dialog');d.id=id;const h=node('div',undefined,'profile-dialog-heading'),label=node('h2',title),close=node('button','×');label.id=id+'-title';d.setAttribute('aria-labelledby',label.id);close.type='button';close.setAttribute('aria-label','Venster sluiten');close.onclick=()=>d.close();h.append(label,close);d.append(h);document.body.append(d);return d}
- const inbox=dialog('notifications-dialog','Uitnodigingen'),list=node('div'),error=node('p',undefined,'error'),pushArea=node('div',undefined,'push-settings');error.setAttribute('role','alert');inbox.append(list,error,pushArea);
+ const inbox=dialog('notifications-dialog','Notificaties'),list=node('div'),error=node('p',undefined,'error'),pushArea=node('div',undefined,'push-settings');error.setAttribute('role','alert');inbox.append(list,error,pushArea);
  const send=dialog('invite-friends-dialog','Vrienden uitnodigen'),friends=node('div'),sendError=node('p',undefined,'error'),submit=node('button','Uitnodigen','green');sendError.setAttribute('role','alert');submit.type='button';submit.disabled=true;send.append(friends,sendError,submit);let selected=new Set();
  const inviteButton=node('button','Vriend uitnodigen');inviteButton.id='invite-friends';inviteButton.type='button';inviteButton.hidden=true;$('#member-actions').append(inviteButton);
  function avatar(profile){const el=node('span',undefined,'avatar');renderAvatar(el,profile.avatar,profile.name);return el}
  function button(text,fn){const el=node('button',text);el.type='button';el.disabled=busy;el.onclick=fn;return el}
- function badge(){count.textContent=items.length;count.hidden=!items.length;bell.setAttribute('aria-label',items.length?`Uitnodigingen (${items.length})`:'Uitnodigingen')}
+ function badge(){count.textContent=items.length;count.hidden=!items.length;bell.setAttribute('aria-label',items.length?`Notificaties (${items.length})`:'Notificaties')}
  function draw(){list.replaceChildren();badge();if(!items.length)list.append(node('p','Geen openstaande uitnodigingen.','hint'));
   for(const item of items){const card=node('article',undefined,'invitation-card');const heading=node('div',undefined,'invitation-person');heading.append(avatar(item.sender),node('strong',item.sender.name));card.append(heading,node('p',item.roomName,'invitation-room'));
    const labels={gone:'Deze lobby is gesloten.',started:'Het spel is al begonnen.',full:'Deze lobby is vol.'};if(labels[item.availability])card.append(node('p',labels[item.availability],'hint'));
@@ -28,27 +29,38 @@ export function createNotificationsUI({api,toast,getRoom,connect,onBeforeJoin=()
  inviteButton.onclick=openSend;
  submit.onclick=async()=>{if(!selected.size)return;submit.disabled=true;for(const input of friends.querySelectorAll('input'))input.disabled=true;try{const result=await api('/api/rooms/'+getRoom().pin+'/invitations',{profileIds:[...selected]});const failed=result.results.filter(r=>!r.ok);if(failed.length){sendError.textContent=failed.map(r=>r.error).join(' ');for(const result of result.results)if(result.ok){selected.delete(result.profileId);const input=[...friends.querySelectorAll('input')].find(i=>i.dataset.profileId===result.profileId);if(input){input.checked=false;input.dataset.locked='true';input.parentElement.querySelector('span:not(.avatar)').append(node('small','Uitgenodigd'))}}}else{send.close();toast('Uitnodiging verstuurd ✓')}}catch(e){sendError.textContent=e.message}finally{submit.disabled=!selected.size;submit.textContent=selected.size?'Uitnodigen ('+selected.size+')':'Uitnodigen';for(const input of friends.querySelectorAll('input'))input.disabled=input.dataset.locked==='true'}};
  const supported=()=>window.isSecureContext&&'serviceWorker'in navigator&&'PushManager'in window&&'Notification'in window;
- const ios=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1;
- const installed=()=>matchMedia('(display-mode:standalone)').matches||navigator.standalone===true;
+ const ios=isIOS,installed=isInstalled;
  function keyBytes(value){const raw=atob(value.replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(raw,c=>c.charCodeAt(0))}
  async function registration(){return navigator.serviceWorker.register('/sw.js',{scope:'/'})}
  async function bindPush(){const reg=await registration();await navigator.serviceWorker.ready;const subscription=await reg.pushManager.getSubscription()||await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:keyBytes(settings.publicKey)});await api('/api/notifications/subscribe',{subscription:subscription.toJSON()});try{localStorage.setItem('dmc-push-owner',settings.profileId)}catch{}settings.subscribed=true}
+ async function enablePush(){const permission=await Notification.requestPermission();if(permission!=='granted')return permission;await bindPush();return permission}
  async function pushSettings(){pushArea.replaceChildren();if(ios()&&!installed()){pushArea.append(node('p','Push op iPhone: voeg DMC mexx via Safari → Deel → Zet op beginscherm toe en open de app daar. Vereist iOS 16.4 of nieuwer.','hint'));return}
   if(!supported()){pushArea.append(node('p','Deze browser ondersteunt geen pushmeldingen. Uitnodigingen blijven hier in de app beschikbaar.','hint'));return}
   settings=await api('/api/notifications/settings');const local=await navigator.serviceWorker.getRegistration('/');const active=Notification.permission==='granted'&&settings.subscribed&&!!await local?.pushManager?.getSubscription();
   const toggle=button(active?'Push op dit apparaat uitzetten':'Pushmeldingen aanzetten',async()=>{toggle.disabled=true;try{
    if(active){await api('/api/notifications/unsubscribe',{});await releaseLocalPush();try{localStorage.removeItem('dmc-push-owner')}catch{}}
-   else{const permission=await Notification.requestPermission();if(permission!=='granted'){error.textContent=permission==='denied'?'Meldingen zijn geblokkeerd. Pas dit aan in je browserinstellingen.':'Push is niet ingeschakeld.';return}await bindPush()}
+   else{const permission=await enablePush();if(permission!=='granted'){error.textContent=permission==='denied'?'Meldingen zijn geblokkeerd. Pas dit aan in je browserinstellingen.':'Push is niet ingeschakeld.';return}}
    await pushSettings();
   }catch(e){error.textContent='Push inschakelen lukt niet. '+e.message}finally{toggle.disabled=false}});pushArea.append(toggle);
   if(Notification.permission==='denied')pushArea.append(node('p','Meldingen staan uit in je browserinstellingen.','hint'));
  }
+ const pushPrompt=dialog('push-prompt','Uitnodigingen direct ontvangen?'),pushCopy=node('p','Zet pushmeldingen aan en krijg een seintje als een vriend je uitnodigt. Je kunt dit later aanpassen bij de bel → Notificaties.','push-prompt-copy'),promptActions=node('div',undefined,'push-prompt-actions'),later=node('button','Later'),enable=node('button','Meldingen aanzetten','green'),promptError=node('p',undefined,'error');later.type=enable.type='button';promptError.setAttribute('role','alert');promptActions.append(later,enable);pushPrompt.append(pushCopy,promptError,promptActions);
+ const promptKey='dmc-push-prompt-v1';let promptHandled=false,promptChecking=false,promptBusy=false;
+ function rememberPrompt(){promptHandled=true;try{localStorage.setItem(promptKey,'seen')}catch{}}
+ later.onclick=()=>pushPrompt.close();pushPrompt.addEventListener('close',rememberPrompt);pushPrompt.addEventListener('cancel',event=>{if(promptBusy)event.preventDefault()});
+ enable.onclick=async()=>{if(promptBusy)return;promptBusy=true;enable.disabled=later.disabled=true;promptError.textContent='';try{const permission=await enablePush();rememberPrompt();pushPrompt.close();toast(permission==='granted'?'Pushmeldingen staan aan ✓':permission==='denied'?'Meldingen zijn geblokkeerd. Je kunt dit aanpassen in je browserinstellingen.':'Je kunt push later aanzetten bij Notificaties.')}catch(e){promptError.textContent='Inschakelen lukt nu niet. Probeer opnieuw of regel het later bij Notificaties.'}finally{promptBusy=false;enable.disabled=later.disabled=false}};
+ async function maybePromptPush(){
+  if(promptHandled||promptChecking||!loggedIn||!installed()||!supported()||Notification.permission!=='default'||getRoom()?.phase==='playing'||document.hidden||document.querySelector('dialog[open]')||new URLSearchParams(location.search).has('invitation'))return;
+  try{if(localStorage.getItem(promptKey)){promptHandled=true;return}}catch{}
+  promptChecking=true;try{await onEntryReady();if(!loggedIn||getRoom()?.phase==='playing')return;settings=await api('/api/notifications/settings');if(loggedIn&&!promptHandled&&installed()&&Notification.permission==='default'&&!document.hidden&&!document.querySelector('dialog[open]')&&getRoom()?.phase!=='playing'){pushPrompt.showModal();promptHandled=true}}catch{}finally{promptChecking=false}
+ }
+ document.addEventListener('close',()=>{setTimeout(maybePromptPush,0)},true);document.addEventListener('dmc-app-installed',maybePromptPush);
  let started=false,prompted=false;async function start(){if(started)return;started=true;try{await refresh();const id=new URLSearchParams(location.search).get('invitation');if(id)await openInbox(id);if(supported()&&Notification.permission==='granted'){
    settings=await api('/api/notifications/settings');let owner;try{owner=localStorage.getItem('dmc-push-owner')}catch{}if(owner===settings.profileId)await bindPush();
-  }}catch{} }
- document.addEventListener('dmc-profile-change',event=>{loggedIn=event.detail.loggedIn;bell.hidden=!loggedIn;sync();if(loggedIn)start();else if(event.detail.accountEnabled&&!prompted&&new URLSearchParams(location.search).has('invitation')){prompted=true;toast('Log in om je uitnodiging te bekijken.');document.dispatchEvent(new Event('dmc-login-request'))}});
- function sync(){inviteButton.hidden=!loggedIn||getRoom()?.phase!=='lobby'||!getRoom()?.members.find(m=>m.id===getRoom().viewer.id)?.hasProfile;inviteButton.disabled=getRoom()?.members.length>=30}
+  }await maybePromptPush()}catch{} }
+ document.addEventListener('dmc-profile-change',event=>{loggedIn=event.detail.loggedIn;bell.hidden=!loggedIn;sync();if(loggedIn){start();maybePromptPush()}else if(event.detail.accountEnabled&&!prompted&&new URLSearchParams(location.search).has('invitation')){prompted=true;toast('Log in om je uitnodiging te bekijken.');document.dispatchEvent(new Event('dmc-login-request'))}});
+ function sync(){if((!loggedIn||getRoom()?.phase==='playing')&&pushPrompt.open)pushPrompt.close();inviteButton.hidden=!loggedIn||getRoom()?.phase!=='lobby'||!getRoom()?.members.find(m=>m.id===getRoom().viewer.id)?.hasProfile;inviteButton.disabled=getRoom()?.members.length>=30}
  navigator.serviceWorker?.addEventListener('message',event=>{if(event.data?.type==='dmc-invitation'&&/^[-a-f0-9]{36}$/.test(event.data.id||'')){const url=new URL(location.href);url.searchParams.set('invitation',event.data.id);history.replaceState(null,'',url.pathname+url.search+url.hash);openInbox(event.data.id)}});
- const timer=setInterval(()=>{if(loggedIn&&!document.hidden)refresh().catch(()=>{})},10000);window.addEventListener('focus',()=>refresh().catch(()=>{}));document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh().catch(()=>{})});window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
+ const timer=setInterval(()=>{if(loggedIn&&!document.hidden)refresh().catch(()=>{})},10000);window.addEventListener('focus',()=>refresh().catch(()=>{}));document.addEventListener('visibilitychange',()=>{if(!document.hidden){refresh().catch(()=>{});maybePromptPush()}});window.addEventListener('pagehide',()=>clearInterval(timer),{once:true});
  return {sync};
 }

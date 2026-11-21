@@ -9,7 +9,7 @@
 2. Deploy de nieuwe versie naar de bestaande Render-service. De bestaande
    `SUPABASE_URL` en `SUPABASE_SECRET_KEY` blijven gelijk. Er zijn **geen nieuwe
    geheime Render-variabelen**, e-mailinstellingen of betaalde pushdiensten nodig.
-3. Open de app op het vaste HTTPS-adres, log in en open **🔔 Uitnodigingen**.
+3. Open de app op het vaste HTTPS-adres, log in en open **🔔 Notificaties**.
    Kies **Pushmeldingen aanzetten** en geef toestemming in de browser.
 4. Laat een geaccepteerde vriend vanuit een lobby op **Vriend uitnodigen** tikken.
    Selecteer de ontvanger en verstuur. Controleer de uitnodiging in de app en
@@ -23,6 +23,25 @@ release. Als het sleutelpaar ooit bewust wordt vervangen, moeten apparaten push
 opnieuw inschakelen. Optioneel kun je `VAPID_SUBJECT` als servervariabele instellen
 op een `mailto:`-adres of HTTPS-contactpagina. Standaard wordt de projectpagina
 gebruikt. Stuur private sleutels of pushabonnementen niet in chat of screenshots.
+
+## Installeren en de eerste pushvraag
+
+Op het openingsscherm en in het menu staat **Zet op beginscherm**. Waar de browser
+een installatievenster ondersteunt, opent de knop dat venster. Op iPhone toont
+de app de stappen via Safari → Deel → Zet op beginscherm. Na installatie verdwijnt
+de knop wanneer je de app vanaf het beginscherm opent.
+
+Een ingelogde speler krijgt in de geïnstalleerde app eenmalig de vraag om
+pushmeldingen aan te zetten, als de browser push ondersteunt en nog geen keuze
+voor toestemming is gemaakt. De systeemvraag verschijnt pas na **Meldingen
+aanzetten**. **Later**, het kruisje en Escape onthouden de keuze op dit apparaat;
+de vraag verschijnt niet bij iedere start. Je kunt push daarna altijd beheren
+via **🔔 Notificaties**. Tijdens een spel of bovenop een ander venster verschijnt
+de vraag niet. Gasten krijgen geen pushvraag, omdat uitnodigingen aan accounts
+zijn gekoppeld.
+
+Nieuwe pushmeldingen hebben de titel **DMC mexx - Uitnodiging voor lobby 🍺**.
+Deze tekstwijziging vereist geen nieuwe SQL-migratie.
 
 ## Telefoons en browsers
 

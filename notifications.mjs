@@ -24,7 +24,7 @@ export function createNotifications({profiles,rooms,authorize,ApiError,json,body
    for(const job of jobs){if(['gone','started'].includes(availability(job))){await call(null,'push_done',{id:job.id,lease:job.lease});continue}let retry=false;
     await Promise.all(job.subscriptions.map(async target=>{try{
      const subscription=validPushSubscription(target.subscription);
-     await sendPush(subscription,JSON.stringify({title:job.title,body:job.body,url:job.url,tag:'invite-'+job.id}),{vapidDetails:{subject:process.env.VAPID_SUBJECT||'https://github.com/dkonings1708/test-daan',publicKey:keys.publicKey,privateKey:keys.privateKey},TTL:3600,urgency:'normal',timeout:5000});
+     await sendPush(subscription,JSON.stringify({title:'DMC mexx - Uitnodiging voor lobby 🍺',body:job.body,url:job.url,tag:'invite-'+job.id}),{vapidDetails:{subject:process.env.VAPID_SUBJECT||'https://github.com/dkonings1708/test-daan',publicKey:keys.publicKey,privateKey:keys.privateKey},TTL:3600,urgency:'normal',timeout:5000});
     }catch(error){if([404,410].includes(error.statusCode)){await call(null,'push_remove',{endpointHash:target.hash})}else retry=true}}));
     if(!retry)await call(null,'push_done',{id:job.id,lease:job.lease});
    }

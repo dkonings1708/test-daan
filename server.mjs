@@ -261,7 +261,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/password-visibility.js','/notifications-ui.js','/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/install-ui.js','/password-visibility.js','/notifications-ui.js','/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&['/sw.js','/manifest.webmanifest','/app-icon-192.png','/app-icon-512.png'].includes(path)){
         const type=path==='/sw.js'?'text/javascript; charset=utf-8':path.endsWith('.png')?'image/png':'application/manifest+json';
         res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-cache',...(path==='/sw.js'?{'Service-Worker-Allowed':'/'}:{})});res.end(readFileSync(resolve(root,path.slice(1))));return;
