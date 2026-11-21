@@ -1,4 +1,4 @@
-import {createAvatarPicker} from './avatars.mjs';
+import {createAvatarPicker,renderAvatar} from './avatars.mjs';
 import {createAccountUI} from './account-ui.js';
 
 export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
@@ -13,7 +13,11 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
  function renderChoice(){
   $('#device-profile-button').textContent=profile?'Mijn profiel':accountState.enabled?'Inloggen':'Profiel maken';$('#profile-choice').hidden=!profile;
   $('#profile-account-link').hidden=!accountState.enabled||!!accountState.user;$('#profile-account-logout').hidden=!accountState.user;$('#profile-account-email').hidden=!accountState.user;$('#profile-account-email').textContent=accountState.user?.email||'';$('#profile-storage-note').textContent=accountState.user?'Je profiel en statistieken op al je apparaten.':'Bewaard op dit apparaat. Online rondes en adtjes tellen automatisch mee.';
-  $('#profile-welcome').textContent=profile?'Hey '+profile.name+' 👋':'';
+  $('#profile-welcome').textContent=profile?.name||'';
+  document.body.classList.toggle('using-profile',useProfile);$('#entry-profile-summary').hidden=!useProfile;$('#entry-guest-label').hidden=useProfile;
+  if(profile){renderAvatar($('#entry-profile-avatar'),profile.avatar,profile.name);$('#entry-profile-summary').setAttribute('aria-label','Profielinstellingen van '+profile.name)}
+  for(const kind of ['host','join']){const fields=$('#'+kind+'-identity');fields.hidden=useProfile;fields.disabled=useProfile}
+  for(const button of document.querySelectorAll('[data-profile-mode]'))button.hidden=(button.dataset.profileMode==='profile')===useProfile;
   document.dispatchEvent(new CustomEvent('dmc-profile-change',{detail:{profile,loggedIn:!!accountState.user}}));
   for(const button of document.querySelectorAll('[data-profile-mode]'))button.setAttribute('aria-pressed',String((button.dataset.profileMode==='profile')===useProfile));
  }
@@ -32,6 +36,7 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
  async function openDeviceProfile(){
   try{await ready;await refresh();$('#device-profile-name').value=profile?.name||$('#host-name').value||$('#join-name').value;avatar=profile?.avatar||null;picker.select(avatar);$('#device-profile-picker details').open=false;drawStats();$('#device-profile-error').textContent='';dialog.showModal()}catch(error){toast(error.message)}
  }
+ $('#entry-profile-summary').onclick=()=>openDeviceProfile();
  $('#device-profile-button').onclick=async()=>{await ready;if(!profile&&accountState.enabled)accountUI.open('login');else openDeviceProfile()};
  $('#profile-account-link').onclick=()=>{dialog.close();accountUI.open('signup')};
  $('#profile-account-logout').onclick=async()=>{try{await accountUI.logout()}catch(error){$('#device-profile-error').textContent=error.message}};

@@ -120,3 +120,23 @@ Ben je ingelogd, dan is je avatar de menuknop; anders verschijnt een hamburger.
 Account maken en wachtwoordherstel vragen tweemaal hetzelfde wachtwoord; gewoon
 inloggen vraagt dit eenmaal. De accountteller toont adtjes numeriek, ook halve.
 Deze vormgevingsupdate vraagt geen aanvullende Supabase-migratie.
+
+## Sneller starten met je profiel
+
+Op het openingsscherm wordt je opgeslagen profiel automatisch gebruikt. Een
+compacte profielkaart toont met welke naam en avatar je speelt; de kaart opent
+je profielinstellingen. Bij lobby maken en meedoen worden naam en foto rechtstreeks
+uit je profiel gehaald. Alleen bij **Als gast spelen** verschijnen de losse
+naam- en avatarvelden. Je gastkeuze blijft binnen hetzelfde browsertabblad
+onthouden en verandert je account niet.
+
+Onder de startknoppen staan maximaal drie groepen waarvan je al lid bent, met
+een directe knop naar hun lobby. **Alle groepen** opent het volledige overzicht;
+aanvragen die nog wachten staan niet tussen de snelknoppen.
+
+In het lobbycodeveld kun je zes cijfers, een code met spaties of een volledige
+lobby-uitnodigingslink plakken. Een gewone lobby-uitnodiging opent meteen **Meedoen**
+met de juiste code. Tijdens het verbinden zie je de voortgang en zijn startknoppen
+tijdelijk geblokkeerd tegen dubbel indienen. Een mislukte poging bewaart je
+invoer; de knoppen worden weer bruikbaar. Deze update vereist geen nieuwe
+Supabase-instellingen.
