@@ -4,6 +4,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {writeCookie} from './account-auth.mjs';
 import {randomTeams} from './teams.mjs';
 import * as engine from './game-engine.mjs';
 import { createChat } from './chat.mjs';
@@ -50,7 +51,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.accountedHalfUnits={...totals};
     if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round)}
   }
-  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase});
+  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase,beforeAccountChange:checkAccountChange,onAccountChange:leaveForAccount});
   // Upgrade saved lobbies, including penalties from games started before counters existed.
   for(const room of rooms.values()){syncAdts(room);saveStatement.run(room.pin,JSON.stringify(room))}
   function changed(room){db.exec("BEGIN IMMEDIATE");try{syncAdts(room);room.revision++;persist(room);db.exec("COMMIT")}catch(error){db.exec("ROLLBACK");throw error}broadcast(room);schedulePending(room)}
@@ -88,10 +89,14 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     for(const room of candidates){if(!room)continue;const memberId=room.sessions[digest];if(memberId&&room.members.some(m=>m.id===memberId))return {room,memberId}}
     throw new ApiError(401,'Je sessie is verlopen. Ga opnieuw naar de lobby.');
   }
-  function sessionCookie(req,res,token){
-    const secure=req.socket.encrypted||req.headers['x-forwarded-proto']==='https';
-    res.setHeader('Set-Cookie',`dmc_session=${token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=86400${secure?'; Secure':''}`);
+  function sessionCookie(req,res,token){writeCookie(req,res,'dmc_session',token,86400)}
+  function leaveMember(room,memberId){
+        room.members=room.members.filter(m=>m.id!==memberId);for(const [token,member]of Object.entries(room.sessions))if(member===memberId)delete room.sessions[token];
+        disconnectMember(room,memberId);avatarStore.removeMember(room.pin,memberId);
+        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin);avatarStore.removeRoom(room.pin)}
   }
+  function checkAccountChange(req){let entry;try{entry=authorize(req)}catch{return}if(entry.room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om van account te wisselen.')}
+  function leaveForAccount(req,res){let entry;try{entry=authorize(req)}catch{return}checkAccountChange(req);leaveMember(entry.room,entry.memberId);writeCookie(req,res,'dmc_session','',0)}
   function requireAdmin(room,memberId){if(room.adminId!==memberId)throw new ApiError(403,'Alleen de beheerder kan dit doen.')}
   function requireLobby(room){if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om dit aan te passen.')}
   function limitRequest(req,kind,max,windowMs,identity=''){
@@ -178,6 +183,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(req.headers['sec-fetch-site']==='cross-site')throw new ApiError(403,'Ongeldige herkomst.');
         if(!/^\/api\/rooms\/\d{6}\/chat\/media$/.test(path)&&!String(req.headers['content-type']||'').startsWith('application/json'))throw new ApiError(415,'Verstuur de actie als JSON.');
       }
+      if(await profiles.handleAccount(req,res,path))return;
       if(await profiles.handle(req,res,path))return;
       if(avatarStore.handle(req,res,path))return;
       if(await chat.handle(req,res,path))return;
@@ -185,20 +191,17 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }
       if(req.method==='POST'&&path==='/api/logout'){
         const {room,memberId}=authorize(req);if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om die te verlaten.');
-        room.members=room.members.filter(m=>m.id!==memberId);for(const [token,member]of Object.entries(room.sessions))if(member===memberId)delete room.sessions[token];
-        disconnectMember(room,memberId);avatarStore.removeMember(room.pin,memberId);
-        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin);avatarStore.removeRoom(room.pin)}
-        res.setHeader('Set-Cookie','dmc_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0');json(res,200,{ok:true});return;
+        leaveMember(room,memberId);writeCookie(req,res,'dmc_session','',0);json(res,200,{ok:true});return;
       }
       if(req.method==='POST'&&path==='/api/rooms'){
         limitRequest(req,'create',20,3600000);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');
-        const input=await body(req),profile=await profiles.forEntry(req,input),hostName=name(input.name||profile?.name);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');if(!hostName)throw new ApiError(400,'Vul je naam in.');
+        const input=await body(req),profile=await profiles.forEntry(req,input,res),hostName=name(input.name||profile?.name);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');if(!hostName)throw new ApiError(400,'Vul je naam in.');
         let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
         const memberId=id(),token=randomBytes(32).toString('hex');
         const room={pin,adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar===undefined?profile?.avatar:input.avatar),...(profile?{profileId:profile.id}:{}),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
@@ -211,7 +214,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         try{const prior=authorize(req,room.pin);json(res,200,snapshot(room,prior.memberId));return}catch{}
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
         if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
-        const profile=await profiles.forEntry(req,input),display=name(input.name||profile?.name);
+        const profile=await profiles.forEntry(req,input,res),display=name(input.name||profile?.name);
         // The host may start or close this lobby while the cloud lookup awaits.
         if(rooms.get(room.pin)!==room)throw new ApiError(404,'Deze lobbycode bestaat niet of is verlopen.');
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');

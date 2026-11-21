@@ -19,6 +19,9 @@ create table if not exists public.dmc_profile_rounds (
   primary key (profile, game, round)
 );
 
+alter table public.dmc_device_profiles add column if not exists account_user_id uuid;
+create unique index if not exists dmc_profile_account_owner on public.dmc_device_profiles(account_user_id);
+
 alter table public.dmc_device_profiles enable row level security;
 alter table public.dmc_profile_events enable row level security;
 alter table public.dmc_profile_rounds enable row level security;
@@ -93,5 +96,30 @@ $$;
 
 revoke all on function public.dmc_profile_save(text,jsonb), public.dmc_profile_import(text,jsonb,jsonb), public.dmc_profile_event(text,text,text,jsonb) from public, anon, authenticated;
 grant execute on function public.dmc_profile_save(text,jsonb), public.dmc_profile_import(text,jsonb,jsonb), public.dmc_profile_event(text,text,text,jsonb) to service_role;
+-- Only a verified Supabase Auth user may be passed here by the Render server.
+-- First login can claim that browser's existing, still-unlinked device profile.
+create or replace function public.dmc_profile_account(p_user_id uuid, p_device_hash text, p_new_hash text, p_profile jsonb)
+returns jsonb language plpgsql security invoker set search_path = '' as $$
+declare existing public.dmc_device_profiles%rowtype;
+begin
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_user_id::text,0));
+  select * into existing from public.dmc_device_profiles where account_user_id=p_user_id for update;
+  if not found and p_device_hash is not null then
+    select * into existing from public.dmc_device_profiles where token_hash=p_device_hash for update;
+    if found and existing.account_user_id is null then
+      update public.dmc_device_profiles set account_user_id=p_user_id where id=existing.id returning * into existing;
+    else existing.id=null;
+    end if;
+  end if;
+  if existing.id is null then
+    insert into public.dmc_device_profiles(id,token_hash,body,account_user_id)
+    values(p_profile->>'id',p_new_hash,p_profile,p_user_id) returning * into existing;
+  end if;
+  return jsonb_build_object('profile',existing.body,'token_hash',existing.token_hash);
+end;
+$$;
+revoke all on function public.dmc_profile_account(uuid,text,text,jsonb) from public, anon, authenticated;
+grant execute on function public.dmc_profile_account(uuid,text,text,jsonb) to service_role;
+
 notify pgrst, 'reload schema';
 commit;

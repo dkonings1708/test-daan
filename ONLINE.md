@@ -272,7 +272,21 @@ Afgeronde rondes worden per profiel, spel en ronde eenmaal geteld; persoonlijke
 straffen worden samen met de spelstand binnen een transactie verwerkt.
 Profiel-ID's en cookies worden niet in lobbysnapshots gedeeld. Alleen online
 spel telt mee. Er zijn geen OAuth-sleutels of extra diensten nodig. Een profiel
-werkt uitsluitend zolang de cookie op dit apparaat beschikbaar is.
+zonder account werkt uitsluitend zolang de cookie op dit apparaat beschikbaar is.
+Met **Account koppelen** wordt het bestaande profiel aan een Supabase Auth-account
+met e-mail en wachtwoord gekoppeld. Daarmee kun je op andere apparaten inloggen,
+ook na het wissen van cookies. Zie [Supabase instellen](SUPABASE.md#inloggen-op-meerdere-apparaten).
+
+`/api/account` (GET) meldt of accountlogin beschikbaar is en welk eigen e-mailadres
+is ingelogd. POST-acties `signup`, `login`, `logout`, `recover`, `session` en
+`password` staan onder `/api/account/`. Supabase Auth verifieert de gebruiker;
+alleen de server kan de privéprofielen opvragen of koppelen. Cookies voor toegang
+en refresh zijn HttpOnly; callbacktokens uit de standaard Supabase-e-maillink
+worden direct uit de URL verwijderd en servermatig geverifieerd. De servercache
+bevat geen wachtwoorden of accountsessies. Bestaande accountprofielen worden
+nooit door een later apparaatprofiel overschreven. Wisselen en uitloggen verlaten
+de oude lobby en zijn geblokkeerd tijdens een lopend spel. Gastdeelname blijft
+beschikbaar.
 
 
 ### Persoonlijke statistieken resetten

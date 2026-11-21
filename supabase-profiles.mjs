@@ -15,7 +15,7 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
  CREATE TABLE IF NOT EXISTS profile_cloud_imports(target TEXT NOT NULL, id TEXT NOT NULL, token_hash TEXT NOT NULL, body TEXT NOT NULL, rounds TEXT NOT NULL, done INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(target,id))`);
  // Freeze the migration baseline before any game events modify local counters.
  const remember=db.prepare('INSERT OR IGNORE INTO profile_cloud_imports(target,id,token_hash,body,rounds) VALUES(?,?,?,?,?)');
- for(const row of db.prepare('SELECT id,token_hash,body FROM device_profiles').all()){
+ for(const row of db.prepare('SELECT id,token_hash,body FROM device_profiles WHERE account_user_id IS NULL').all()){
   const rounds=db.prepare('SELECT game,round FROM profile_rounds WHERE profile=?').all(row.id);
   remember.run(target,row.id,row.token_hash,row.body,JSON.stringify(rounds));
  }
@@ -31,11 +31,12 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
   }
   try{return await response.json()}catch{throw new ApiError(503,'Profielen zijn tijdelijk niet bereikbaar. Probeer later opnieuw.')}
  }
- function cache(profile,tokenHash){
+ function cache(profile,tokenHash,accountId){
   if(!profile)return;
   if(tokenHash){
    db.prepare('INSERT INTO device_profiles(id,token_hash,body) VALUES(?,?,?) ON CONFLICT(id) DO UPDATE SET body=excluded.body').run(profile.id,tokenHash,JSON.stringify(profile));
    db.prepare('INSERT INTO profile_cloud_imports(target,id,token_hash,body,rounds,done) VALUES(?,?,?,?,?,1) ON CONFLICT(target,id) DO UPDATE SET done=1').run(target,profile.id,tokenHash,JSON.stringify(profile),'[]');
+   if(accountId)db.prepare('UPDATE device_profiles SET account_user_id=? WHERE id=?').run(accountId,profile.id);
   }else db.prepare('UPDATE device_profiles SET body=? WHERE id=?').run(JSON.stringify(profile),profile.id);
  }
  async function prepare(){
@@ -62,7 +63,8 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
  return {
   enqueue,
   flush(){if(!db.prepare('SELECT 1 FROM profile_outbox LIMIT 1').get())return Promise.resolve();return serial(drain)},
-  current(tokenHash){return serial(async()=>{await drain();const rows=await request('dmc_device_profiles?select=body&token_hash=eq.'+encodeURIComponent(tokenHash)+'&limit=1');const profile=rows[0]?.body||null;if(profile)cache(profile,tokenHash);return profile})},
+  current(tokenHash){return serial(async()=>{await drain();const rows=await request('dmc_device_profiles?select=*&token_hash=eq.'+encodeURIComponent(tokenHash)+'&limit=1'),row=rows[0];if(row?.account_user_id){cache(row.body,tokenHash,row.account_user_id);return null}const profile=row?.body||null;if(profile)cache(profile,tokenHash);return profile})},
+  account(userId,deviceHash,profile){return serial(async()=>{await drain();const result=await request('rpc/dmc_profile_account',{method:'POST',body:{p_user_id:userId,p_device_hash:deviceHash,p_new_hash:createHash('sha256').update(randomBytes(32)).digest('hex'),p_profile:profile}});if(!result?.profile||!result.token_hash)throw new ApiError(503,'Je accountprofiel is tijdelijk niet bereikbaar.');cache(result.profile,result.token_hash,userId);return result.profile})},
   save(tokenHash,profile){return serial(async()=>{await drain();const result=await request('rpc/dmc_profile_save',{method:'POST',body:{p_token_hash:tokenHash,p_profile:profile}});cache(result,tokenHash);return result})}
  };
 }

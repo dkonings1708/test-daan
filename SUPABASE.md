@@ -32,11 +32,65 @@ blijft gelijk. Google/Apple-login is hiervoor niet nodig.
 6. Maak een profiel met foto, speel een ronde, deploy dezelfde service opnieuw
    en herlaad in dezelfde browser. Profiel, foto en tellers moeten blijven staan.
 
-Er hoeven geen Storage-buckets, publieke RLS-policies of Auth-providers te worden
-aangemaakt. De kleine, bijgesneden profielfoto staat in het privéprofiel. De
-Render-server beheert toegang via de bestaande HttpOnly-cookie; de Supabase
+Er hoeven geen Storage-buckets of publieke RLS-policies te worden
+aangemaakt. Voor inloggen met e-mail stel je ook Auth in zoals hieronder.
+De kleine, bijgesneden profielfoto staat in het privéprofiel. De
+Render-server beheert toegang via HttpOnly-cookies; de Supabase
 secret key blijft uitsluitend op de server. Publieke en ingelogde Supabase-
 clientrollen hebben geen lees- of schrijfrechten op de profieltabellen/functies.
+
+## Inloggen op meerdere apparaten
+
+Ook bij een bestaande installatie: voer het **volledige bijgewerkte**
+[supabase/profiles.sql](supabase/profiles.sql) opnieuw uit. Dit voegt de
+accountkoppeling toe zonder bestaande profielen te verwijderen. De twee
+Render-variabelen blijven hetzelfde; er is geen extra API-key nodig.
+
+1. Open **Authentication → Sign In / Providers → Email** (in sommige dashboards
+   **Providers → Email**). Schakel e-mail/wachtwoord en nieuwe aanmeldingen in.
+   Laat **Confirm email** aan staan.
+2. Open **Authentication → URL Configuration**. Vul bij **Site URL** het vaste
+   HTTPS-adres van de app in, met een afsluitende `/`. Voeg datzelfde adres toe
+   aan **Redirect URLs**, bijvoorbeeld `https://jouw-app.onrender.com/`.
+   Gebruik het adres waarop je vrienden daadwerkelijk spelen. Voeg bij een
+   eigen domein ook dat adres toe. Gebruik geen brede wildcard.
+3. Laat de standaard e-mailtemplates met `{{ .ConfirmationURL }}` intact voor
+   bevestiging en wachtwoordherstel. De app verwerkt de standaard e-maillink;
+   er is geen PKCE- of SSR-template nodig.
+4. Stel onder **Authentication → Email / SMTP Settings** eigen SMTP in voor
+   gebruik door vrienden. De ingebouwde Supabase-maildienst is voor testen,
+   heeft een lage limiet en verstuurt zonder eigen SMTP alleen naar adressen
+   van projectteamleden. Gebruik daarvoor een mailprovider en een geverifieerd
+   afzenderadres; nodig spelers niet uit als projectbeheerder. Zie
+   [Supabase SMTP](https://supabase.com/docs/guides/auth/auth-smtp).
+5. Open op het **oorspronkelijke apparaat** de app → **Mijn profiel → Account
+   koppelen**. Maak een account, bevestig de e-mail en log eerst in diezelfde
+   browser in. De bestaande naam, foto, lid-sindsdatum, rondes en adtjes gaan mee.
+   Zonder apparaatprofiel kun je direct via **Inloggen → Account maken** starten.
+6. Open de app op een tweede apparaat en kies **Inloggen** met hetzelfde
+   e-mailadres en wachtwoord. Controleer naam, foto en statistieken. Een later
+   aanwezige apparaatgast wordt niet over een bestaand accountprofiel geschreven.
+7. Test **Wachtwoord vergeten?**, log opnieuw in en doe een nieuwe Render-deploy.
+   Het profiel hoort op beide apparaten behouden te blijven.
+
+Na een bevestigingslink hoort de app weer te openen. Een link die naar localhost
+of een verkeerd domein gaat betekent dat de URL-instellingen nog niet kloppen.
+Bij te veel e-mails moet je de SMTP- en Auth-limieten controleren; die limieten
+staan los van Render.
+
+Supabase Auth bewaart de wachtwoorden. De app verifieert elke accountsessie bij
+Supabase en bewaart sessietokens in HttpOnly, SameSite-cookies (Secure op HTTPS).
+Verlopen toegang wordt met het refresh-token vernieuwd. E-mailadressen en
+sessietokens worden niet met lobbygenoten gedeeld. Gasten en apparaatprofielen
+blijven mogelijk. Een account blijft bestaan als je de browsercookies wist;
+log daarna opnieuw in. Een apparaatprofiel zonder account werkt alleen zolang
+de oorspronkelijke cookie beschikbaar is.
+
+In- en uitloggen kan in de lobby. Tijdens een lopend spel moet je eerst terug
+naar de lobby; bij uitloggen of wisselen van account verlaat je die lobby.
+**Profiel verwijderen** verwijdert foto en statistieken en logt je uit, maar
+verwijdert de Supabase Auth-inloggegevens niet. Opnieuw inloggen maakt dan een
+leeg profiel aan. Statistieken resetten blijft afzonderlijk beschikbaar.
 
 ## Wat wordt bewaard?
 
