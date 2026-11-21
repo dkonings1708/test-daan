@@ -225,7 +225,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }

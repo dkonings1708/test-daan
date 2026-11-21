@@ -30,7 +30,7 @@ De app verstuurt hiervoor geen e-mails of pushmeldingen.
 
 Maak onder **Vrienden & groepen → Groepen** een groep met een naam en een unieke
 clan tag van 2–6 letters/cijfers. Je kunt van meerdere groepen lid zijn; de tags
-staan bij je profiel. In een groepslobby staat de tag van die groep voorop.
+staan bij je profiel. In een groepslobby staat de tag van die groep als badge achter de spelersnaam.
 
 - **Openbaar:** accounts kunnen direct lid worden.
 - **Op aanvraag:** een groepsbeheerder moet de aanvraag goedkeuren. Deze groepen
@@ -112,3 +112,11 @@ De integratietest controleert toestemming, uitnodigingen, beheerderswissels,
 profielprivacy, daadwerkelijke groepsrondes, idempotentie, onafhankelijk resetten
 en herstel met een lege Render-datamap. De browsercontroles omvatten desktop en
 iPhone X-emulatie, gedeelde bediening, vrienden, profielkaarten en kronen.
+
+## Mobiele bediening en formulieren
+
+Op mobiel zitten profiel, vrienden/groepen en lokaal spelen achter één menu.
+Ben je ingelogd, dan is je avatar de menuknop; anders verschijnt een hamburger.
+Account maken en wachtwoordherstel vragen tweemaal hetzelfde wachtwoord; gewoon
+inloggen vraagt dit eenmaal. De accountteller toont adtjes numeriek, ook halve.
+Deze vormgevingsupdate vraagt geen aanvullende Supabase-migratie.

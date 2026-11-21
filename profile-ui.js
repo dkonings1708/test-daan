@@ -1,6 +1,5 @@
 import {createAvatarPicker} from './avatars.mjs';
 import {createAccountUI} from './account-ui.js';
-import {renderMugs} from './beer-mugs.js';
 
 export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
  const $=s=>document.querySelector(s);let profile=null,useProfile=false,avatar=null,accountState={enabled:false,user:null};
@@ -15,11 +14,12 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
   $('#device-profile-button').textContent=profile?'Mijn profiel':accountState.enabled?'Inloggen':'Profiel maken';$('#profile-choice').hidden=!profile;
   $('#profile-account-link').hidden=!accountState.enabled||!!accountState.user;$('#profile-account-logout').hidden=!accountState.user;$('#profile-account-email').hidden=!accountState.user;$('#profile-account-email').textContent=accountState.user?.email||'';$('#profile-storage-note').textContent=accountState.user?'Je profiel en statistieken op al je apparaten.':'Bewaard op dit apparaat. Online rondes en adtjes tellen automatisch mee.';
   $('#profile-welcome').textContent=profile?'Hey '+profile.name+' 👋':'';
+  document.dispatchEvent(new CustomEvent('dmc-profile-change',{detail:{profile,loggedIn:!!accountState.user}}));
   for(const button of document.querySelectorAll('[data-profile-mode]'))button.setAttribute('aria-pressed',String((button.dataset.profileMode==='profile')===useProfile));
  }
  function drawStats(){
   $('#device-profile-stats').hidden=!profile;$('#device-profile-forget').hidden=!profile;
-  if(profile){$('#profile-rounds').textContent=profile.rounds;renderMugs($('#profile-adts'),profile.adtHalfUnits,{compact:true});$('#profile-since').textContent='Lid sinds '+new Intl.DateTimeFormat('nl-NL',{day:'numeric',month:'long',year:'numeric'}).format(profile.joinedAt)}
+  if(profile){$('#profile-rounds').textContent=profile.rounds;$('#profile-adts').textContent=(profile.adtHalfUnits/2).toLocaleString('nl-NL');$('#profile-adts').setAttribute('aria-label',(profile.adtHalfUnits/2).toLocaleString('nl-NL')+' adtjes');$('#profile-since').textContent='Lid sinds '+new Intl.DateTimeFormat('nl-NL',{day:'numeric',month:'long',year:'numeric'}).format(profile.joinedAt)}
  }
  for(const button of document.querySelectorAll('[data-reset-stats]'))button.onclick=async()=>{
   const scope=button.dataset.resetStats;
