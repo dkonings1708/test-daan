@@ -3,7 +3,7 @@ import {mkdtemp,rm,readFile} from 'node:fs/promises';import {tmpdir} from 'node:
 import {createApplication} from '../server.mjs';import {turnKey} from '../game-engine.mjs';import {supabaseFixture} from './helpers/supabase.mjs';import {socialPostgresFixture} from './helpers/social-postgres.mjs';
 async function fixture(remote,fn){
  let dice=[];let dir=await mkdtemp(join(tmpdir(),'dmc-social-')),app;const dirs=[dir];async function boot(){app=createApplication({dataDir:dir,supabase:remote?.config||null,timingScale:.01,rng:(min,max)=>max===7?(dice.shift()??6):max===10000?9999:123});await new Promise(r=>app.server.listen(0,'127.0.0.1',r))}await boot();
- const client=()=>({cookies:new Map(),async call(path,body,headers={}){const response=await fetch('http://127.0.0.1:'+app.server.address().port+path,{method:body===undefined?'GET':'POST',headers:{Cookie:[...this.cookies].map(([k,v])=>k+'='+v).join('; '),'Content-Type':'application/json',...headers},body:body===undefined?undefined:JSON.stringify(body)});for(const h of response.headers.getSetCookie()){const pair=h.split(';')[0],i=pair.indexOf('=');this.cookies.set(pair.slice(0,i),pair.slice(i+1))}return {status:response.status,data:await response.json()}},act(pin,action,input={}){return this.call(`/api/rooms/${pin}/command`,{action,requestId:randomUUID(),...input})},social(action,input={}){return this.call('/api/social/'+action,input)}});
+ const client=()=>({cookies:new Map(),async call(path,body,headers={}){const response=await fetch('http://127.0.0.1:'+app.server.address().port+path,{method:body===undefined?'GET':'POST',headers:{Cookie:[...this.cookies].map(([k,v])=>k+'='+v).join('; '),'Content-Type':'application/json',...headers},body:body===undefined?undefined:JSON.stringify(body)});for(const h of response.headers.getSetCookie()){const pair=h.split(';')[0],i=pair.indexOf('=');this.cookies.set(pair.slice(0,i),pair.slice(i+1))}return {status:response.status,data:await response.json()}},events(pin,signal){return fetch('http://127.0.0.1:'+app.server.address().port+'/api/rooms/'+pin+'/events',{headers:{Cookie:[...this.cookies].map(([k,v])=>k+'='+v).join('; ')},signal})},act(pin,action,input={}){return this.call(`/api/rooms/${pin}/command`,{action,requestId:randomUUID(),...input})},social(action,input={}){return this.call('/api/social/'+action,input)}});
  try{await fn({client,remote,setDice:values=>dice=[...values],dir:()=>dir,restart:async()=>{await app.close();dir=await mkdtemp(join(tmpdir(),'dmc-social-deploy-'));dirs.push(dir);await boot()}})}finally{await app.close();await remote?.close();for(const d of dirs)await rm(d,{recursive:true,force:true})}
 }
 const password='social fixture password';async function account(c,email,name){assert.equal((await c.call('/api/account/signup',{email,password})).status,200);await c.call('/api/profile',{name,avatar:'beer-boss'});return (await c.call('/api/profile')).data.profile}
@@ -31,6 +31,17 @@ test('an extra account must authenticate and receives its own stats without chan
  const bytes=await readFile(join(dir(),'rooms.sqlite'));assert.equal(bytes.includes(Buffer.from(password)),false);assert.equal(bytes.includes(Buffer.from('extra@example.test')),false);
 }));
 
+test('ordinary lobbies carry account tags for hosts, joined and shared-device players; guests cannot forge them',async()=>fixture(await supabaseFixture(),async({client,remote})=>{
+ const a=client(),b=client(),c=client(),guest=client();await account(a,'tags-host@example.test','Host');await account(b,'tags-join@example.test','Join');await account(c,'tags-extra@example.test','Extra');
+ const tag={id:'group-fixture',tag:'DMC',name:'Dobbelclub'};for(const row of remote.profiles.values())row.tags=[tag];
+ const created=await a.call('/api/rooms',{useProfile:true});assert.equal(created.status,201);assert.equal(created.data.group,null);assert.deepEqual(created.data.members[0].clanTags,[tag]);const pin=created.data.pin;
+ const joined=await b.call(`/api/rooms/${pin}/join`,{useProfile:true});assert.deepEqual(joined.data.members.find(m=>m.name==='Join').clanTags,[tag]);assert.equal(joined.data.viewer.isAdmin,false);
+ const added=await a.call(`/api/rooms/${pin}/extra`,{kind:'account',email:'tags-extra@example.test',password});assert.equal(added.status,201);assert.deepEqual(added.data.members.find(m=>m.name==='Extra').clanTags,[tag]);
+ const guestRoom=await guest.call(`/api/rooms/${pin}/join`,{name:'Guest',clanTags:[tag]});assert.deepEqual(guestRoom.data.members.find(m=>m.name==='Guest').clanTags||[],[]);
+ const reads=()=>remote.requests.filter(r=>r.path.endsWith('/dmc_social_profile')).length,before=reads();await a.call('/api/me');await b.call('/api/me');assert.equal(reads(),before);
+ assert.ok((await a.act(pin,'start')).data.members.filter(m=>m.hasProfile).every(m=>m.clanTags[0].tag==='DMC'));assert.equal(JSON.stringify(created.data).includes('account_user_id'),false);
+}));
+
 test('real PostgreSQL: friendships, permanent group permissions, invites, shared accounts, game scoring and fresh deployments',{skip:!process.env.DMC_TEST_POSTGRES},async t=>fixture(await socialPostgresFixture(),async({client,restart,remote,setDice})=>{
  const a=client(),b=client(),c=client(),d=client(),guest=client();await account(a,'a-'+randomUUID()+'@example.test','Ada');await account(b,'b-'+randomUUID()+'@example.test','Bo');await account(c,'c-'+randomUUID()+'@example.test','Cy');await account(d,'d-'+randomUUID()+'@example.test','Dee');
  const aid=(await a.call('/api/social')).data.me.id,bid=(await b.call('/api/social')).data.me.id,cid=(await c.call('/api/social')).data.me.id;
@@ -49,6 +60,20 @@ test('real PostgreSQL: friendships, permanent group permissions, invites, shared
   assert.equal((await c.social('group_join',{groupId,invite:old})).data.status,'pending');assert.equal((await c.social('group_join',{groupId,invite})).data.status,'member');
   assert.equal((await d.social('group_join',{groupId,inviteHash:invite})).data.status,'pending');assert.equal((await d.social('group_get',{groupId})).data.members.length,0);
   assert.equal((await c.social('group_role',{groupId,profileId:cid,role:'admin'})).status,403);
+ });
+ await t.test('ordinary lobby tags stay live across joining, shared accounts and clan membership changes without granting clan admin rights',async()=>{
+  const room=(await a.call('/api/rooms',{useProfile:true})).data,pin=room.pin;assert.equal(room.group,null);assert.ok(room.members[0].clanTags.some(t=>t.id===groupId));
+  const joined=(await b.call(`/api/rooms/${pin}/join`,{useProfile:true})).data;assert.ok(joined.members.find(m=>m.name==='Bo').clanTags.some(t=>t.id===groupId));assert.equal(joined.viewer.isAdmin,false);
+  const email=(await c.call('/api/account')).data.user.email;const added=(await a.call(`/api/rooms/${pin}/extra`,{kind:'account',email,password})).data;assert.ok(added.members.find(m=>m.name==='Cy').clanTags.some(t=>t.id===groupId));assert.equal(!!added.members.find(m=>m.name==='Cy').groupAdmin,false);
+  const controller=new AbortController(),stream=await a.events(pin,AbortSignal.any([controller.signal,AbortSignal.timeout(10000)])),reader=stream.body.getReader();let buffer='';
+  async function stateWhere(predicate){for(;;){const cut=buffer.indexOf('\n\n');if(cut<0){const chunk=await reader.read();assert.equal(chunk.done,false);buffer+=new TextDecoder().decode(chunk.value);continue}const event=buffer.slice(0,cut);buffer=buffer.slice(cut+2);if(event.startsWith('event: state\n')){const value=JSON.parse(event.split('\ndata: ')[1]);if(predicate(value))return value}}}
+  try{
+   await stateWhere(s=>s.members.find(m=>m.name==='Cy')?.clanTags?.some(t=>t.id===groupId));
+   await c.social('group_leave',{groupId});const removed=await stateWhere(s=>s.members.find(m=>m.name==='Cy')?.clanTags?.length===0);assert.equal(removed.group,null);
+   await c.social('group_join',{groupId,invite});await stateWhere(s=>s.members.find(m=>m.name==='Cy')?.clanTags?.some(t=>t.id===groupId));
+  }finally{controller.abort();await reader.cancel().catch(()=>{})}
+  const view=(await guest.call(`/api/rooms/${pin}/join`,{name:'Guest',clanTags:[{tag:'FAKE'}]})).data;assert.deepEqual(view.members.find(m=>m.name==='Guest').clanTags||[],[]);
+  await a.call('/api/logout',{});await b.call('/api/logout',{});await guest.call('/api/logout',{});
  });
  await t.test('group code cannot bypass membership; both administrators control the game',async()=>{
   let room=(await a.social('group_play',{groupId})).data;assert.ok(room.pin);const pin=room.pin;

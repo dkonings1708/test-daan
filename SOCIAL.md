@@ -30,7 +30,10 @@ De app verstuurt hiervoor geen e-mails of pushmeldingen.
 
 Maak onder **Vrienden & groepen → Groepen** een groep met een naam en een unieke
 clan tag van 2–6 letters/cijfers. Je kunt van meerdere groepen lid zijn; de tags
-staan bij je profiel. In een groepslobby staat de tag van die groep als badge achter de spelersnaam.
+staan bij je profiel. De labels verschijnen ook in gewone online lobbies en
+tijdens het spel, inclusief extra accountspelers op hetzelfde apparaat. In een
+groepslobby krijgt de tag van die groep voorrang. Wijzigingen in lidmaatschap
+worden direct aan de gewone lobbies doorgegeven; gastspelers krijgen geen tag.
 
 - **Openbaar:** accounts kunnen direct lid worden.
 - **Op aanvraag:** een groepsbeheerder moet de aanvraag goedkeuren. Deze groepen

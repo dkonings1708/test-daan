@@ -177,6 +177,16 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   }
   const chat=createChat(db,{authorize,limitRequest,json,ApiError,persist,live});
   const avatarStore=createAvatarStore(db,{rooms,authorize,ApiError});
+  async function clanMetadata(room){
+    if(room.group)return;
+    const ids=[...new Set(room.members.map(m=>m.profileId).filter(Boolean))];if(!ids.length)return;
+    try{
+      const tags=await profiles.clanTags(ids);if(closed||rooms.get(room.pin)!==room)return;
+      let updated=false;
+      for(const member of room.members)if(ids.includes(member.profileId)&&JSON.stringify(member.clanTags||[])!==JSON.stringify(tags[member.profileId]||[])){member.clanTags=tags[member.profileId]||[];updated=true}
+      if(updated){room.revision++;persist(room);broadcast(room)}
+    }catch{console.error('Clantags zijn tijdelijk niet bereikbaar; bestaande labels blijven behouden.')}
+  }
   async function groupMetadata(room){
     if(!room.group)return;
     const actor=room.members.find(m=>m.profileId&&!m.controllerId);if(!actor)return;
@@ -203,7 +213,10 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.members.push({id:memberId,name:actor.name,avatar:avatarStore.set(room,memberId,actor.avatar),profileId:actor.id,team:'Team '+(room.members.length%2+1),playing:true});
     room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);await groupMetadata(room);changed(room);return snapshot(room,memberId);
   }
-  const social=createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,beforeMembershipChange(action,input,actor){
+  const social=createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,async onGroupsChange(action,input,actor){
+    const target=['group_approve','group_remove'].includes(action)?input.profileId:actor.id;
+    for(const room of rooms.values())if(!room.group&&(action==='group_update'||room.members.some(m=>m.profileId===target)))await clanMetadata(room);
+  },beforeMembershipChange(action,input,actor){
     const target=action==='group_leave'?actor.id:input.profileId;
     if([...rooms.values()].some(room=>room.group?.id===input.groupId&&room.phase==='playing'&&room.members.some(m=>m.profileId===target)))throw new ApiError(409,'Ga eerst terug naar de groepslobby voordat je dit lid verwijdert.');
   }});
@@ -227,7 +240,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       }
       if(req.method==='GET'&&['/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
-        const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
+        const {room,memberId}=authorize(req);await clanMetadata(room);authorize(req,room.pin);json(res,200,snapshot(room,memberId));return;
       }
       if(req.method==='POST'&&path==='/api/logout'){
         const {room,memberId}=authorize(req);if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om die te verlaten.');
@@ -239,13 +252,13 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
         const memberId=id(),token=randomBytes(32).toString('hex');
         const room={pin,adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar===undefined?profile?.avatar:input.avatar),...(profile?{profileId:profile.id}:{}),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
-        room.members[0].avatar=avatarStore.set(room,memberId,room.members[0].avatar);rooms.set(pin,room);persist(room);sessionCookie(req,res,token);json(res,201,snapshot(room,memberId));return;
+        room.members[0].avatar=avatarStore.set(room,memberId,room.members[0].avatar);rooms.set(pin,room);persist(room);sessionCookie(req,res,token);await clanMetadata(room);json(res,201,snapshot(room,memberId));return;
       }
       const join=path.match(/^\/api\/rooms\/(\d{6})\/join$/);
       if(req.method==='POST'&&join){
         limitRequest(req,'join',90,60000);const input=await body(req),room=rooms.get(join[1]);
         if(!room)throw new ApiError(404,'Deze lobbycode bestaat niet of is verlopen.');
-        try{const prior=authorize(req,room.pin);json(res,200,snapshot(room,prior.memberId));return}catch{}
+        try{const prior=authorize(req,room.pin);await clanMetadata(room);authorize(req,room.pin);json(res,200,snapshot(room,prior.memberId));return}catch{}
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
         if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
         const profile=room.group?await profiles.accountProfile(req,res):await profiles.forEntry(req,input,res),display=name(input.name||profile?.name);
@@ -258,7 +271,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(!display)throw new ApiError(400,'Vul je naam in.');
         if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
         const memberId=id(),token=randomBytes(32).toString('hex');
-        const avatar=avatarStore.set(room,memberId,input.avatar===undefined?profile?.avatar:input.avatar);room.members.push({id:memberId,name:display,avatar,...(profile?{profileId:profile.id}:{}),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);if(room.group)await groupMetadata(room);changed(room);json(res,200,snapshot(room,memberId));return;
+        const avatar=avatarStore.set(room,memberId,input.avatar===undefined?profile?.avatar:input.avatar);room.members.push({id:memberId,name:display,avatar,...(profile?{profileId:profile.id}:{}),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);if(room.group)await groupMetadata(room);else await clanMetadata(room);if(!room.members.some(m=>m.id===memberId))throw new ApiError(401,'Je lobbysessie is verlopen.');changed(room);json(res,200,snapshot(room,memberId));return;
       }
       const extra=path.match(/^\/api\/rooms\/(\d{6})\/extra$/);
       if(req.method==='POST'&&extra){
@@ -273,11 +286,11 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
         const added=id(),avatar=avatarStore.set(room,added,profile?profile.avatar:validatedAvatar(input.avatar));
         room.members.push({id:added,name:display,avatar,controllerId:memberId,...(profile?{profileId:profile.id}:{}),playing:true,team:room.members.find(m=>m.id===memberId).team});
-        if(room.group)await groupMetadata(room);changed(room);json(res,201,snapshot(room,memberId));return;
+        if(room.group)await groupMetadata(room);else await clanMetadata(room);if(!room.members.some(m=>m.id===memberId))throw new ApiError(401,'Je lobbysessie is verlopen.');changed(room);json(res,201,snapshot(room,memberId));return;
       }
       const event=path.match(/^\/api\/rooms\/(\d{6})\/events$/);
       if(req.method==='GET'&&event){
-        const {room,memberId}=authorize(req,event[1]);
+        const {room,memberId}=authorize(req,event[1]);await clanMetadata(room);authorize(req,event[1]);
         if(!streams.has(room.pin))streams.set(room.pin,new Map());const members=streams.get(room.pin),connections=members.get(memberId)||new Set();
         if(connections.size>=8)throw new ApiError(429,'Je hebt dit spel al in veel tabbladen open. Sluit een ouder tabblad.');
         res.writeHead(200,{'Content-Type':'text/event-stream; charset=utf-8','Cache-Control':'no-cache, no-transform','Connection':'keep-alive','X-Accel-Buffering':'no'});res.write('retry: 1500\n\n');

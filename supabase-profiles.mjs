@@ -19,6 +19,7 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
   const rounds=db.prepare('SELECT game,round FROM profile_rounds WHERE profile=?').all(row.id);
   remember.run(target,row.id,row.token_hash,row.body,JSON.stringify(rounds));
  }
+ const tagCache=new Map();
  let queue=Promise.resolve(),initialized=false;
  const serial=fn=>{const result=queue.then(fn);queue=result.catch(()=>{});return result};
  async function request(path,{method='GET',body}={}){
@@ -57,12 +58,25 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
    // are still queued: the cloud remains the source of truth for profile reads.
    db.prepare('DELETE FROM profile_outbox WHERE seq=?').run(row.seq);
    if(result&&!db.prepare('SELECT 1 FROM profile_outbox WHERE profile=?').get(row.profile))cache(result);
-   if(row.action==='forget'){db.prepare('DELETE FROM profile_cloud_imports WHERE id=?').run(row.profile);db.prepare('DELETE FROM profile_rounds WHERE profile=?').run(row.profile);db.prepare('DELETE FROM device_profiles WHERE id=?').run(row.profile)}
+   if(row.action==='forget'){tagCache.delete(row.profile);db.prepare('DELETE FROM profile_cloud_imports WHERE id=?').run(row.profile);db.prepare('DELETE FROM profile_rounds WHERE profile=?').run(row.profile);db.prepare('DELETE FROM device_profiles WHERE id=?').run(row.profile)}
   }
  }
  return {
   enqueue,
-  social(actor,action,input){return serial(async()=>{await drain();const result=await request('rpc/dmc_social',{method:'POST',body:{p_actor:actor,p_action:action,p_input:input}});if(result?.error)throw new ApiError(Number(result.status)||400,result.error);return result})},
+  tags(profileIds){return serial(async()=>{
+   await drain();const result={};
+   for(const id of new Set(profileIds)){
+    let entry=tagCache.get(id);
+    if(!entry||entry.until<=Date.now()){
+     const profile=await request('rpc/dmc_social_profile',{method:'POST',body:{p_id:id}});
+     entry={tags:profile?.tags||[],until:Date.now()+30000};tagCache.set(id,entry);
+     if(tagCache.size>1000)tagCache.delete(tagCache.keys().next().value);
+    }
+    result[id]=entry.tags;
+   }
+   return result;
+  })},
+  social(actor,action,input){return serial(async()=>{await drain();const result=await request('rpc/dmc_social',{method:'POST',body:{p_actor:actor,p_action:action,p_input:input}});if(result?.error)throw new ApiError(Number(result.status)||400,result.error);if(['group_create','group_join','group_leave','group_approve','group_remove','group_update'].includes(action))tagCache.clear();return result})},
   flush(){if(!db.prepare('SELECT 1 FROM profile_outbox LIMIT 1').get())return Promise.resolve();return serial(drain)},
   current(tokenHash){return serial(async()=>{await drain();const rows=await request('dmc_device_profiles?select=*&token_hash=eq.'+encodeURIComponent(tokenHash)+'&limit=1'),row=rows[0];if(row?.account_user_id){cache(row.body,tokenHash,row.account_user_id);return null}const profile=row?.body||null;if(profile)cache(profile,tokenHash);return profile})},
   account(userId,deviceHash,profile){return serial(async()=>{await drain();const result=await request('rpc/dmc_profile_account',{method:'POST',body:{p_user_id:userId,p_device_hash:deviceHash,p_new_hash:createHash('sha256').update(randomBytes(32)).digest('hex'),p_profile:profile}});if(!result?.profile||!result.token_hash)throw new ApiError(503,'Je accountprofiel is tijdelijk niet bereikbaar.');cache(result.profile,result.token_hash,userId);return result.profile})},

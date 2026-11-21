@@ -1,5 +1,5 @@
 import {randomBytes,createHash} from 'node:crypto';
-export function createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,beforeMembershipChange=()=>{}}){
+export function createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,beforeMembershipChange=()=>{},onGroupsChange=()=>{}}){
  const digest=value=>createHash('sha256').update(value).digest('hex');
  async function handle(req,res,path){
   const member=path.match(/^\/api\/rooms\/(\d{6})\/members\/([a-f0-9]{24})\/profile$/);
@@ -26,7 +26,7 @@ export function createSocial({profiles,ApiError,body,json,limitRequest,authorize
   if(action==='group_play'){
    const group=await profiles.social(actor.id,'group_access',input);json(res,200,await openGroupRoom(req,res,group,actor));return true;
   }
-  json(res,200,await profiles.social(actor.id,action,input));return true;
+  const result=await profiles.social(actor.id,action,input);if(['group_create','group_join','group_leave','group_approve','group_remove','group_update'].includes(action))await onGroupsChange(action,input,actor);json(res,200,result);return true;
  }
  return {handle};
 }

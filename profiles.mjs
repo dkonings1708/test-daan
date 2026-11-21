@@ -104,6 +104,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
   try{const user=await auth.identify(session);return await cloud.account(user.id,null,freshProfile(user))}finally{await auth.discard(session)}
  }
  return {handle,handleAccount,forEntry,penalty,round,setAvatar,flush,accountProfile,extraAccount,
+  async clanTags(ids){const result=Object.fromEntries(ids.map(id=>[id,[]]));if(!cloud)return result;const accounts=ids.filter(id=>db.prepare('SELECT account_user_id FROM device_profiles WHERE id=?').get(id)?.account_user_id);return {...result,...(accounts.length?await cloud.tags(accounts):{})}},
   view(actor,target){if(cloud)return cloud.social(actor,'profile',{profileId:target});const profile=read(target);if(!profile)throw new ApiError(404,'Dit profiel bestaat niet meer.');return {profile:{...profile,hasAccount:false,tags:[]},friendship:'none',self:actor===target}},
   social(actor,action,input={}){if(!cloud)throw new ApiError(503,'Groepen en vrienden vereisen Supabase.');return cloud.social(actor,action,input)},storage:cloud?'supabase':'sqlite'};
 }

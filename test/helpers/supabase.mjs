@@ -40,7 +40,8 @@ export async function supabaseFixture(){
    value=[...profiles.values()].filter(row=>row.token_hash===hash).map(row=>({id:row.body.id,token_hash:row.token_hash,account_user_id:row.account_user_id||null,body:row.body}));
   }else{
    let text='';for await(const chunk of req)text+=chunk;const input=JSON.parse(text);
-   if(req.url.endsWith('/dmc_profile_account')){
+   if(req.url.endsWith('/dmc_social_profile')){const row=profiles.get(input.p_id);value=row?{id:row.body.id,tags:structuredClone(row.tags||[])}:null;
+   }else if(req.url.endsWith('/dmc_profile_account')){
     let row=[...profiles.values()].find(row=>row.account_user_id===input.p_user_id);
     if(!row){row=[...profiles.values()].find(row=>row.token_hash===input.p_device_hash&&!row.account_user_id);if(row)row.account_user_id=input.p_user_id;else{row={token_hash:input.p_new_hash,account_user_id:input.p_user_id,body:structuredClone(input.p_profile)};profiles.set(row.body.id,row)}}
     value={profile:row.body,token_hash:row.token_hash};
