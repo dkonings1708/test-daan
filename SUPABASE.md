@@ -129,3 +129,10 @@ blijven onafhankelijk van Render bewaard. Het spel gebruikt één serverinstance
 
 Zie ook [Supabase API keys](https://supabase.com/docs/guides/api/api-keys) en
 [Render persistent disks](https://render.com/docs/disks).
+
+## Vrienden en groepen toevoegen
+
+Voer voor deze update het volledige [SQL-script](supabase/profiles.sql) opnieuw
+uit. Dit voegt vriendschappen, groepen, beheerders, uitnodigingen en blijvende
+groepsscores toe. Bestaande gegevens blijven behouden. Render heeft geen nieuwe
+omgevingsvariabelen nodig. Zie [SOCIAL.md](SOCIAL.md) voor gebruik en validatie.

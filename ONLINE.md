@@ -371,3 +371,14 @@ de kans en bewaakt beurt, worplimiet en vastgezette stenen.
 De detectie, permissies, blokkades en bron van online worpen zijn getest met
 gesimuleerde bewegingssignalen en iPhone X-emulatie. De knopbediening, lokale
 standalone versie, avatars, profielen en teamregels blijven beschikbaar.
+
+## Vrienden, clans en extra spelers
+
+Zie [SOCIAL.md](SOCIAL.md). De `/api/social`-routes vereisen een geverifieerd
+account; publieke profielkaarten in een lobby vereisen een geldige lobbysessie.
+De Supabase-RPC bepaalt de wederzijdse vriendschappen, groepsrollen en toegang.
+`POST /api/rooms/:pin/extra` voegt een geauthenticeerd tweede account of een
+gast toe met een servermatig gekozen controller. Snapshots bevatten
+`viewer.controlledIds`; de server bewaakt elke beurt onafhankelijk van de UI.
+De tweede accountsessie wordt meteen weer ingetrokken, zonder de hoofdlogin
+te wijzigen. Groepsstatistieken lopen via de bestaande idempotente eventwachtrij.

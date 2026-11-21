@@ -118,6 +118,7 @@ body{border-top:2px solid #d9535e}.brand i{color:#ed7b83}.setup-header>.eyebrow{
 #local-team-size{font-size:16px;color:#f4f6f1;background:#0f1512;border:1px solid #ffffff21;border-radius:9px}
 #shake-toggle-local[aria-pressed=true]{color:#efa1a8}#motion-message{position:fixed;left:50%;transform:translateX(-50%);bottom:20px;z-index:130;max-width:calc(100vw - 30px);padding:12px 16px;border:1px solid #ffffff24;border-radius:12px;background:#24372a;color:#e4f5df;font-size:12px;box-shadow:0 8px 28px #0005}
 @media(max-width:700px){body:not(.online-game) .topbar{flex-wrap:wrap}body:not(.online-game) .header-tools{margin-left:auto;max-width:100%;min-width:0;flex-wrap:wrap;justify-content:flex-end}}
+button.score-avatar{padding:0;border:0} .score-avatar.crowned{position:relative;overflow:visible;box-shadow:0 0 0 2px #e4bc62}.score-avatar.crowned:after{content:'👑';position:absolute;top:-10px;right:-5px;font-size:12px;line-height:1}.score-avatar svg,.score-avatar img{border-radius:inherit}
 </style>
 </head>
 <body>
@@ -496,11 +497,13 @@ function renderScores(){
   if(group.name)list.append(textNode('h3',group.name,'team-title'));
   for(const id of group.members){
    const person=config.players.find(p=>p.id===id),record=view.records.get(id),active=!past&&!state.complete&&id===currentId(),out=view.out.has(id);const row=document.createElement('div');row.className='score-row'+(active?' active':'')+(out?' out':'')+(view.outcome?.loserIds.includes(id)?' lost':'');row.dataset.player=id;
-   const avatar=document.createElement('span');avatar.className='score-avatar';avatar.setAttribute('aria-hidden','true');
+   const avatar=document.createElement(ONLINE_MODE?'button':'span');avatar.className='score-avatar';if(ONLINE_MODE){avatar.type='button';avatar.setAttribute('aria-label','Profiel van '+person.name);avatar.onclick=()=>window.parent.postMessage({type:'dmc-open-profile',memberId:id},location.origin)}else avatar.setAttribute('aria-hidden','true');
    const member=ONLINE_MODE?onlineSnapshot.members.find(member=>member.id===id):null;
    if(renderGameAvatar)renderGameAvatar(avatar,member?.avatar,person.name,onlineSnapshot.pin);else avatar.textContent=person.name.trim().slice(0,2).toUpperCase();
+   avatar.classList.toggle('crowned',!!member?.crowned);
    const total=ONLINE_MODE?(onlineSnapshot.members.find(m=>m.id===id)?.adtHalfUnits||0):(state.adtHalfUnits?.[id]||0);
-   const name=textNode('div',person.name,'score-name'),adts=document.createElement('span');adts.className='score-adts';adts.textContent=(total/2).toLocaleString('nl-NL')+' adtjes';name.append(adts);const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
+   const clanTag=member?.clanTags?.find(t=>t.id===onlineSnapshot?.group?.id)||member?.clanTags?.[0];
+   const name=textNode('div',(clanTag?'['+clanTag.tag+'] ':'')+person.name,'score-name'),adts=document.createElement('span');adts.className='score-adts';adts.textContent=(total/2).toLocaleString('nl-NL')+' adtjes';name.append(adts);const stars=view.stars.get(id);if(stars){const span=textNode('span',' '+ '★'.repeat(stars),'stars');span.setAttribute('aria-label',`${stars} sterren`);name.append(span)}
    const last=record?.at(-1);const score=textNode('span',out?'RIP':last?String(last.score):'—','score-number');
    let detail=record?record.map(w=>(w.tieBreakRound?'K'+w.tieBreakRound+': ':'')+w.score).join(' → ')+(active?' · aan de beurt':''):active?'Aan de beurt':view.schedule.includes(id)?past?'Niet gegooid':'Wacht op de beurt':past?'Deze ronde niet aan de beurt':'Volgende ronde aan de beurt';
    const extraPenalties=(view.incidents||[]).filter(incident=>incident.player===id).length;
@@ -518,7 +521,7 @@ function showIncident(kind){
  renderGame();$('#incident-dialog').showModal();
 }
 function closeIncident(){
- if(ONLINE_MODE){if(onlineSnapshot?.viewer.id===currentId())sendOnlineAction('ack');else $('#incident-dialog').close();return}
+ if(ONLINE_MODE){if(onlineControlsCurrent())sendOnlineAction('ack');else $('#incident-dialog').close();return}
  $('#incident-dialog').close();if(!state)return;state.incidentOpen=false;renderGame();
  const target=canRollNow()?$('#roll'):$('#pass');target.focus({preventScroll:true});
 }
@@ -637,11 +640,12 @@ $('#local-team-size').value=settings.teamSize??2;updateLocalTeamPreview();$('#no
 if(settings.logo){$('#club-logo').src=settings.logo;$('#club-logo').hidden=false;$('#logo-fallback').hidden=true}
 renderMembers();renderEditors();updateSetupMode();
 
+function onlineControlsCurrent(){return !!onlineSnapshot&&(onlineSnapshot.viewer.controlledIds||[onlineSnapshot.viewer.id]).includes(currentId())}
 function sendOnlineAction(action,extra={}){
  if(!ONLINE_MODE||!onlineSnapshot||!onlineConnected||onlinePending)return;
  const adminActions=['newRound','endRound','lobby'];
  if(adminActions.includes(action)){if(!onlineSnapshot.viewer.isAdmin)return}
- else if(!state||onlineSnapshot.viewer.id!==currentId())return;
+ else if(!state||!onlineControlsCurrent())return;
  window.parent.postMessage({type:'dmc-online-action',action,extra},location.origin);
 }
 function hydrateOnlineState(value){
@@ -649,7 +653,7 @@ function hydrateOnlineState(value){
  copy.history=copy.history.map(round=>({...round,records:new Map(Object.entries(round.records)),stars:new Map(Object.entries(round.stars)),out:new Set(round.out)}));return copy;
 }
 function applyOnlineControls(){
- const admin=onlineSnapshot.viewer.isAdmin,active=onlineSnapshot.viewer.id===currentId(),ready=active&&onlineConnected&&!onlinePending;
+ const admin=onlineSnapshot.viewer.isAdmin,active=onlineControlsCurrent(),ready=active&&onlineConnected&&!onlinePending;
  if(!ready){$('#roll').disabled=true;$('#pass').disabled=true;dice.forEach(die=>die.disabled=true)}
  $('#new-round').hidden=!admin;$('#reset').hidden=!admin;
  if(!admin){$('#next-round').hidden=true;$('#outcome-next').hidden=true}else{$('#outcome-next').hidden=false}

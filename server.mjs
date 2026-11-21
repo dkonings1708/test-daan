@@ -11,6 +11,7 @@ import { createChat } from './chat.mjs';
 import { avatarFrom } from './avatars.mjs';
 import { createAvatarStore } from './avatar-store.mjs';
 import { createProfiles } from './profiles.mjs';
+import {createSocial} from './social.mjs';
 
 const root=dirname(fileURLToPath(import.meta.url));
 const MAX_AGE=24*60*60*1000;
@@ -33,7 +34,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   function persist(room){room.updated=Date.now();saveStatement.run(room.pin,JSON.stringify(room))}
   function live(room){return streams.get(room.pin)||new Map()}
   function snapshot(room,viewerId) {
-    return {pin:room.pin,revision:room.revision,phase:room.phase,viewer:{id:viewerId,isAdmin:room.adminId===viewerId},members:room.members.map(({profileId,...m})=>({...m,adtHalfUnits:m.adtHalfUnits||0,connected:live(room).has(m.id),isAdmin:m.id===room.adminId})),rules:room.rules,config:room.config||null,state:room.game||null,now:Date.now()};
+    return {pin:room.pin,revision:room.revision,phase:room.phase,group:room.group||null,viewer:{id:viewerId,isAdmin:isRoomAdmin(room,viewerId),controlledIds:room.members.filter(m=>m.id===viewerId||m.controllerId===viewerId).map(m=>m.id)},members:room.members.map(({profileId,...m})=>({...m,hasProfile:!!profileId,adtHalfUnits:m.adtHalfUnits||0,connected:live(room).has(m.controllerId||m.id),isAdmin:isRoomAdmin(room,m.id)})),rules:room.rules,config:room.config||null,state:room.game||null,now:Date.now()};
   }
   function broadcast(room){for(const [memberId,connections]of live(room))for(const res of connections){if(!res.destroyed)res.write('event: state\ndata: '+JSON.stringify(snapshot(room,memberId))+'\n\n')}}
   function disconnectMember(room,memberId){const connections=live(room).get(memberId);live(room).delete(memberId);if(connections)for(const res of connections)res.end()}
@@ -46,10 +47,10 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     for(const member of room.members){
       const delta=(totals[member.id]||0)-(accounted[member.id]||0);
       member.adtHalfUnits=(member.adtHalfUnits||0)+Math.max(0,delta);
-      profiles.penalty(member.profileId,Math.max(0,delta));
+      profiles.penalty(member.profileId,Math.max(0,delta),room.group?.id);
     }
     room.accountedHalfUnits={...totals};
-    if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round)}
+    if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round,room.group?.id)}
   }
   const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase,beforeAccountChange:checkAccountChange,onAccountChange:leaveForAccount});
   // Upgrade saved lobbies, including penalties from games started before counters existed.
@@ -76,7 +77,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       try{
         if(pending.type==='outcome')room.game.outcomePending=false;
         else room.pending=engine.settleRoll(room.config,room.game,pending);
-        changed(room);profiles.flush().catch(()=>console.error('Profielstatistieken wachten op Supabase; worden opnieuw geprobeerd.'));
+        changed(room);profiles.flush().then(async()=>{if(!closed&&room.group){await groupMetadata(room);broadcast(room)}}).catch(()=>console.error('Profielstatistieken wachten op Supabase; worden opnieuw geprobeerd.'));
       }catch(error){room.game.rolling=false;room.game.animation=null;room.pending=null;changed(room);console.error('Spelactie kon niet worden afgerond:',error.message)}
     },delay));
   }
@@ -91,13 +92,15 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   }
   function sessionCookie(req,res,token){writeCookie(req,res,'dmc_session',token,86400)}
   function leaveMember(room,memberId){
-        room.members=room.members.filter(m=>m.id!==memberId);for(const [token,member]of Object.entries(room.sessions))if(member===memberId)delete room.sessions[token];
-        disconnectMember(room,memberId);avatarStore.removeMember(room.pin,memberId);
-        if(room.members.length){if(room.adminId===memberId)room.adminId=room.members[0].id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin);avatarStore.removeRoom(room.pin)}
+        const removed=room.members.filter(m=>m.id===memberId||m.controllerId===memberId).map(m=>m.id);
+        room.members=room.members.filter(m=>!removed.includes(m.id));for(const [token,member]of Object.entries(room.sessions))if(removed.includes(member))delete room.sessions[token];
+        for(const member of removed){disconnectMember(room,member);avatarStore.removeMember(room.pin,member)}
+        if(room.members.length){if(room.adminId===memberId)room.adminId=(room.members.find(m=>!m.controllerId)||room.members[0]).id;changed(room)}else{clearTimeout(timers.get(room.pin));timers.delete(room.pin);streams.delete(room.pin);rooms.delete(room.pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(room.pin);chat.remove(room.pin);avatarStore.removeRoom(room.pin)}
   }
   function checkAccountChange(req){let entry;try{entry=authorize(req)}catch{return}if(entry.room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om van account te wisselen.')}
   function leaveForAccount(req,res){let entry;try{entry=authorize(req)}catch{return}checkAccountChange(req);leaveMember(entry.room,entry.memberId);writeCookie(req,res,'dmc_session','',0)}
-  function requireAdmin(room,memberId){if(room.adminId!==memberId)throw new ApiError(403,'Alleen de beheerder kan dit doen.')}
+  function isRoomAdmin(room,memberId){return room.adminId===memberId||room.members.some(m=>m.id===memberId&&m.groupAdmin&&!m.controllerId)}
+  function requireAdmin(room,memberId){if(!isRoomAdmin(room,memberId))throw new ApiError(403,'Alleen de beheerder kan dit doen.')}
   function requireLobby(room){if(room.phase!=='lobby')throw new ApiError(409,'Ga eerst terug naar de lobby om dit aan te passen.')}
   function limitRequest(req,kind,max,windowMs,identity=''){
     const key=kind+':'+(identity||req.socket.remoteAddress),now=Date.now();
@@ -124,6 +127,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         const avatar=validatedAvatar(input.avatar);member.avatar=avatarStore.set(room,memberId,avatar);
         const profile=profiles.setAvatar(member.profileId,avatar);if(profile)syncProfileAvatar(profile,room);break;
       }
+      case 'removeLocal':{requireLobby(room);const target=room.members.find(m=>m.id===input.memberId);if(!target?.controllerId||target.controllerId!==memberId&&!isRoomAdmin(room,memberId))throw new ApiError(403,'Deze extra speler hoort niet bij jou.');leaveMember(room,target.id);break;}
       case 'rules':requireLobby(room);room.rules=validatedRules(input.rules);break;
       case 'move':{
         requireLobby(room);const index=room.members.findIndex(m=>m.id===input.memberId),step=input.step;
@@ -149,23 +153,22 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       case 'playing':requireLobby(room);{const member=room.members.find(m=>m.id===input.memberId);if(!member)throw new ApiError(404,'Speler niet gevonden.');member.playing=input.playing===true}break;
       case 'kick':{
         requireLobby(room);if(input.memberId===room.adminId)throw new ApiError(400,'Draag eerst het beheer over.');
-        room.members=room.members.filter(m=>m.id!==input.memberId);
-        for(const [token,member]of Object.entries(room.sessions))if(member===input.memberId)delete room.sessions[token];
-        disconnectMember(room,input.memberId);avatarStore.removeMember(room.pin,input.memberId);break;
+        leaveMember(room,input.memberId);break;
       }
-      case 'admin':requireLobby(room);if(!room.members.some(m=>m.id===input.memberId))throw new ApiError(404,'Speler niet gevonden.');room.adminId=input.memberId;break;
+      case 'admin':requireLobby(room);if(!room.members.some(m=>m.id===input.memberId&&!m.controllerId))throw new ApiError(404,'Speler niet gevonden.');room.adminId=input.memberId;break;
       case 'start':requireLobby(room);room.gameId=id();room.config=engine.configFrom(room);room.game=engine.startGame(room.config);room.accountedHalfUnits={};room.phase='playing';break;
       case 'newRound':if(room.phase!=='playing'||!room.game.complete||room.game.outcomePending)throw new ApiError(409,'Sluit eerst deze ronde af.');room.pending=null;engine.nextRound(room.config,room.game);break;
       case 'endRound':if(room.phase!=='playing')throw new ApiError(409,'Er is geen actieve ronde.');engine.finishRound(room.config,room.game);break;
       case 'lobby':room.pending=null;room.phase='lobby';room.game=null;room.config=null;break;
       case 'roll':case 'hold':case 'pass':case 'ack':{
         if(room.phase!=='playing')throw new ApiError(409,'Het spel is nog niet gestart.');
-        if(memberId!==engine.currentId(room.game))throw new ApiError(403,'Alleen de speler aan de beurt kan spelen.');
+        const activeId=engine.currentId(room.game),activeMember=room.members.find(m=>m.id===activeId);
+        if(memberId!==activeId&&activeMember?.controllerId!==memberId)throw new ApiError(403,'Alleen de speler aan de beurt kan spelen.');
         if(input.turnKey!==engine.turnKey(room.game))throw new ApiError(409,'De beurt is inmiddels veranderd.');
-        if(action==='roll')room.pending=engine.beginRoll(room.config,room.game,memberId,rng,Date.now(),input.rollSource===undefined?'button':input.rollSource);
-        if(action==='hold')engine.hold(room.config,room.game,memberId,input.index);
-        if(action==='pass')engine.pass(room.config,room.game,memberId);
-        if(action==='ack')engine.acknowledge(room.config,room.game,memberId);
+        if(action==='roll')room.pending=engine.beginRoll(room.config,room.game,activeId,rng,Date.now(),input.rollSource===undefined?'button':input.rollSource);
+        if(action==='hold')engine.hold(room.config,room.game,activeId,input.index);
+        if(action==='pass')engine.pass(room.config,room.game,activeId);
+        if(action==='ack')engine.acknowledge(room.config,room.game,activeId);
         break;
       }
       default:throw new ApiError(400,'Onbekende spelactie.');
@@ -174,6 +177,36 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   }
   const chat=createChat(db,{authorize,limitRequest,json,ApiError,persist,live});
   const avatarStore=createAvatarStore(db,{rooms,authorize,ApiError});
+  async function groupMetadata(room){
+    if(!room.group)return;
+    const actor=room.members.find(m=>m.profileId&&!m.controllerId);if(!actor)return;
+    const group=await profiles.social(actor.profileId,'group_get',{groupId:room.group.id});
+    room.group={id:group.id,name:group.name,tag:group.tag};
+    for(const member of room.members){const entry=group.members.find(m=>m.profile.id===member.profileId);member.groupAdmin=entry?.role==='admin';member.crowned=!!entry?.leader;member.clanTags=entry?.profile.tags||[]}
+    if(!closed&&rooms.get(room.pin)===room)persist(room);
+  }
+  async function openGroupRoom(req,res,group,actor){
+    checkAccountChange(req);let room=[...rooms.values()].find(r=>r.group?.id===group.id);
+    if(room){
+      const existing=room.members.find(m=>m.profileId===actor.id);
+      if(existing?.controllerId)throw new ApiError(409,'Dit account speelt al mee via een ander apparaat. Verwijder eerst die extra speler.');
+      if(existing){await groupMetadata(room);const token=randomBytes(32).toString('hex');room.sessions[hash(token)]=existing.id;sessionCookie(req,res,token);persist(room);return snapshot(room,existing.id)}
+      requireLobby(room);if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
+    }
+    leaveForAccount(req,res);
+    const memberId=id(),token=randomBytes(32).toString('hex');
+    if(!room){
+      if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');
+      let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
+      room={pin,group:{id:group.id,name:group.name,tag:group.tag},adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[],sessions:{},rules:validatedRules(group.rules||{}),config:null,game:null,pending:null,receipts:[]};rooms.set(pin,room);
+    }
+    room.members.push({id:memberId,name:actor.name,avatar:avatarStore.set(room,memberId,actor.avatar),profileId:actor.id,team:'Team '+(room.members.length%2+1),playing:true});
+    room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);await groupMetadata(room);changed(room);return snapshot(room,memberId);
+  }
+  const social=createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,beforeMembershipChange(action,input,actor){
+    const target=action==='group_leave'?actor.id:input.profileId;
+    if([...rooms.values()].some(room=>room.group?.id===input.groupId&&room.phase==='playing'&&room.members.some(m=>m.profileId===target)))throw new ApiError(409,'Ga eerst terug naar de groepslobby voordat je dit lid verwijdert.');
+  }});
   const server=http.createServer(async(req,res)=>{
     res.setHeader('X-Content-Type-Options','nosniff');res.setHeader('Referrer-Policy','same-origin');res.setHeader('X-Frame-Options','SAMEORIGIN');res.setHeader('Permissions-Policy','microphone=(self), camera=()');
     try{
@@ -185,13 +218,14 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       }
       if(await profiles.handleAccount(req,res,path))return;
       if(await profiles.handle(req,res,path))return;
+      if(await social.handle(req,res,path))return;
       if(avatarStore.handle(req,res,path))return;
       if(await chat.handle(req,res,path))return;
       if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true,profileStorage:profiles.storage});return}
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);json(res,200,snapshot(room,memberId));return;
       }
@@ -214,7 +248,9 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         try{const prior=authorize(req,room.pin);json(res,200,snapshot(room,prior.memberId));return}catch{}
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
         if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
-        const profile=await profiles.forEntry(req,input,res),display=name(input.name||profile?.name);
+        const profile=room.group?await profiles.accountProfile(req,res):await profiles.forEntry(req,input,res),display=name(input.name||profile?.name);
+        if(room.group)await profiles.social(profile.id,'group_access',{groupId:room.group.id});
+        if(profile&&room.members.some(m=>m.profileId===profile.id))throw new ApiError(409,'Dit account zit al in de lobby. Open de groep om te hervatten.');
         // The host may start or close this lobby while the cloud lookup awaits.
         if(rooms.get(room.pin)!==room)throw new ApiError(404,'Deze lobbycode bestaat niet of is verlopen.');
         if(room.phase!=='lobby')throw new ApiError(409,'Het spel is al begonnen. De beheerder kan de lobby opnieuw openen.');
@@ -222,7 +258,22 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         if(!display)throw new ApiError(400,'Vul je naam in.');
         if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
         const memberId=id(),token=randomBytes(32).toString('hex');
-        const avatar=avatarStore.set(room,memberId,input.avatar===undefined?profile?.avatar:input.avatar);room.members.push({id:memberId,name:display,avatar,...(profile?{profileId:profile.id}:{}),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);changed(room);json(res,200,snapshot(room,memberId));return;
+        const avatar=avatarStore.set(room,memberId,input.avatar===undefined?profile?.avatar:input.avatar);room.members.push({id:memberId,name:display,avatar,...(profile?{profileId:profile.id}:{}),team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);if(room.group)await groupMetadata(room);changed(room);json(res,200,snapshot(room,memberId));return;
+      }
+      const extra=path.match(/^\/api\/rooms\/(\d{6})\/extra$/);
+      if(req.method==='POST'&&extra){
+        const {room,memberId}=authorize(req,extra[1]);requireLobby(room);limitRequest(req,'extra-account',20,60000);const input=await body(req);
+        let profile=null;if(input.kind==='account')profile=await profiles.extraAccount(input);else if(input.kind!=='guest')throw new ApiError(400,'Kies gast of account.');
+        if(profile&&room.group)await profiles.social(profile.id,'group_access',{groupId:room.group.id});
+        if(rooms.get(room.pin)!==room||!room.members.some(m=>m.id===memberId))throw new ApiError(401,'Je lobbysessie is verlopen.');requireLobby(room);
+        if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
+        if(room.members.filter(m=>m.controllerId===memberId).length>=9)throw new ApiError(409,'Je kunt maximaal negen extra spelers bedienen.');
+        if(profile&&room.members.some(m=>m.profileId===profile.id))throw new ApiError(409,'Dit account zit al in de lobby.');
+        const display=name(profile?.name||input.name);if(!display)throw new ApiError(400,'Vul een naam in.');
+        if(room.members.some(m=>m.name.toLocaleLowerCase()===display.toLocaleLowerCase()))throw new ApiError(409,'Deze naam is al in gebruik.');
+        const added=id(),avatar=avatarStore.set(room,added,profile?profile.avatar:validatedAvatar(input.avatar));
+        room.members.push({id:added,name:display,avatar,controllerId:memberId,...(profile?{profileId:profile.id}:{}),playing:true,team:room.members.find(m=>m.id===memberId).team});
+        if(room.group)await groupMetadata(room);changed(room);json(res,201,snapshot(room,memberId));return;
       }
       const event=path.match(/^\/api\/rooms\/(\d{6})\/events$/);
       if(req.method==='GET'&&event){
@@ -237,8 +288,9 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       const command=path.match(/^\/api\/rooms\/(\d{6})\/command$/);
       if(req.method==='POST'&&command){
         const {room,memberId}=authorize(req,command[1]);limitRequest(req,'actions',180,60000,room.pin+':'+memberId);const input=await body(req);
+        if(room.group&&['rules','move','reorder','team','randomTeams','playing','kick','admin','start','newRound','endRound','lobby','removeLocal'].includes(input.action)){await groupMetadata(room);authorize(req,command[1]);if(rooms.get(room.pin)!==room)throw new ApiError(404,'Deze lobby is verlopen.')}
         try{applyCommand(room,memberId,input)}catch(error){if(error instanceof ApiError)throw error;throw new ApiError(409,error.message)}
-        if(room.members.some(member=>member.profileId))await profiles.flush();json(res,200,snapshot(room,memberId));return;
+        if(input.action==='rules'&&room.group){const actor=room.members.find(m=>m.id===memberId);await profiles.social(actor.profileId,'group_rules',{groupId:room.group.id,rules:room.rules})}if(room.members.some(member=>member.profileId))await profiles.flush();if(room.group){await groupMetadata(room);broadcast(room)}json(res,200,snapshot(room,memberId));return;
       }
       throw new ApiError(404,'Pagina niet gevonden.');
     }catch(error){

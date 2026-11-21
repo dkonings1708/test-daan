@@ -62,6 +62,7 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
  }
  return {
   enqueue,
+  social(actor,action,input){return serial(async()=>{await drain();const result=await request('rpc/dmc_social',{method:'POST',body:{p_actor:actor,p_action:action,p_input:input}});if(result?.error)throw new ApiError(Number(result.status)||400,result.error);return result})},
   flush(){if(!db.prepare('SELECT 1 FROM profile_outbox LIMIT 1').get())return Promise.resolve();return serial(drain)},
   current(tokenHash){return serial(async()=>{await drain();const rows=await request('dmc_device_profiles?select=*&token_hash=eq.'+encodeURIComponent(tokenHash)+'&limit=1'),row=rows[0];if(row?.account_user_id){cache(row.body,tokenHash,row.account_user_id);return null}const profile=row?.body||null;if(profile)cache(profile,tokenHash);return profile})},
   account(userId,deviceHash,profile){return serial(async()=>{await drain();const result=await request('rpc/dmc_profile_account',{method:'POST',body:{p_user_id:userId,p_device_hash:deviceHash,p_new_hash:createHash('sha256').update(randomBytes(32)).digest('hex'),p_profile:profile}});if(!result?.profile||!result.token_hash)throw new ApiError(503,'Je accountprofiel is tijdelijk niet bereikbaar.');cache(result.profile,result.token_hash,userId);return result.profile})},

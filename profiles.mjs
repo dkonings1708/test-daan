@@ -60,11 +60,11 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
  }
  async function forEntry(req,input,res){if(input.useProfile!==true)return null;const p=await current(req,res);if(!p)throw new ApiError(401,'Maak eerst een profiel of speel als gast.');return p}
  function setAvatar(profileId,avatar){if(!profileId)return null;const profile=read(profileId);if(!profile||profile.avatar===avatar)return null;profile.avatar=avatarFrom(avatar);save(profile);cloud?.enqueue(profileId,'avatar',{avatar:profile.avatar});return profile}
- function penalty(profileId,delta){if(!profileId||delta<=0)return;const p=read(profileId);if(p){p.adtHalfUnits+=delta;save(p);cloud?.enqueue(profileId,'penalty',{units:delta})}}
- function round(profileId,game,number){
+ function penalty(profileId,delta,groupId){if(!profileId||delta<=0)return;const p=read(profileId);if(p){p.adtHalfUnits+=delta;save(p);cloud?.enqueue(profileId,'penalty',{units:delta,...(groupId?{groupId}:{})})}}
+ function round(profileId,game,number,groupId){
   if(!profileId)return;const p=read(profileId);if(!p)return;
   const inserted=db.prepare('INSERT OR IGNORE INTO profile_rounds(profile,game,round) VALUES(?,?,?)').run(profileId,game,number);
-  if(inserted.changes){p.rounds++;save(p);cloud?.enqueue(profileId,'round',{game,round:number})}
+  if(inserted.changes){p.rounds++;save(p);cloud?.enqueue(profileId,'round',{game,round:number,...(groupId?{groupId}:{})})}
  }
  async function finishLogin(req,res,session){
   const user=await auth.identify(session);beforeAccountChange(req);
@@ -93,5 +93,17 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
   if(path==='/api/account/session'){const session=await auth.accept(input);json(res,200,await finishLogin(req,res,session));return true}
   throw new ApiError(404,'Accountactie niet gevonden.');
  }
- return {handle,handleAccount,forEntry,penalty,round,setAvatar,flush,storage:cloud?'supabase':'sqlite'};
+ async function accountProfile(req,res,{optional=false}={}){
+  if(!auth){if(optional)return null;throw new ApiError(503,'Accounts zijn niet ingesteld.')}
+  const identity=await auth.resolve(req,res);if(!identity){if(optional)return null;throw new ApiError(401,'Log in met een account om vrienden en groepen te gebruiken.')}
+  const token=tokenFrom(req);return cloud.account(identity.user.id,token?digest(token):null,freshProfile(identity.user));
+ }
+ async function extraAccount(input){
+  if(!auth)throw new ApiError(503,'Accounts zijn niet ingesteld.');
+  const session=await auth.login(input);
+  try{const user=await auth.identify(session);return await cloud.account(user.id,null,freshProfile(user))}finally{await auth.discard(session)}
+ }
+ return {handle,handleAccount,forEntry,penalty,round,setAvatar,flush,accountProfile,extraAccount,
+  view(actor,target){if(cloud)return cloud.social(actor,'profile',{profileId:target});const profile=read(target);if(!profile)throw new ApiError(404,'Dit profiel bestaat niet meer.');return {profile:{...profile,hasAccount:false,tags:[]},friendship:'none',self:actor===target}},
+  social(actor,action,input={}){if(!cloud)throw new ApiError(503,'Groepen en vrienden vereisen Supabase.');return cloud.social(actor,action,input)},storage:cloud?'supabase':'sqlite'};
 }

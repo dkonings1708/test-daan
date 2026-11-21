@@ -12,6 +12,13 @@ De lobbychat deelt tekst, foto’s, video’s en
 spraakmemo’s met de deelnemers, ook tijdens het spel. Zie `ONLINE.md` voor starten en publiceren. Open het bestand in een browser met JavaScript ingeschakeld;
 een bestandsvoorbeeld in een berichtenapp voert het spel mogelijk niet uit.
 
+## Vrienden en vaste groepen
+
+Via **Vrienden & groepen** beheer je vrienden, clans en een blijvend groepsklassement.
+Tik op namen of avatars om profielen te bekijken. Elke online deelnemer kan extra
+gast- of accountspelers op hetzelfde apparaat toevoegen. Zie [SOCIAL.md](SOCIAL.md)
+voor gebruik, privacy, spelregels en de benodigde Supabase-migratie.
+
 ## Instellingen
 
 Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**. De vaste

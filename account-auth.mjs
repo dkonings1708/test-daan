@@ -46,6 +46,7 @@ export function createAccountAuth({url,key,ApiError}){
  function redirect(req){const scheme=req.socket.encrypted||req.headers['x-forwarded-proto']==='https'?'https':'http';return scheme+'://'+req.headers.host+'/'}
  return {
   resolve,clear,setSession,
+  async discard(session){try{await request('logout?scope=local',{method:'POST',access:session.access_token})}catch{}},
   async signup(req,input){return request('signup?redirect_to='+encodeURIComponent(redirect(req)),{method:'POST',body:credentials(input)})},
   async login(input){return request('token?grant_type=password',{method:'POST',body:credentials(input)})},
   async accept(input){
