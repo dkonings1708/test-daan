@@ -40,7 +40,7 @@ via **🔔 Notificaties**. Tijdens een spel of bovenop een ander venster verschi
 de vraag niet. Gasten krijgen geen pushvraag, omdat uitnodigingen aan accounts
 zijn gekoppeld.
 
-Nieuwe pushmeldingen hebben de titel **DMC mexx - Uitnodiging voor lobby 🍺**.
+Nieuwe pushmeldingen hebben de titel **Uitnodiging voor lobby 🍺**.
 Deze tekstwijziging vereist geen nieuwe SQL-migratie.
 
 ## Telefoons en browsers
