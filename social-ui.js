@@ -21,7 +21,7 @@ export function createSocialUI({api,toast,getRoom,connect,onBeforePlay=()=>true,
   for(const g of groups){const entry=button('',async()=>{entry.disabled=true;try{await playGroup(g.id)}finally{entry.disabled=false}},'entry-group');entry.disabled=$('#entry').getAttribute('aria-busy')==='true';entry.append(node('strong',g.name),node('small','Open lobby →'));home.append(entry)}
  }
  async function playGroup(id){await onEntryReady();if($('#entry').getAttribute('aria-busy')==='true')return;if(getRoom()?.group?.id===id){panel.close();return}if(!await onBeforePlay())return;onEntryBusy(true);try{const result=await api('/api/social/group_play',{groupId:id});panel.close();connect(result)}finally{onEntryBusy(false)}}
- const addButton=button('＋ Speler toevoegen',()=>{if(getRoom()?.phase!=='lobby')return;$('#extra-form').reset();$('#extra-kind').onchange();extraAvatar=null;picker.select(null);$('#extra-error').textContent='';extra.showModal()});addButton.id='extra-open';$('#players-panel').append(addButton);
+ const addButton=button('＋ Speler toevoegen',()=>{if(getRoom()?.phase!=='lobby')return;$('#extra-form').reset();$('#extra-kind').onchange();extraAvatar=null;picker.select(null);$('#extra-error').textContent='';extra.showModal()});addButton.id='extra-open';$('#member-actions').append(addButton);
  function avatar(profile,crown=false){const a=node('span',undefined,'avatar'+(crown?' crowned':''));renderAvatar(a,profile.avatar,profile.name,getRoom()?.pin||'');if(crown)a.setAttribute('aria-label','Leider van het groepsklassement');return a}
  function tags(profile){const wrap=node('div',undefined,'clan-tags');for(const tag of profile.tags||[])wrap.append(node('span',tag.tag,'clan-tag'));return wrap}
  async function showProfile(result){

@@ -136,3 +136,9 @@ Voer voor deze update het volledige [SQL-script](supabase/profiles.sql) opnieuw
 uit. Dit voegt vriendschappen, groepen, beheerders, uitnodigingen en blijvende
 groepsscores toe. Bestaande gegevens blijven behouden. Render heeft geen nieuwe
 omgevingsvariabelen nodig. Zie [SOCIAL.md](SOCIAL.md) voor gebruik en validatie.
+
+## Uitnodigingen en push
+
+Voer voor lobby-uitnodigingen en push het volledige bijgewerkte SQL-script opnieuw
+uit. De bestaande servervariabelen blijven gelijk; pushsleutels worden automatisch
+privé in Supabase bewaard. Er is hiervoor geen SMTP nodig. Zie [PUSH.md](PUSH.md).

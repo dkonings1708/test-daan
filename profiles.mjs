@@ -4,7 +4,7 @@ import {createAccountAuth,writeCookie} from './account-auth.mjs';
 import {createSupabaseProfiles,supabaseSettings} from './supabase-profiles.mjs';
 
 // The cookie and its hashed identity stay unchanged when switching storage.
-export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange=()=>{},supabase=supabaseSettings(),beforeAccountChange=()=>{},onAccountChange=()=>{}}){
+export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange=()=>{},supabase=supabaseSettings(),beforeAccountChange=()=>{},onAccountChange=()=>{},onAccountExit=async()=>{}}){
  db.exec('CREATE TABLE IF NOT EXISTS device_profiles(id TEXT PRIMARY KEY, token_hash TEXT UNIQUE NOT NULL, body TEXT NOT NULL); CREATE TABLE IF NOT EXISTS profile_rounds(profile TEXT NOT NULL, game TEXT NOT NULL, round INTEGER NOT NULL, PRIMARY KEY(profile,game,round))');
  if(!db.prepare('PRAGMA table_info(device_profiles)').all().some(column=>column.name==='account_user_id'))db.exec('ALTER TABLE device_profiles ADD COLUMN account_user_id TEXT');
  const auth=supabase?createAccountAuth({...supabase,ApiError}):null;
@@ -42,7 +42,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
     if(cloud){cloud.enqueue(existing.id,'forget',{});await flush()}
     else{db.prepare('DELETE FROM profile_rounds WHERE profile=?').run(existing.id);db.prepare('DELETE FROM device_profiles WHERE id=?').run(existing.id)}
    }
-   if(account){await auth.logout(req,res);onAccountChange(req,res)}
+   if(account){await onAccountExit(req,res);await auth.logout(req,res);onAccountChange(req,res)}
    cookie(req,res,'',0);json(res,200,{profile:null});return true;
   }
   const name=typeof input.name==='string'?input.name.trim().replace(/\s+/g,' ').slice(0,40):'';
@@ -69,7 +69,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
  async function finishLogin(req,res,session){
   const user=await auth.identify(session);beforeAccountChange(req);
   const token=tokenFrom(req),profile=await cloud.account(user.id,token?digest(token):null,freshProfile(user));
-  onAccountChange(req,res);auth.setSession(req,res,session);cookie(req,res,'',0);
+  await onAccountExit(req,res);onAccountChange(req,res);auth.setSession(req,res,session);cookie(req,res,'',0);
   return {ok:true,user:{email:user.email},profile:publicProfile(profile)};
  }
  async function handleAccount(req,res,path){
@@ -83,7 +83,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
   if(path==='/api/account/recover'){limitRequest(req,'recovery-email',10,3600000);await auth.recover(req,input);json(res,200,{ok:true,message:'Als dit account bestaat, is er een herstelmail verstuurd.'});return true}
   if(path==='/api/account/password'){const identity=await auth.resolve(req,res);if(!identity)throw new ApiError(401,'Open de herstelmail of log opnieuw in.');await auth.password(identity,input);json(res,200,{ok:true});return true}
   beforeAccountChange(req);
-  if(path==='/api/account/logout'){await auth.logout(req,res);onAccountChange(req,res);cookie(req,res,'',0);json(res,200,{ok:true});return true}
+  if(path==='/api/account/logout'){await onAccountExit(req,res);await auth.logout(req,res);onAccountChange(req,res);cookie(req,res,'',0);json(res,200,{ok:true});return true}
   if(path==='/api/account/signup'){
    limitRequest(req,'signup-email',30,3600000);const session=await auth.signup(req,input);
    if(!session?.access_token){json(res,200,{ok:true,confirmationRequired:true});return true}
@@ -104,6 +104,7 @@ export function createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChang
   try{const user=await auth.identify(session);return await cloud.account(user.id,null,freshProfile(user))}finally{await auth.discard(session)}
  }
  return {handle,handleAccount,forEntry,penalty,round,setAvatar,flush,accountProfile,extraAccount,
+  notifications(actor,action,input){if(!cloud)throw new ApiError(503,'Meldingen vereisen Supabase.');return cloud.notifications(actor,action,input)},
   async clanTags(ids){const result=Object.fromEntries(ids.map(id=>[id,[]]));if(!cloud)return result;const accounts=ids.filter(id=>db.prepare('SELECT account_user_id FROM device_profiles WHERE id=?').get(id)?.account_user_id);return {...result,...(accounts.length?await cloud.tags(accounts):{})}},
   view(actor,target){if(cloud)return cloud.social(actor,'profile',{profileId:target});const profile=read(target);if(!profile)throw new ApiError(404,'Dit profiel bestaat niet meer.');return {profile:{...profile,hasAccount:false,tags:[]},friendship:'none',self:actor===target}},
   social(actor,action,input={}){if(!cloud)throw new ApiError(503,'Groepen en vrienden vereisen Supabase.');return cloud.social(actor,action,input)},storage:cloud?'supabase':'sqlite'};

@@ -1,3 +1,4 @@
+import {releaseLocalPush} from './notifications-ui.js';
 import {createAvatarPicker,renderAvatar} from './avatars.mjs';
 import {createAccountUI} from './account-ui.js';
 
@@ -18,7 +19,7 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
   if(profile){renderAvatar($('#entry-profile-avatar'),profile.avatar,profile.name);$('#entry-profile-summary').setAttribute('aria-label','Profielinstellingen van '+profile.name)}
   for(const kind of ['host','join']){const fields=$('#'+kind+'-identity');fields.hidden=useProfile;fields.disabled=useProfile}
   for(const button of document.querySelectorAll('[data-profile-mode]'))button.hidden=(button.dataset.profileMode==='profile')===useProfile;
-  document.dispatchEvent(new CustomEvent('dmc-profile-change',{detail:{profile,loggedIn:!!accountState.user}}));
+  document.dispatchEvent(new CustomEvent('dmc-profile-change',{detail:{profile,loggedIn:!!accountState.user,accountEnabled:accountState.enabled}}));
   for(const button of document.querySelectorAll('[data-profile-mode]'))button.setAttribute('aria-pressed',String((button.dataset.profileMode==='profile')===useProfile));
  }
  function drawStats(){
@@ -36,6 +37,7 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
  async function openDeviceProfile(){
   try{await ready;await refresh();$('#device-profile-name').value=profile?.name||$('#host-name').value||$('#join-name').value;avatar=profile?.avatar||null;picker.select(avatar);$('#device-profile-picker details').open=false;drawStats();$('#device-profile-error').textContent='';dialog.showModal()}catch(error){toast(error.message)}
  }
+ document.addEventListener('dmc-login-request',async()=>{await ready;if(accountState.enabled)accountUI.open('login');else toast('Inloggen is niet ingesteld.');});
  $('#entry-profile-summary').onclick=()=>openDeviceProfile();
  $('#device-profile-button').onclick=async()=>{await ready;if(!profile&&accountState.enabled)accountUI.open('login');else openDeviceProfile()};
  $('#profile-account-link').onclick=()=>{dialog.close();accountUI.open('signup')};
@@ -48,7 +50,7 @@ export function createDeviceProfile({api,toast,hostPicker,joinPicker}){
  };
  $('#device-profile-forget').onclick=async()=>{
   if(!confirm(accountState.user?'Profiel en statistieken verwijderen? Je inlogaccount blijft bestaan.':'Profiel en statistieken definitief verwijderen?'))return;
-  try{await api('/api/profile/forget',{});profile=null;await accountUI.refresh();selected(false);dialog.close();toast('Profiel verwijderd. Je kunt als gast spelen.')}catch(error){$('#device-profile-error').textContent=error.message}
+  try{await api('/api/profile/forget',{});await releaseLocalPush();profile=null;await accountUI.refresh();selected(false);dialog.close();toast('Profiel verwijderd. Je kunt als gast spelen.')}catch(error){$('#device-profile-error').textContent=error.message}
  };
  return {ready,isActive:()=>useProfile};
 }

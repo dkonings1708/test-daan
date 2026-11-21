@@ -285,5 +285,104 @@ $$;
 revoke all on function public.dmc_social_profile(text),public.dmc_social(text,text,jsonb) from public,anon,authenticated;
 grant execute on function public.dmc_social_profile(text),public.dmc_social(text,text,jsonb) to service_role;
 
+-- Private lobby invitations and browser push subscriptions.
+create table if not exists public.dmc_lobby_invitations (
+ id text primary key, sender text not null references public.dmc_device_profiles(id) on delete cascade,
+ recipient text not null references public.dmc_device_profiles(id) on delete cascade,
+ room_pin text not null check(room_pin ~ '^[0-9]{6}$'), room_instance text not null,
+ group_id text references public.dmc_groups(id) on delete cascade, room_name text not null,
+ status text not null default 'pending' check(status in ('pending','accepted','declined')),
+ created_at timestamptz not null default now(), expires_at timestamptz not null default now()+interval '1 hour',
+ push_pending boolean not null default true, push_attempts integer not null default 0,
+ push_after timestamptz not null default now(), push_lease text,
+ unique(sender,recipient,room_instance)
+);
+create index if not exists dmc_invitation_inbox on public.dmc_lobby_invitations(recipient,expires_at);
+create table if not exists public.dmc_push_config (
+ singleton boolean primary key default true check(singleton), public_key text not null, private_key text not null
+);
+create table if not exists public.dmc_push_subscriptions (
+ endpoint_hash text primary key, profile_id text not null references public.dmc_device_profiles(id) on delete cascade,
+ device_hash text not null, subscription jsonb not null, updated_at timestamptz not null default now()
+);
+create index if not exists dmc_push_owner on public.dmc_push_subscriptions(profile_id);
+alter table public.dmc_lobby_invitations enable row level security;
+alter table public.dmc_push_config enable row level security;
+alter table public.dmc_push_subscriptions enable row level security;
+revoke all on public.dmc_lobby_invitations,public.dmc_push_config,public.dmc_push_subscriptions from public,anon,authenticated;
+grant select,insert,update,delete on public.dmc_lobby_invitations,public.dmc_push_config,public.dmc_push_subscriptions to service_role;
+
+create or replace function public.dmc_notifications(p_actor text,p_action text,p_input jsonb)
+returns jsonb language plpgsql security invoker set search_path='' as $$
+declare item public.dmc_lobby_invitations%rowtype; target text:=p_input->>'profileId'; result jsonb;
+begin
+ -- These maintenance actions are only callable by the server service_role.
+ if p_action='device_remove' then delete from public.dmc_push_subscriptions where device_hash=p_input->>'deviceHash';return jsonb_build_object('ok',true); end if;
+ if p_action='push_remove' then delete from public.dmc_push_subscriptions where endpoint_hash=p_input->>'endpointHash';return jsonb_build_object('ok',true); end if;
+ if p_action='push_config' then
+  if not exists(select 1 from public.dmc_push_config) and p_input ? 'privateKey' and p_input ? 'publicKey' then
+   insert into public.dmc_push_config(singleton,public_key,private_key) values(true,p_input->>'publicKey',p_input->>'privateKey') on conflict do nothing;
+  end if;
+  return (select jsonb_build_object('publicKey',public_key,'privateKey',private_key) from public.dmc_push_config where singleton);
+ end if;
+ if p_action='push_claim' then
+  if not exists(select 1 from public.dmc_push_config) then return '[]'::jsonb; end if;
+  with selected as (
+   select i.id from public.dmc_lobby_invitations i where i.push_pending and i.status='pending' and i.expires_at>now()
+    and i.push_after<=now() and i.push_attempts<3
+    and i.room_instance in (select jsonb_array_elements_text(coalesce(p_input->'instances','[]'::jsonb))) and exists(select 1 from public.dmc_push_subscriptions s where s.profile_id=i.recipient)
+   order by i.created_at for update skip locked limit 5
+  ), claimed as (
+   update public.dmc_lobby_invitations i set push_attempts=push_attempts+1,push_after=now()+interval '30 seconds',push_lease=p_input->>'lease'
+   from selected where i.id=selected.id returning i.*
+  ) select coalesce(jsonb_agg(jsonb_build_object('id',i.id,'lease',i.push_lease,'title','DMC mexx · Uitnodiging',
+   'body',coalesce(p.body->>'name','Een vriend')||' nodigt je uit voor '||i.room_name,
+   'url','/?invitation='||i.id,'roomPin',i.room_pin,'instance',i.room_instance,'subscriptions',coalesce((select jsonb_agg(jsonb_build_object('hash',s.endpoint_hash,'subscription',s.subscription))
+    from public.dmc_push_subscriptions s where s.profile_id=i.recipient),'[]'::jsonb))),'[]'::jsonb) into result
+   from claimed i join public.dmc_device_profiles p on p.id=i.sender;
+  return result;
+ end if;
+ if p_action='push_done' then update public.dmc_lobby_invitations set push_pending=false where id=p_input->>'id' and push_lease=p_input->>'lease';return jsonb_build_object('ok',true); end if;
+ if not exists(select 1 from public.dmc_device_profiles where id=p_actor and account_user_id is not null) then return jsonb_build_object('error','Log eerst in met je account.','status',401); end if;
+ if p_action='subscribe' then
+  if exists(select 1 from public.dmc_push_subscriptions where endpoint_hash=p_input->>'endpointHash' and profile_id<>p_actor and device_hash<>p_input->>'deviceHash') then
+   return jsonb_build_object('error','Deze pushverbinding hoort bij een ander apparaat.','status',409); end if;
+  delete from public.dmc_push_subscriptions where device_hash=p_input->>'deviceHash';
+  if (select count(*) from public.dmc_push_subscriptions where profile_id=p_actor)>=10 then return jsonb_build_object('error','Push staat al op tien apparaten aan.','status',409); end if;
+  insert into public.dmc_push_subscriptions(endpoint_hash,profile_id,device_hash,subscription) values(p_input->>'endpointHash',p_actor,p_input->>'deviceHash',p_input->'subscription')
+  on conflict(endpoint_hash) do update set profile_id=excluded.profile_id,device_hash=excluded.device_hash,subscription=excluded.subscription,updated_at=now();
+  return jsonb_build_object('ok',true);
+ end if;
+ if p_action='subscription_status' then return jsonb_build_object('subscribed',exists(select 1 from public.dmc_push_subscriptions where profile_id=p_actor and device_hash=p_input->>'deviceHash')); end if;
+ if p_action='list' then
+  delete from public.dmc_lobby_invitations where expires_at<now()-interval '7 days';
+  return coalesce((select jsonb_agg(jsonb_build_object('id',i.id,'sender',jsonb_build_object('id',p.id,'name',p.body->'name','avatar',p.body->'avatar'),
+   'roomPin',i.room_pin,'instance',i.room_instance,'roomName',i.room_name,'groupId',i.group_id,'createdAt',extract(epoch from i.created_at)*1000,'expiresAt',extract(epoch from i.expires_at)*1000) order by i.created_at desc)
+   from (select * from public.dmc_lobby_invitations where recipient=p_actor and status='pending' and expires_at>now() order by created_at desc limit 50) i join public.dmc_device_profiles p on p.id=i.sender),'[]'::jsonb);
+ end if;
+ if p_action='send' then
+  if target=p_actor or not exists(select 1 from public.dmc_friends where status='accepted' and ((requester=p_actor and recipient=target) or (recipient=p_actor and requester=target))) then return jsonb_build_object('error','Je kunt alleen geaccepteerde vrienden uitnodigen.','status',403); end if;
+  if p_input->>'groupId' is not null and (not exists(select 1 from public.dmc_group_members where group_id=p_input->>'groupId' and profile_id=target and status='member') or not exists(select 1 from public.dmc_group_members where group_id=p_input->>'groupId' and profile_id=p_actor and status='member')) then return jsonb_build_object('error','Voor deze lobby moeten jullie allebei lid van de groep zijn.','status',403); end if;
+  perform pg_catalog.pg_advisory_xact_lock(pg_catalog.hashtextextended(p_actor,2));
+  select * into item from public.dmc_lobby_invitations where sender=p_actor and recipient=target and room_instance=p_input->>'instance' for update;
+  if found and item.created_at>now()-interval '1 minute' then return jsonb_build_object('ok',true,'sent',false,'id',item.id); end if;
+  if (select count(*) from public.dmc_lobby_invitations where sender=p_actor and created_at>now()-interval '10 minutes')>=30 then return jsonb_build_object('error','Je hebt veel uitnodigingen verstuurd. Probeer later opnieuw.','status',429); end if;
+  insert into public.dmc_lobby_invitations(id,sender,recipient,room_pin,room_instance,group_id,room_name)
+   values(gen_random_uuid()::text,p_actor,target,p_input->>'roomPin',p_input->>'instance',p_input->>'groupId',left(p_input->>'roomName',80))
+   on conflict(sender,recipient,room_instance) do update set status='pending',created_at=now(),expires_at=now()+interval '1 hour',push_pending=true,push_attempts=0,push_after=now(),push_lease=null returning * into item;
+  return jsonb_build_object('ok',true,'sent',true,'id',item.id);
+ end if;
+ select * into item from public.dmc_lobby_invitations where id=p_input->>'id' and recipient=p_actor;
+ if not found then return jsonb_build_object('error','Deze uitnodiging is niet voor jouw account of bestaat niet meer.','status',404); end if;
+ if p_action='decline' then update public.dmc_lobby_invitations set status='declined',push_pending=false where id=item.id and status='pending';return jsonb_build_object('ok',true); end if;
+ if item.expires_at<=now() or item.status='declined' then return jsonb_build_object('error','Deze uitnodiging is verlopen.','status',410); end if;
+ if p_action='get' then return jsonb_build_object('id',item.id,'roomPin',item.room_pin,'instance',item.room_instance,'status',item.status,'groupId',item.group_id); end if;
+ if p_action='accept' then update public.dmc_lobby_invitations set status='accepted',push_pending=false where id=item.id;return jsonb_build_object('ok',true); end if;
+ return jsonb_build_object('error','Onbekende meldingsactie.','status',400);
+end;
+$$;
+revoke all on function public.dmc_notifications(text,text,jsonb) from public,anon,authenticated;
+grant execute on function public.dmc_notifications(text,text,jsonb) to service_role;
+
 notify pgrst, 'reload schema';
 commit;

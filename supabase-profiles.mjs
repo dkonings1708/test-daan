@@ -63,6 +63,7 @@ export function createSupabaseProfiles(db,{url,key,ApiError}){
  }
  return {
   enqueue,
+  notifications(actor,action,input={}){return serial(async()=>{await drain();const result=await request('rpc/dmc_notifications',{method:'POST',body:{p_actor:actor,p_action:action,p_input:input}});if(result?.error)throw new ApiError(Number(result.status)||400,result.error);return result})},
   tags(profileIds){return serial(async()=>{
    await drain();const result={};
    for(const id of new Set(profileIds)){

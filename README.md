@@ -19,6 +19,13 @@ Tik op namen of avatars om profielen te bekijken. Elke online deelnemer kan extr
 gast- of accountspelers op hetzelfde apparaat toevoegen. Zie [SOCIAL.md](SOCIAL.md)
 voor gebruik, privacy, spelregels en de benodigde Supabase-migratie.
 
+## Lobby-uitnodigingen en push
+
+Nodig geaccepteerde vrienden uit vanuit de lobby. Ontvangers zien hun uitnodigingen
+bij de bel en kunnen met hun eigen profiel aansluiten. Optionele pushmeldingen
+werken op ondersteunde browsers; op iPhone via de beginschermapp vanaf iOS 16.4.
+Voer voor deze update het volledige SQL-script opnieuw uit. Zie [PUSH.md](PUSH.md).
+
 ## Instellingen
 
 Het startdashboard heeft de tabbladen **Spelers** en **Spelregels**. De vaste

@@ -1,3 +1,4 @@
+import {releaseLocalPush} from './notifications-ui.js';
 export function createAccountUI({api,toast,onChange=()=>{},onDeviceProfile=()=>{}}){
  const $=s=>document.querySelector(s);let state={enabled:false,user:null},mode='login',busy=false;
  const dialog=document.createElement('dialog');dialog.id='account-dialog';dialog.className='device-profile-dialog account-dialog';dialog.setAttribute('aria-labelledby','account-title');
@@ -40,5 +41,5 @@ export function createAccountUI({api,toast,onChange=()=>{},onDeviceProfile=()=>{
   }catch(error){toast(error.message)}
  }
  const ready=refresh().catch(error=>{toast(error.message);return state});window.addEventListener('hashchange',callback);callback();
- return {ready,refresh,open(next='login'){select(next);dialog.showModal()},async logout(){await api('/api/account/logout',{});location.assign(cleanURL())}};
+ return {ready,refresh,open(next='login'){select(next);dialog.showModal()},async logout(){await releaseLocalPush();await api('/api/account/logout',{});location.assign(cleanURL())}};
 }

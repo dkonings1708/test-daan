@@ -24,7 +24,8 @@ Via **Vrienden & groepen → Vrienden** kun je ontvangen verzoeken accepteren of
 afwijzen, verzonden verzoeken intrekken en vrienden verwijderen. Een verzoek
 wordt pas een vriendschap na acceptatie door de ontvanger. De knop toont het
 aantal ontvangen verzoeken; tijdens gebruik wordt dit periodiek bijgewerkt.
-De app verstuurt hiervoor geen e-mails of pushmeldingen.
+Vriendschapsverzoeken sturen geen e-mails of pushmeldingen. Lobby-uitnodigingen
+kunnen wel optionele pushmeldingen sturen; zie [PUSH.md](PUSH.md).
 
 ## Een vaste groep
 
@@ -143,3 +144,10 @@ met de juiste code. Tijdens het verbinden zie je de voortgang en zijn startknopp
 tijdelijk geblokkeerd tegen dubbel indienen. Een mislukte poging bewaart je
 invoer; de knoppen worden weer bruikbaar. Deze update vereist geen nieuwe
 Supabase-instellingen.
+
+## Vrienden uitnodigen voor een lobby
+
+Met **Vriend uitnodigen** kun je geaccepteerde vrienden vanuit een lobby uitnodigen.
+De bel toont ontvangen uitnodigingen; **Meedoen** gebruikt het eigen profiel.
+Optionele push werkt per apparaat na toestemming. Zie [PUSH.md](PUSH.md) voor
+installatie, de vereiste SQL-update en de voorwaarden op iPhone.

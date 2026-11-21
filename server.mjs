@@ -11,6 +11,7 @@ import { createChat } from './chat.mjs';
 import { avatarFrom } from './avatars.mjs';
 import { createAvatarStore } from './avatar-store.mjs';
 import { createProfiles } from './profiles.mjs';
+import {createNotifications} from './notifications.mjs';
 import {createSocial} from './social.mjs';
 
 const root=dirname(fileURLToPath(import.meta.url));
@@ -21,7 +22,7 @@ const id=()=>randomBytes(12).toString('hex');
 function validatedRules(value){try{return engine.rulesFrom(value)}catch(error){throw new ApiError(400,error.message)}}
 function validatedAvatar(value){try{return avatarFrom(value)}catch(error){throw new ApiError(400,error.message)}}
 const name=value=>typeof value==='string'?value.trim().replace(/\s+/g,' ').slice(0,40):'';
-export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(root,'.dmc-data'),rng=randomInt,timingScale=1,supabase}={}) {
+export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(root,'.dmc-data'),rng=randomInt,timingScale=1,supabase,sendPush}={}) {
   mkdirSync(dataDir,{recursive:true});
   const db=new DatabaseSync(resolve(dataDir,'rooms.sqlite'));
   db.exec('PRAGMA journal_mode=WAL; CREATE TABLE IF NOT EXISTS rooms (pin TEXT PRIMARY KEY, body TEXT NOT NULL)');
@@ -29,7 +30,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   const rooms=new Map(),streams=new Map(),timers=new Map(),rates=new Map();
   let closed=false;
   for(const row of db.prepare('SELECT pin,body FROM rooms').all()) {
-    try{const room=JSON.parse(row.body);if(Date.now()-room.updated<MAX_AGE)rooms.set(row.pin,room);else db.prepare('DELETE FROM rooms WHERE pin=?').run(row.pin)}catch(error){console.error('Opgeslagen lobby kon niet worden gelezen:',row.pin,error.message)}
+    try{const room=JSON.parse(row.body);room.inviteId||=id();if(Date.now()-room.updated<MAX_AGE)rooms.set(row.pin,room);else db.prepare('DELETE FROM rooms WHERE pin=?').run(row.pin)}catch(error){console.error('Opgeslagen lobby kon niet worden gelezen:',row.pin,error.message)}
   }
   function persist(room){room.updated=Date.now();saveStatement.run(room.pin,JSON.stringify(room))}
   function live(room){return streams.get(room.pin)||new Map()}
@@ -52,7 +53,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     room.accountedHalfUnits={...totals};
     if(room.game.complete){room.gameId||=id();for(const member of room.members)if((room.game.roundSchedule||room.game.schedule).includes(member.id))profiles.round(member.profileId,room.gameId,room.game.round,room.group?.id)}
   }
-  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase,beforeAccountChange:checkAccountChange,onAccountChange:leaveForAccount});
+  const profiles=createProfiles(db,{ApiError,json,body,limitRequest,onAvatarChange:syncProfileAvatar,supabase,beforeAccountChange:checkAccountChange,onAccountChange:leaveForAccount,onAccountExit:req=>notifications.detach(req)});
   // Upgrade saved lobbies, including penalties from games started before counters existed.
   for(const room of rooms.values()){syncAdts(room);saveStatement.run(room.pin,JSON.stringify(room))}
   function changed(room){db.exec("BEGIN IMMEDIATE");try{syncAdts(room);room.revision++;persist(room);db.exec("COMMIT")}catch(error){db.exec("ROLLBACK");throw error}broadcast(room);schedulePending(room)}
@@ -208,11 +209,32 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
     if(!room){
       if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');
       let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
-      room={pin,group:{id:group.id,name:group.name,tag:group.tag},adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[],sessions:{},rules:validatedRules(group.rules||{}),config:null,game:null,pending:null,receipts:[]};rooms.set(pin,room);
+      room={pin,inviteId:id(),group:{id:group.id,name:group.name,tag:group.tag},adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[],sessions:{},rules:validatedRules(group.rules||{}),config:null,game:null,pending:null,receipts:[]};rooms.set(pin,room);
     }
     room.members.push({id:memberId,name:actor.name,avatar:avatarStore.set(room,memberId,actor.avatar),profileId:actor.id,team:'Team '+(room.members.length%2+1),playing:true});
     room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);await groupMetadata(room);changed(room);return snapshot(room,memberId);
   }
+  async function joinInvitation(req,res,invitation,actor){
+    const room=rooms.get(invitation.roomPin);
+    if(!room||room.inviteId!==invitation.instance)throw new ApiError(410,'Deze lobby bestaat niet meer.');
+    if(room.group)await profiles.social(actor.id,'group_access',{groupId:room.group.id});
+    if(rooms.get(room.pin)!==room)throw new ApiError(410,'Deze lobby bestaat niet meer.');
+    const existing=room.members.find(m=>m.profileId===actor.id);
+    if(existing?.controllerId)throw new ApiError(409,'Je speelt al mee via een ander apparaat. Verwijder eerst die extra speler.');
+    if(existing){
+      const current=(()=>{try{return authorize(req)}catch{return null}})();
+      if(current?.room!==room||current.memberId!==existing.id){checkAccountChange(req);leaveForAccount(req,res)}
+      const token=randomBytes(32).toString('hex');room.sessions[hash(token)]=existing.id;sessionCookie(req,res,token);persist(room);return snapshot(room,existing.id);
+    }
+    if(invitation.status==='accepted')throw new ApiError(410,'Deze uitnodiging is al gebruikt.');
+    requireLobby(room);if(room.members.length>=30)throw new ApiError(409,'Deze lobby is vol.');
+    if(room.members.some(m=>m.name.toLocaleLowerCase()===actor.name.toLocaleLowerCase()))throw new ApiError(409,'Deze naam wordt al gebruikt. Pas je profielnaam aan.');
+    checkAccountChange(req);leaveForAccount(req,res);
+    const memberId=id(),token=randomBytes(32).toString('hex');
+    room.members.push({id:memberId,name:actor.name,avatar:avatarStore.set(room,memberId,actor.avatar),profileId:actor.id,team:'Team '+(room.members.length%2+1),playing:true});room.sessions[hash(token)]=memberId;sessionCookie(req,res,token);
+    if(room.group)await groupMetadata(room);else await clanMetadata(room);changed(room);return snapshot(room,memberId);
+  }
+  const notifications=createNotifications({profiles,rooms,authorize,ApiError,json,body,limitRequest,joinInvitation,sendPush});
   const social=createSocial({profiles,ApiError,body,json,limitRequest,authorize,openGroupRoom,async onGroupsChange(action,input,actor){
     const target=['group_approve','group_remove'].includes(action)?input.profileId:actor.id;
     for(const room of rooms.values())if(!room.group&&(action==='group_update'||room.members.some(m=>m.profileId===target)))await clanMetadata(room);
@@ -232,13 +254,18 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
       if(await profiles.handleAccount(req,res,path))return;
       if(await profiles.handle(req,res,path))return;
       if(await social.handle(req,res,path))return;
+      if(await notifications.handle(req,res,path))return;
       if(avatarStore.handle(req,res,path))return;
       if(await chat.handle(req,res,path))return;
       if(req.method==='GET'&&path==='/healthz'){json(res,200,{ok:true,profileStorage:profiles.storage});return}
       if(req.method==='GET'&&['/','/index.html','/local','/local/','/online','/online.html'].includes(path)){
         res.writeHead(200,{'Content-Type':'text/html; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path==='/'||path.startsWith('/online')?'online.html':'index.html')));return;
       }
-      if(req.method==='GET'&&['/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/notifications-ui.js','/header-menu.js','/social-ui.js','/account-ui.js','/shake.js','/teams.mjs','/profile-ui.js','/lobby-chat.js','/sortable.js','/avatars.mjs','/unsaved-changes.js','/beer-mugs.js'].includes(path)){res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});res.end(readFileSync(resolve(root,path.slice(1))));return}
+      if(req.method==='GET'&&['/sw.js','/manifest.webmanifest','/app-icon-192.png','/app-icon-512.png'].includes(path)){
+        const type=path==='/sw.js'?'text/javascript; charset=utf-8':path.endsWith('.png')?'image/png':'application/manifest+json';
+        res.writeHead(200,{'Content-Type':type,'Cache-Control':'no-cache',...(path==='/sw.js'?{'Service-Worker-Allowed':'/'}:{})});res.end(readFileSync(resolve(root,path.slice(1))));return;
+      }
       if(req.method==='GET'&&path==='/api/me'){
         const {room,memberId}=authorize(req);await clanMetadata(room);authorize(req,room.pin);json(res,200,snapshot(room,memberId));return;
       }
@@ -251,7 +278,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
         const input=await body(req),profile=await profiles.forEntry(req,input,res),hostName=name(input.name||profile?.name);if(rooms.size>=100)throw new ApiError(503,'Alle lobbyplekken zijn momenteel bezet.');if(!hostName)throw new ApiError(400,'Vul je naam in.');
         let pin;do{pin=String(randomInt(100000,1000000))}while(rooms.has(pin));
         const memberId=id(),token=randomBytes(32).toString('hex');
-        const room={pin,adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar===undefined?profile?.avatar:input.avatar),...(profile?{profileId:profile.id}:{}),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
+        const room={pin,inviteId:id(),adminId:memberId,phase:'lobby',revision:1,updated:Date.now(),members:[{id:memberId,name:hostName,avatar:validatedAvatar(input.avatar===undefined?profile?.avatar:input.avatar),...(profile?{profileId:profile.id}:{}),team:'Team 1',playing:input.playing!==false}],sessions:{[hash(token)]:memberId},rules:validatedRules(input.rules),config:null,game:null,pending:null,receipts:[]};
         room.members[0].avatar=avatarStore.set(room,memberId,room.members[0].avatar);rooms.set(pin,room);persist(room);sessionCookie(req,res,token);await clanMetadata(room);json(res,201,snapshot(room,memberId));return;
       }
       const join=path.match(/^\/api\/rooms\/(\d{6})\/join$/);
@@ -316,7 +343,7 @@ export function createApplication({dataDir=process.env.DMC_DATA_DIR||resolve(roo
   const cleanup=setInterval(()=>{
     for(const [pin,room]of rooms)if(Date.now()-room.updated>MAX_AGE&&!live(room).size){clearTimeout(timers.get(pin));rooms.delete(pin);streams.delete(pin);db.prepare('DELETE FROM rooms WHERE pin=?').run(pin);chat.remove(pin);avatarStore.removeRoom(pin)}
   },60000);cleanup.unref();
-  return {server,close:async()=>{closed=true;clearInterval(cleanup);clearInterval(profileRetry);for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));try{await profiles.flush()}catch{console.error('Profielupdates blijven in de lokale wachtrij voor een volgende poging.')}db.close()}};
+  return {server,close:async()=>{closed=true;clearInterval(cleanup);clearInterval(profileRetry);await notifications.close();for(const timer of timers.values())clearTimeout(timer);for(const group of streams.values())for(const connections of group.values())for(const res of connections)res.end();await new Promise(resolve=>server.close(resolve));try{await profiles.flush()}catch{console.error('Profielupdates blijven in de lokale wachtrij voor een volgende poging.')}db.close()}};
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   const app=createApplication();const port=Number(process.env.PORT)||3000;app.server.listen(port,'0.0.0.0',()=>console.log(`DMC mexx luistert op poort ${port}`));
